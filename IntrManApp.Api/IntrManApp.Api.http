@@ -1,0 +1,6 @@
+@IntrManApp.Api_HostAddress = http://localhost:5096
+
+GET {{IntrManApp.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,74 @@
+﻿using Carter;
+using FluentValidation;
+using IntrManApp.Api.Database;
+using IntrManApp.Shared.Models.Production;
+using IntrManApp.Shared.Common;
+using IntrManApp.Shared.Contract;
+using MediatR;
+using Mapster;
+
+namespace IntrManApp.Api.Features.BasicModules
+{
+    public static class CreateLocation
+    {
+        public class Command : IRequest<Result<Guid>>
+        {
+            public string Name { get; set; } = string.Empty;
+        }
+
+        public class Validator : AbstractValidator<Command>
+        {
+            public Validator()
+            {
+                RuleFor(c => c.Name).NotEmpty();
+            }
+        }
+
+        internal sealed class Handler : IRequestHandler<Command, Result<Guid>>
+        {
+            private readonly IntrManDbContext _context;
+            private readonly IValidator<Command> _validator;
+
+            public Handler(IntrManDbContext dbContext, IValidator<Command> validator)
+            {
+                _context = dbContext;
+                _validator = validator;
+            }
+            public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
+            {
+                var validationResult = _validator.Validate(request);
+                if (!validationResult.IsValid)
+                {
+                    return Result.Failure<Guid>(new Error(
+                        "CreateLocation.Validation", validationResult.ToString()));
+                }
+                var location = new Location
+                {
+                    Name = request.Name
+                };
+                _context.Add(location);
+                await _context.SaveChangesAsync();
+                return location.Id;
+            }
+        }
+    }
+
+    public class CreateLocationEndPoint : ICarterModule
+    {
+        public void AddRoutes(IEndpointRouteBuilder app)
+        {
+            app.MapPost("api/createLocation", async (CreateLocationRequest request, ISender sender) =>
+            {
+                var command = request.Adapt<CreateLocation.Command>();
+                var result = await sender.Send(command);
+
+                if (result.IsFailure)
+                {
+                    return Results.BadRequest(result.Error);
+                }
+                return Results.Ok(result.Value);
+            });
+        }
+
+    }
+}
