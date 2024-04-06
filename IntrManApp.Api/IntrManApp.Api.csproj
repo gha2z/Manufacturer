@@ -23,11 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IntrManApp.Domain\IntrManApp.Shared.csproj" />
+    <Folder Include="Features\Sales\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Sales\" />
+    <ProjectReference Include="..\IntrManApp.Shared\IntrManApp.Shared.csproj" />
   </ItemGroup>
 
 </Project>
