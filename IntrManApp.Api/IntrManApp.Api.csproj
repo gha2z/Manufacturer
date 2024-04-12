@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <Folder Include="Features\Sales\" />
+    <Folder Include="Entities\" />
   </ItemGroup>
 
   <ItemGroup>

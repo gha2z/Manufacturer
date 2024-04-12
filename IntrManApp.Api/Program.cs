@@ -10,7 +10,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<IntrManDbContext>(o =>
-    o.UseSqlServer(builder.Configuration.GetConnectionString("Database")));
+{
+    o.UseSqlServer(builder.Configuration.GetConnectionString("Database"));
+    o.EnableSensitiveDataLogging();
+});
 
 var assembly = typeof(Program).Assembly;
 builder.Services.AddMediatR(config =>

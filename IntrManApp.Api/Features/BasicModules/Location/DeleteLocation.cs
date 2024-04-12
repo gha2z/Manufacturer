@@ -28,7 +28,7 @@ namespace IntrManApp.Api.Features.BasicModules
 
 
                 var category = _context.ProductCategories
-                    .Where(c => c.Id.Equals(request.Id)).First();
+                    .Where(c => c.Id.Equals(request.Id)).FirstOrDefault();
                 if (category != null)
                 {
                     _context.ProductCategories.Remove(category);

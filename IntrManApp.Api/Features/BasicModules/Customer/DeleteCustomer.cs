@@ -28,7 +28,7 @@ namespace IntrManApp.Api.Features.BasicModules
 
 
                 var item = _context.Customers
-                    .Where(c => c.BusinessEntityId.Equals(request.BusinessEntityId)).First();
+                    .Where(c => c.BusinessEntityId.Equals(request.BusinessEntityId)).FirstOrDefault();
                 if (item != null)
                 {
                     _context.Customers.Remove(item);

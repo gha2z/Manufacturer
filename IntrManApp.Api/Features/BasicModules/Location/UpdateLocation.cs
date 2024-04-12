@@ -1,7 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using IntrManApp.Api.Database;
-using IntrManApp.Shared.Models.Production;
+using IntrManApp.Api.Entities;
 using IntrManApp.Shared.Common;
 using IntrManApp.Shared.Contract;
 using MediatR;
@@ -45,7 +45,7 @@ namespace IntrManApp.Api.Features.BasicModules
                         "UpdateLocation.Validation", validationResult.ToString()));
                 }
                 var item = _context.Locations
-                    .Where(c => c.Id.Equals(request.Id)).First();
+                    .Where(c => c.Id.Equals(request.Id)).FirstOrDefault();
                 if (item != null)
                 {
                     item.Name = request.Name;

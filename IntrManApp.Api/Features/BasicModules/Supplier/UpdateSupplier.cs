@@ -1,7 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using IntrManApp.Api.Database;
-using IntrManApp.Shared.Models.Production;
+using IntrManApp.Api.Entities;
 using IntrManApp.Shared.Common;
 using IntrManApp.Shared.Contract;
 using MediatR;
@@ -45,7 +45,7 @@ namespace IntrManApp.Api.Features.BasicModules
                         "UpdateSupplier.Validation", validationResult.ToString()));
                 }
                 var item = _context.Suppliers
-                    .Where(c => c.BusinessEntityId.Equals(request.BusinessEntityId)).First();
+                    .Where(c => c.BusinessEntityId.Equals(request.BusinessEntityId)).FirstOrDefault();
                 if (item != null)
                 {
                     item.Name = request.Name;

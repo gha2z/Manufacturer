@@ -1,12 +1,11 @@
 ﻿using Carter;
 using FluentValidation;
 using IntrManApp.Api.Database;
-using IntrManApp.Shared.Models.Purchasing;
 using IntrManApp.Shared.Common;
 using IntrManApp.Shared.Contract;
 using MediatR;
 using Mapster;
-using IntrManApp.Shared.Models.Person;
+using IntrManApp.Api.Entities;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
@@ -54,7 +53,7 @@ namespace IntrManApp.Api.Features.BasicModules
                 } else
                 {
                     entity = _context.BusinessEntities
-                        .Where(b => b.Id.Equals(request.BusinessEntityId)).First();
+                        .Where(b => b.Id.Equals(request.BusinessEntityId)).FirstOrDefault();
                 }
                 if (entity != null)
                 {

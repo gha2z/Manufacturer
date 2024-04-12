@@ -1,14 +1,11 @@
 ﻿using Carter;
 using FluentValidation;
 using IntrManApp.Api.Database;
-using IntrManApp.Shared.Models.Purchasing;
 using IntrManApp.Shared.Common;
 using IntrManApp.Shared.Contract;
 using MediatR;
 using Mapster;
-using IntrManApp.Shared.Models.Person;
-using IntrManApp.Shared.Models.Sales;
-using IntrManApp.Shared.Models.Production;
+using IntrManApp.Api.Entities;
 using System.Globalization;
 
 namespace IntrManApp.Api.Features.BasicModules
@@ -85,167 +82,182 @@ namespace IntrManApp.Api.Features.BasicModules
                     return Result.Failure<Guid>(new Error(
                         "CreateProduct.Validation", validationResult.ToString()));
                 }
-              
-                MeasurementUnitGroup measurementUnitGroup;
-                MeasurementUnit measurementUnitOrder;
-                if (request.MeasurementUnitGroupId == Guid.Empty)
-                {
-                    if (_context.MeasurementUnitGroups.Count() == 0)
-                    {
-                        measurementUnitGroup = new()
-                        {
-                            Name = "Weight - Kgs"
-                        };
-                        _context.Add(measurementUnitGroup);
-                        await _context.SaveChangesAsync();
-                        measurementUnitOrder = new()
-                        {
-                            Name = "gram",
-                            Quantity = 1,
-                            GroupId = measurementUnitGroup.Id
-                        };
-                        _context.Add(measurementUnitOrder);
-                        await _context.SaveChangesAsync();
-                        var parentUnit = new MeasurementUnit()
-                        {
-                            Name = "kilogram",
-                            Quantity = 1000,
-                            GroupId = measurementUnitGroup.Id,
-                            ChildId = measurementUnitOrder.Id
-                        };
-                        _context.Add(parentUnit);
-                        await _context.SaveChangesAsync();
-                    } else
-                    {
-                        measurementUnitGroup = _context.MeasurementUnitGroups.First();
-                        measurementUnitOrder = _context.MeasurementUnits
-                            .Where(u => u.GroupId.Equals(measurementUnitGroup.Id)).First();
-                    }
-                }
-                else
-                {
-                    measurementUnitGroup = _context.MeasurementUnitGroups
-                        .Where(u => u.Id.Equals(request.MeasurementUnitGroupId)).First();
-                    measurementUnitOrder = _context.MeasurementUnits
-                        .Where(u => u.GroupId.Equals(request.MeasurementUnitOrderId)).First();
-                }
-                if (measurementUnitGroup == null || measurementUnitOrder == null)
-                {
-                    return Result.Failure<Guid>(new Error(
-                      "CreateProduct.Validation", "Measurement Unit not found"));
-                }
 
-                Location location;
-                if(request.LocationId.Equals(Guid.Empty))
+                try
                 {
-                    if(_context.Locations.Count()==0)
+                    var product = new Product
                     {
-                        location = new Location()
+                        
+                        ProductNumber = request.ProductNumber,
+                        IsFinishedGood = request.IsFinishedGood,
+                        IsSalable = request.IsSalable,
+                        IsUniqueBatchPerOrder = request.IsUniqueBatchPerOrder,
+                        SafetyStockLevel = request.SafetyStockLevel,
+                        ReorderPoint = request.ReorderPoint,
+                        StandardCost = request.StandardCost,
+                        ListPrice = request.ListPrice,
+                        OrderQuantity = request.OrderQuantity,
+                        DaysToManufacture = request.DaysToManufacture,
+                        DaysToExpire = request.DaysToExpire,
+                        ProductRackingPalletCol = request.ProductRackingPalletCol,
+                        ProductRackingPalletRow = request.ProductRackingPalletRow,
+                        AdditionalInfo = request.AdditionalInfo
+                    };
+                    ProductCategory? category;
+                    if (request.CategoryId == null || request.CategoryId == Guid.Empty)
+                    {
+                        if (_context.ProductCategories.Count() == 0)
                         {
-                            Name = "Warehouse"
-                        };
-                        _context.Add(location);
-                        await _context.SaveChangesAsync();
-                    } else
-                    {
-                        location = _context.Locations.First();
-                    }
-                } else
-                {
-                    location = _context.Locations
-                        .Where(l => l.Id.Equals(request.LocationId)).First();
-                }
-                if (location == null)
-                {
-                    return Result.Failure<Guid>(new Error(
-                      "CreateProduct.Validation", "Default location not found"));
-                }
-                ProductCategory category;
-                if (request.CategoryId.Equals(Guid.Empty))
-                {
-                    if (_context.ProductCategories.Count() == 0)
-                    {
-                        category = new ProductCategory()
+                            category = new ProductCategory()
+                            {
+                                Name = "Unnamed Category"
+                            };
+                            _context.Add(category);
+                        }
+                        else
                         {
-                            Name = "Unnamed Category"
-                        };
-                        _context.Add(category);
-                        await _context.SaveChangesAsync();
+                            category = _context.ProductCategories.FirstOrDefault();
+                        }
                     }
                     else
                     {
-                        category = _context.ProductCategories.First();
+                        category = _context.ProductCategories
+                        .Where(c => c.Id.Equals(request.CategoryId)).FirstOrDefault();
                     }
-                }
-                else
-                {
-                    category = _context.ProductCategories
-                        .Where(l => l.Id.Equals(request.CategoryId)).First();
-                }
-                if (category == null)
+                    if (category == null)
+                    {
+                        return Result.Failure<Guid>(new Error(
+                            "CreateProduct.Validation", "Please define Product Category"));
+                    }
+                    product.Category = category;
+
+                    MeasurementUnitGroup? measurementUnitGroup = null;
+                    MeasurementUnit? measurementUnitOrder = null;
+                    if (request.MeasurementUnitGroupId == Guid.Empty)
+                    {
+                        if (_context.MeasurementUnitGroups.Count() == 0)
+                        {
+                            measurementUnitGroup = new()
+                            {
+                                Name = "Weight - Kgs"
+                            };
+
+                            measurementUnitOrder = new()
+                            {
+                                Name = "gram",
+                                Quantity = 1,
+                                Group = measurementUnitGroup
+                            };
+
+                            var parentUnit = new MeasurementUnit()
+                            {
+                                Name = "kilogram",
+                                Quantity = 1000,
+                                Child = measurementUnitOrder,
+                                Group  = measurementUnitGroup
+                            };
+                            
+                        }
+                        else
+                        {
+                            measurementUnitGroup = _context.MeasurementUnitGroups.FirstOrDefault();
+                            if (measurementUnitGroup != null)
+                                measurementUnitOrder = _context.MeasurementUnits
+                                    .Where(u => u.GroupId.Equals(measurementUnitGroup.Id)).FirstOrDefault();
+                        }
+                    }
+                    else
+                    {
+                        measurementUnitGroup = _context.MeasurementUnitGroups
+                            .Where(u => u.Id.Equals(request.MeasurementUnitGroupId)).FirstOrDefault();
+                        if (measurementUnitGroup != null)
+                        {
+                            measurementUnitOrder = _context.MeasurementUnits
+                            .Where(u => u.GroupId.Equals(request.MeasurementUnitOrderId)).FirstOrDefault();
+                        }
+                    }
+                    if (measurementUnitGroup == null)
+                    {
+                        return Result.Failure<Guid>(new Error(
+                              "CreateProduct.Validation", "Measurement Unit not found"));
+                    }
+                    if (measurementUnitOrder == null)
+                    {
+                        return Result.Failure<Guid>(new Error(
+                          "CreateProduct.Validation", "Measurement Unit not found"));
+                    }
+                    product.MeasurementUnitGroup = measurementUnitGroup;
+                    product.MeasurementUnitOrder = measurementUnitOrder;
+
+                    Location? location = null;
+                    if (request.LocationId.Equals(Guid.Empty))
+                    {
+                        if (_context.Locations.Count() == 0)
+                        {
+                            location = new Location()
+                            {
+                                Name = "Warehouse"
+                            };
+                        }
+                        else
+                        {
+                            location = _context.Locations.FirstOrDefault();
+                        }
+                    }
+                    else
+                    {
+                        location = _context.Locations
+                            .Where(l => l.Id.Equals(request.LocationId)).FirstOrDefault();
+                    }
+                    if (location == null)
+                    {
+                        return Result.Failure<Guid>(new Error(
+                          "CreateProduct.Validation", "Default location not found"));
+                    }
+                    product.Location = location;
+
+
+                    if (_context.Cultures.Count() == 0)
+                    {
+                        var culture = new Culture()
+                        {
+                            Id = "en-US",
+                            Name = "English",
+                            ModifiedDate = DateTime.Now
+
+                        };
+
+                        var chCulture = CultureInfo.GetCultureInfo("zh-CN");
+                        var chineseCulture = new Culture()
+                        {
+                            Id = "zh-CN",
+                            Name = chCulture.Name,
+                            ModifiedDate = DateTime.Now
+                        };
+
+                        _context.Cultures.AddRange(new[] { culture, chineseCulture });
+                    }
+
+                    foreach (var culture in request.ProductNameAndDescriptionCultures)
+                    {
+                        var newCulture = new ProductNameAndDescriptionCulture()
+                        {
+                            CultureId = culture.CultureId,
+                            Name = culture.Name,
+                            Description = culture.Description
+                        };
+                        product.ProductNameAndDescriptionCultures.Add(newCulture);
+                    }
+
+                    _context.Products.Add(product);
+                    await _context.SaveChangesAsync(cancellationToken);
+
+                    return product.Id;
+                } catch (Exception ex)
                 {
                     return Result.Failure<Guid>(new Error(
-                      "CreateProduct.Validation", "Product Category not found"));
+                       "CreateProduct.Validation", $"{ex.Message}\n\n{ex}"));
                 }
-                if(_context.Cultures.Count() == 0)
-                {
-                    var culture = new Culture()
-                    {
-                        Id = "en-US",
-                        Name = "English",
-                        ModifiedDate = DateTime.Now
-                        
-                    }; 
-                    _context.Add(culture);
-                    await _context.SaveChangesAsync();
-                    var chineseCulture = CultureInfo.GetCultureInfo("zh-CN");
-                    culture = new Culture()
-                    {
-                        Id = "zh-CN",
-                        Name = chineseCulture.Name,
-                        ModifiedDate = DateTime.Now
-                    };
-                    _context.Add(culture);
-                    await _context.SaveChangesAsync();
-                }
-                var product = new Product
-                {
-                    CategoryId = category.Id,
-                    ProductNumber = request.ProductNumber,
-                    IsFinishedGood = request.IsFinishedGood,
-                    IsSalable = request.IsSalable,
-                    IsUniqueBatchPerOrder = request.IsUniqueBatchPerOrder,
-                    SafetyStockLevel = request.SafetyStockLevel,
-                    ReorderPoint = request.ReorderPoint,
-                    StandardCost = request.StandardCost,
-                    ListPrice =request.ListPrice,
-                    MeasurementUnitGroupId = measurementUnitGroup.Id,
-                    MeasurementUnitOrderId = measurementUnitOrder.Id,
-                    OrderQuantity = request.OrderQuantity,
-                    DaysToManufacture = request.DaysToManufacture,
-                    DaysToExpire = request.DaysToExpire,
-                    LocationId = location.Id,
-                    ProductRackingPalletCol = request.ProductRackingPalletCol,
-                    ProductRackingPalletRow = request.ProductRackingPalletRow,
-                    AdditionalInfo = request.AdditionalInfo
-                };
-               
-                _context.Add(product);
-                await _context.SaveChangesAsync();
-                foreach (var culture in request.ProductNameAndDescriptionCultures)
-                {
-                    var newCulture = new ProductNameAndDescriptionCulture()
-                    {
-                        ProductId = product.Id,
-                        CultureId = culture.CultureId,
-                        Name = culture.Name,
-                        Description = culture.Description
-                    };
-                    _context.Add(newCulture);
-                }
-                await _context.SaveChangesAsync();
-
-                return product.Id;
             }
         }
     }

@@ -1,15 +1,11 @@
 ﻿using Carter;
 using FluentValidation;
 using IntrManApp.Api.Database;
-using IntrManApp.Shared.Models.Purchasing;
 using IntrManApp.Shared.Common;
 using IntrManApp.Shared.Contract;
-using MediatR;
+using IntrManApp.Api.Entities;
 using Mapster;
-using IntrManApp.Shared.Models.Person;
-using IntrManApp.Shared.Models.Sales;
-using IntrManApp.Shared.Models.Production;
-using System.Globalization;
+using MediatR;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
@@ -87,7 +83,7 @@ namespace IntrManApp.Api.Features.BasicModules
                         "UpdateProduct.Validation", validationResult.ToString()));
                 }
                 var product = _context.Products
-                    .Where(p => p.Id.Equals(request.Id)).First();
+                    .Where(p => p.Id.Equals(request.Id)).FirstOrDefault();
 
                 if (product == null)
                 {
@@ -95,8 +91,8 @@ namespace IntrManApp.Api.Features.BasicModules
                        "UpdateProduct.Validation", "Product not found!"));
                 }
 
-                MeasurementUnitGroup measurementUnitGroup;
-                MeasurementUnit measurementUnitOrder;
+                MeasurementUnitGroup? measurementUnitGroup;
+                MeasurementUnit? measurementUnitOrder;
 
                 if (request.MeasurementUnitGroupId == Guid.Empty)
                 {
@@ -105,7 +101,7 @@ namespace IntrManApp.Api.Features.BasicModules
                 else
                 {
                     measurementUnitGroup = _context.MeasurementUnitGroups
-                        .Where(u => u.Id.Equals(request.MeasurementUnitGroupId)).First();
+                        .Where(u => u.Id.Equals(request.MeasurementUnitGroupId)).FirstOrDefault();
                 }
                 if (request.MeasurementUnitOrderId == Guid.Empty)
                 {
@@ -114,7 +110,7 @@ namespace IntrManApp.Api.Features.BasicModules
                 else
                 { 
                     measurementUnitOrder = _context.MeasurementUnits
-                        .Where(u => u.GroupId.Equals(request.MeasurementUnitOrderId)).First();
+                        .Where(u => u.GroupId.Equals(request.MeasurementUnitOrderId)).FirstOrDefault();
                 }
                 if (measurementUnitGroup == null || measurementUnitOrder == null)
                 {
@@ -122,7 +118,7 @@ namespace IntrManApp.Api.Features.BasicModules
                       "UpdateProduct.Validation", "Measurement Unit not found"));
                 }
 
-                Location location;
+                Location? location;
                 if (request.LocationId.Equals(Guid.Empty))
                 {
                     location = product.Location;
@@ -130,14 +126,14 @@ namespace IntrManApp.Api.Features.BasicModules
                 else
                 {
                     location = _context.Locations
-                        .Where(l => l.Id.Equals(request.LocationId)).First();
+                        .Where(l => l.Id.Equals(request.LocationId)).FirstOrDefault();
                 }
                 if (location == null)
                 {
                     return Result.Failure<Guid>(new Error(
                       "UpdateProduct.Validation", "Default location not found"));
                 }
-                ProductCategory category;
+                ProductCategory? category;
                 if (request.CategoryId.Equals(Guid.Empty))
                 {
                     category = product.Category;
@@ -145,7 +141,7 @@ namespace IntrManApp.Api.Features.BasicModules
                 else
                 {
                     category = _context.ProductCategories
-                        .Where(l => l.Id.Equals(request.CategoryId)).First();
+                        .Where(l => l.Id.Equals(request.CategoryId)).FirstOrDefault();
                 }
                 if (category == null)
                 {
@@ -197,7 +193,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/UpdateProduct", async (UpdateProductRequest request, ISender sender) =>
+            app.MapPut("api/UpdateProduct", async (UpdateProductRequest request, ISender sender) =>
             {
                 var command = request.Adapt<UpdateProduct.Command>();
                 var result = await sender.Send(command);
