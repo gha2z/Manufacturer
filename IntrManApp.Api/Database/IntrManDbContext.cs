@@ -30,6 +30,8 @@ public partial class IntrManDbContext : DbContext
 
     public virtual DbSet<DiscrepantReason> DiscrepantReasons { get; set; }
 
+    public virtual DbSet<InventoryFlag> InventoryFlags { get; set; }
+
     public virtual DbSet<Location> Locations { get; set; }
 
     public virtual DbSet<MeasurementUnit> MeasurementUnits { get; set; }
@@ -79,6 +81,8 @@ public partial class IntrManDbContext : DbContext
     public virtual DbSet<ProductionOrderLineDetailResource> ProductionOrderLineDetailResources { get; set; }
 
     public virtual DbSet<ProductionOrderLineDetailResourceAllocation> ProductionOrderLineDetailResourceAllocations { get; set; }
+
+    public virtual DbSet<RackingPallet> RackingPallets { get; set; }
 
     public virtual DbSet<SalesOrder> SalesOrders { get; set; }
 
@@ -218,6 +222,13 @@ public partial class IntrManDbContext : DbContext
             entity.Property(e => e.Reason).HasMaxLength(100);
         });
 
+        modelBuilder.Entity<InventoryFlag>(entity =>
+        {
+            entity.ToTable("InventoryFlag", "Production");
+
+            entity.Property(e => e.Name).HasMaxLength(25);
+        });
+
         modelBuilder.Entity<Location>(entity =>
         {
             entity.ToTable("Location", "Production");
@@ -330,7 +341,6 @@ public partial class IntrManDbContext : DbContext
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(8, 2)");
             entity.Property(e => e.ProductNumber).HasMaxLength(25);
-            entity.Property(e => e.ProductRackingPalletCol).HasMaxLength(5);
             entity.Property(e => e.ReorderPoint)
                 .HasDefaultValue(0m)
                 .HasColumnType("decimal(18, 2)");
@@ -360,6 +370,10 @@ public partial class IntrManDbContext : DbContext
                 .HasForeignKey(d => d.MeasurementUnitOrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Product_MeasurementUnit");
+
+            entity.HasOne(d => d.RackingPallet).WithMany(p => p.Products)
+                .HasForeignKey(d => d.RackingPalletId)
+                .HasConstraintName("FK_Product_RackingPallet");
         });
 
         modelBuilder.Entity<ProductCategory>(entity =>
@@ -403,7 +417,6 @@ public partial class IntrManDbContext : DbContext
             entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
             entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.QuantityPerBatch).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.RackingPalletCol).HasMaxLength(5);
 
             entity.HasOne(d => d.CheckIn).WithMany(p => p.ProductCheckInLines)
                 .HasForeignKey(d => d.CheckInId)
@@ -421,6 +434,10 @@ public partial class IntrManDbContext : DbContext
             entity.HasOne(d => d.Product).WithMany(p => p.ProductCheckInLines)
                 .HasForeignKey(d => d.ProductId)
                 .HasConstraintName("FK_ProductCheckInLine_Product");
+
+            entity.HasOne(d => d.RackingPallet).WithMany(p => p.ProductCheckInLines)
+                .HasForeignKey(d => d.RackingPalletId)
+                .HasConstraintName("FK_ProductCheckInLine_RackingPallet");
         });
 
         modelBuilder.Entity<ProductCheckInLineDetail>(entity =>
@@ -451,19 +468,35 @@ public partial class IntrManDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.RackingPalletCol).HasMaxLength(5);
 
             entity.HasOne(d => d.CheckOut).WithMany(p => p.ProductCheckOutLines)
                 .HasForeignKey(d => d.CheckOutId)
                 .HasConstraintName("FK_ProductCheckOutLine_ProductCheckout");
 
-            entity.HasOne(d => d.Location).WithMany(p => p.ProductCheckOutLines)
+            entity.HasOne(d => d.Inventory).WithMany(p => p.ProductCheckOutLines)
+                .HasForeignKey(d => d.InventoryId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ProductCheckOutLine_ProductInventory");
+
+            entity.HasOne(d => d.Location).WithMany(p => p.ProductCheckOutLineLocations)
                 .HasForeignKey(d => d.LocationId)
                 .HasConstraintName("FK_ProductCheckOutLine_Location");
 
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductCheckOutLines)
                 .HasForeignKey(d => d.MeasurementUnitId)
                 .HasConstraintName("FK_ProductCheckOutLine_MeasurementUnit");
+
+            entity.HasOne(d => d.RackingPallet).WithMany(p => p.ProductCheckOutLineRackingPallets)
+                .HasForeignKey(d => d.RackingPalletId)
+                .HasConstraintName("FK_ProductCheckOutLine_RackingPallet");
+
+            entity.HasOne(d => d.SourceLocation).WithMany(p => p.ProductCheckOutLineSourceLocations)
+                .HasForeignKey(d => d.SourceLocationId)
+                .HasConstraintName("FK_ProductCheckOutLine_SourceLocation");
+
+            entity.HasOne(d => d.SourceRackingPallet).WithMany(p => p.ProductCheckOutLineSourceRackingPallets)
+                .HasForeignKey(d => d.SourceRackingPalletId)
+                .HasConstraintName("FK_ProductCheckOutLine_SourceRackingPallet");
         });
 
         modelBuilder.Entity<ProductCheckout>(entity =>
@@ -488,8 +521,16 @@ public partial class IntrManDbContext : DbContext
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.CheckInDate).HasColumnType("datetime");
-            entity.Property(e => e.ModifierDate).HasColumnType("datetime");
-            entity.Property(e => e.RevisionNumber).HasDefaultValue((byte)0);
+            entity.Property(e => e.ModifierDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.RevisionNumber)
+                .HasDefaultValue((byte)0)
+                .HasComment("3. Return from Production 6. Check-In from production 7. New Delivery Order 8. Packing 9. Packed 10. Dispatched");
+
+            entity.HasOne(d => d.CheckInTypeNavigation).WithMany(p => p.ProductInternalCheckIns)
+                .HasForeignKey(d => d.CheckInType)
+                .HasConstraintName("FK_ProductInternalCheckIn_InventoryFlag");
         });
 
         modelBuilder.Entity<ProductInternalCheckInLine>(entity =>
@@ -502,7 +543,6 @@ public partial class IntrManDbContext : DbContext
                 .HasComment("Finished Product CheckIn-Type: 0: New finished product 1: Move between locations (e.g from production to warehouse facilitiy)")
                 .HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.RackingPalletCol).HasMaxLength(5);
 
             entity.HasOne(d => d.CheckIn).WithMany(p => p.ProductInternalCheckInLines)
                 .HasForeignKey(d => d.CheckInId)
@@ -514,13 +554,25 @@ public partial class IntrManDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProductReadyCheckInLine_ProductInventory");
 
-            entity.HasOne(d => d.Location).WithMany(p => p.ProductInternalCheckInLines)
+            entity.HasOne(d => d.Location).WithMany(p => p.ProductInternalCheckInLineLocations)
                 .HasForeignKey(d => d.LocationId)
-                .HasConstraintName("FK_ProductReadyCheckInLine_Location");
+                .HasConstraintName("FK_ProductInternalCheckInLine_Location");
 
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductInternalCheckInLines)
                 .HasForeignKey(d => d.MeasurementUnitId)
                 .HasConstraintName("FK_ProductReadyCheckInLine_MeasurementUnit");
+
+            entity.HasOne(d => d.RackingPallet).WithMany(p => p.ProductInternalCheckInLineRackingPallets)
+                .HasForeignKey(d => d.RackingPalletId)
+                .HasConstraintName("FK_ProductInternalCheckInLine_RackingPallet");
+
+            entity.HasOne(d => d.SourceLocation).WithMany(p => p.ProductInternalCheckInLineSourceLocations)
+                .HasForeignKey(d => d.SourceLocationId)
+                .HasConstraintName("FK_ProductInternalCheckInLine_SourceLocation");
+
+            entity.HasOne(d => d.SourceRackingPallet).WithMany(p => p.ProductInternalCheckInLineSourceRackingPallets)
+                .HasForeignKey(d => d.SourceRackingPalletId)
+                .HasConstraintName("FK_ProductInternalCheckInLine_SourceRackingPallet");
         });
 
         modelBuilder.Entity<ProductInternalCheckOutLine>(entity =>
@@ -533,7 +585,6 @@ public partial class IntrManDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.RackingPalletCol).HasMaxLength(5);
 
             entity.HasOne(d => d.CheckOut).WithMany(p => p.ProductInternalCheckOutLines)
                 .HasForeignKey(d => d.CheckOutId)
@@ -545,13 +596,25 @@ public partial class IntrManDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProductInternalCheckOutLine_ProductInventory");
 
-            entity.HasOne(d => d.Location).WithMany(p => p.ProductInternalCheckOutLines)
+            entity.HasOne(d => d.Location).WithMany(p => p.ProductInternalCheckOutLineLocations)
                 .HasForeignKey(d => d.LocationId)
                 .HasConstraintName("FK_ProductInternalCheckOutLine_Location");
 
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductInternalCheckOutLines)
                 .HasForeignKey(d => d.MeasurementUnitId)
                 .HasConstraintName("FK_ProductInternalCheckOutLine_MeasurementUnit");
+
+            entity.HasOne(d => d.RackingPallet).WithMany(p => p.ProductInternalCheckOutLineRackingPallets)
+                .HasForeignKey(d => d.RackingPalletId)
+                .HasConstraintName("FK_ProductInternalCheckOutLine_RackingPallet");
+
+            entity.HasOne(d => d.SourceLocation).WithMany(p => p.ProductInternalCheckOutLineSourceLocations)
+                .HasForeignKey(d => d.SourceLocationId)
+                .HasConstraintName("FK_ProductInternalCheckOutLine_SourceLocation");
+
+            entity.HasOne(d => d.SourceRackingPallet).WithMany(p => p.ProductInternalCheckOutLineSourceRackingPallets)
+                .HasForeignKey(d => d.SourceRackingPalletId)
+                .HasConstraintName("FK_ProductInternalCheckOutLine_SourceRackingPallet");
         });
 
         modelBuilder.Entity<ProductInternalCheckout>(entity =>
@@ -566,6 +629,10 @@ public partial class IntrManDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.RevisionNumber).HasDefaultValue((byte)0);
+
+            entity.HasOne(d => d.CheckOutTypeNavigation).WithMany(p => p.ProductInternalCheckouts)
+                .HasForeignKey(d => d.CheckOutType)
+                .HasConstraintName("FK_ProductInternalCheckout_InventoryFlag");
         });
 
         modelBuilder.Entity<ProductInventory>(entity =>
@@ -583,13 +650,16 @@ public partial class IntrManDbContext : DbContext
             entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
             entity.Property(e => e.Flag)
                 .HasDefaultValue((byte)1)
-                .HasComment("1. CheckIn (purchase) 2. CheckOut for Production 3. Return from Production 4. Waiting for Production 5. In production 6. Check-In from production 7. New Delivery Order 8. Packing 9. Packed 10. Dispatched");
+                .HasComment("1. CheckIn (purchase) 2. CheckOut for Production 3. Return from Production 4. Waiting for Production 5. In production 6. Check-In from production 7. New Delivery Order 8. Packing 9. Packed 10. Dispatched 11. Move location");
             entity.Property(e => e.ModifiedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.RackingPalletCol).HasMaxLength(5);
+
+            entity.HasOne(d => d.FlagNavigation).WithMany(p => p.ProductInventories)
+                .HasForeignKey(d => d.Flag)
+                .HasConstraintName("FK_ProductInventory_InventoryFlag");
 
             entity.HasOne(d => d.Location).WithMany(p => p.ProductInventories)
                 .HasForeignKey(d => d.LocationId)
@@ -602,6 +672,10 @@ public partial class IntrManDbContext : DbContext
             entity.HasOne(d => d.Product).WithMany(p => p.ProductInventories)
                 .HasForeignKey(d => d.ProductId)
                 .HasConstraintName("FK_ProductInventory_Product");
+
+            entity.HasOne(d => d.RackingPallet).WithMany(p => p.ProductInventories)
+                .HasForeignKey(d => d.RackingPalletId)
+                .HasConstraintName("FK_ProductInventory_RackingPallet");
         });
 
         modelBuilder.Entity<ProductNameAndDescriptionCulture>(entity =>
@@ -726,11 +800,6 @@ public partial class IntrManDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
 
-            entity.HasOne(d => d.Inventory).WithMany(p => p.ProductionOrderLineDetailResources)
-                .HasForeignKey(d => d.InventoryId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_ProductionOrderLineDetailResource_ProductionOrderLineDetail");
-
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductionOrderLineDetailResources)
                 .HasForeignKey(d => d.MeasurementUnitId)
                 .HasConstraintName("FK_ProductionOrderLineDetailResource_MeasurementUnit");
@@ -751,18 +820,29 @@ public partial class IntrManDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
 
+            entity.HasOne(d => d.Inventory).WithMany()
+                .HasForeignKey(d => d.InventoryId)
+                .HasConstraintName("FK_ProductionOrderLineDetailResourceAllocation_ProductInventory");
+
             entity.HasOne(d => d.MeasurementUnit).WithMany()
                 .HasForeignKey(d => d.MeasurementUnitId)
                 .HasConstraintName("FK_ProductionOrderLineDetailResourceAllocation_MeasurementUnit");
-
-            entity.HasOne(d => d.RawMaterial).WithMany()
-                .HasForeignKey(d => d.RawMaterialId)
-                .HasConstraintName("FK_ProductionOrderLineDetailResourceAllocation_ProductInventory");
 
             entity.HasOne(d => d.Resource).WithMany()
                 .HasForeignKey(d => d.ResourceId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_ProductionOrderLineDetailResourceAllocation_ProductionOrderLineDetailResource");
+        });
+
+        modelBuilder.Entity<RackingPallet>(entity =>
+        {
+            entity.ToTable("RackingPallet", "Production");
+
+            entity.HasIndex(e => new { e.Col, e.Row }, "IX_RackingPallet").IsUnique();
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Col).HasMaxLength(35);
+            entity.Property(e => e.Description).HasMaxLength(100);
         });
 
         modelBuilder.Entity<SalesOrder>(entity =>
@@ -793,16 +873,11 @@ public partial class IntrManDbContext : DbContext
             entity.ToTable("SalesOrderLine", "Sales");
 
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.RackingPalletCol).HasMaxLength(25);
 
             entity.HasOne(d => d.Inventory).WithMany(p => p.SalesOrderLines)
                 .HasForeignKey(d => d.InventoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_SalesOrderLine_ProductInventory");
-
-            entity.HasOne(d => d.Location).WithMany(p => p.SalesOrderLines)
-                .HasForeignKey(d => d.LocationId)
-                .HasConstraintName("FK_SalesOrderLine_Location");
 
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.SalesOrderLines)
                 .HasForeignKey(d => d.MeasurementUnitId)

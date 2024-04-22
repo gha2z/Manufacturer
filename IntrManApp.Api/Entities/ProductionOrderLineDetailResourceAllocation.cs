@@ -9,7 +9,7 @@ public partial class ProductionOrderLineDetailResourceAllocation
 
     public Guid? ProductCheckoutId { get; set; }
 
-    public Guid? RawMaterialId { get; set; }
+    public Guid? InventoryId { get; set; }
 
     public decimal Quantity { get; set; }
 
@@ -17,9 +17,9 @@ public partial class ProductionOrderLineDetailResourceAllocation
 
     public DateTime ModifierDate { get; set; }
 
-    public virtual MeasurementUnit? MeasurementUnit { get; set; }
+    public virtual ProductInventory? Inventory { get; set; }
 
-    public virtual ProductInventory? RawMaterial { get; set; }
+    public virtual MeasurementUnit? MeasurementUnit { get; set; }
 
     public virtual ProductionOrderLineDetailResource? Resource { get; set; }
 }

@@ -57,7 +57,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/createLocation", async (CreateLocationRequest request, ISender sender) =>
+            app.MapPost("api/locations", async (CreateLocationRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateLocation.Command>();
                 var result = await sender.Send(command);
@@ -67,6 +67,17 @@ namespace IntrManApp.Api.Features.BasicModules
                     return Results.BadRequest(result.Error);
                 }
                 return Results.Ok(result.Value);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Creates new location and returns the new location id",
+                Summary = "Create location",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Location"
+                    }
+                }
             });
         }
 

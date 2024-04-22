@@ -25,9 +25,7 @@ public partial class ProductCheckInLine
 
     public Guid? LocationId { get; set; }
 
-    public string? RackingPalletCol { get; set; }
-
-    public short? RackingPalletRow { get; set; }
+    public Guid? RackingPalletId { get; set; }
 
     public virtual ProductCheckIn? CheckIn { get; set; }
 
@@ -38,4 +36,6 @@ public partial class ProductCheckInLine
     public virtual Product? Product { get; set; }
 
     public virtual ICollection<ProductCheckInLineDetail> ProductCheckInLineDetails { get; set; } = new List<ProductCheckInLineDetail>();
+
+    public virtual RackingPallet? RackingPallet { get; set; }
 }

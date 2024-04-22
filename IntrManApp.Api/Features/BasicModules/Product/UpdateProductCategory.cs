@@ -65,7 +65,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/updateProductCategory", 
+            app.MapPut("api/productCategories", 
                 async (UpdateProductCategoryRequest request, ISender sender) =>
             {
                 var command = request.Adapt<UpdateProductCategory.Command>();
@@ -76,6 +76,17 @@ namespace IntrManApp.Api.Features.BasicModules
                     return Results.BadRequest(result.Error);
                 }
                 return Results.Ok(result.Value);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Updates an existing product category and returns the updated product category id on successful operation",
+                Summary = "Update product category",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Product"
+                    }
+                }
             });
         }
 

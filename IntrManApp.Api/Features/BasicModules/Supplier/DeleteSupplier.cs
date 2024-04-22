@@ -8,7 +8,7 @@ using MediatR;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
-    public class DeleteSupplier
+    public static class DeleteSupplier
     {
         public class Command : IRequest<Result<bool>>
         {
@@ -48,10 +48,10 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/deleteSupplier",
-                async (DeleteSupplierRequest request, ISender sender) =>
+            app.MapDelete("api/suppliers/{id}",
+                async (Guid id, ISender sender) =>
                 {
-                    var command = request.Adapt<DeleteSupplier.Command>();
+                    var command = new DeleteSupplier.Command { BusinessEntityId = id };
                     var result = await sender.Send(command);
 
                     if (result.IsFailure)
@@ -59,6 +59,17 @@ namespace IntrManApp.Api.Features.BasicModules
                         return Results.BadRequest(result.Error);
                     }
                     return Results.Ok(result.Value);
+                }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+                {
+                    Description = "Deletes an existing supplier and returns the TRUE on successful operation",
+                    Summary = "Delete an existing supplier",
+                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Supplier"
+                    }
+                }
                 });
         }
     }

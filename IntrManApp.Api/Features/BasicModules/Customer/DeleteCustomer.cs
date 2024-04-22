@@ -48,10 +48,10 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/deleteCustomer",
-                async (DeleteCustomerRequest request, ISender sender) =>
+            app.MapDelete("api/customers/{id}",
+                async (Guid id, ISender sender) =>
                 {
-                    var command = request.Adapt<DeleteCustomer.Command>();
+                    var command = new DeleteCustomer.Command { BusinessEntityId = id };
                     var result = await sender.Send(command);
 
                     if (result.IsFailure)
@@ -59,6 +59,17 @@ namespace IntrManApp.Api.Features.BasicModules
                         return Results.BadRequest(result.Error);
                     }
                     return Results.Ok(result.Value);
+                }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+                {
+                    Description = "Delete the existing customer and returns true on succesful operation",
+                    Summary = "Delete customer",
+                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Customer"
+                    }
+                }
                 });
         }
     }

@@ -8,11 +8,19 @@ using MediatR;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
-    public class DeleteProduct
+    public static class DeleteProduct
     {
         public class Command : IRequest<Result<bool>>
         {
             public Guid Id { get; set; }
+        }
+
+        public class Validator : AbstractValidator<Command>
+        {
+            public Validator()
+            {
+                RuleFor(c => c.Id).NotEmpty();
+            }
         }
 
         internal sealed class Handler : IRequestHandler<Command, Result<bool>>
@@ -48,10 +56,10 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/deleteProduct",
-                async (DeleteProductRequest request, ISender sender) =>
+            app.MapDelete("api/products/{id}",
+                async (Guid id, ISender sender) =>
                 {
-                    var command = request.Adapt<DeleteProduct.Command>();
+                    var command = new DeleteProduct.Command { Id = id };
                     var result = await sender.Send(command);
 
                     if (result.IsFailure)
@@ -59,6 +67,17 @@ namespace IntrManApp.Api.Features.BasicModules
                         return Results.BadRequest(result.Error);
                     }
                     return Results.Ok(result.Value);
+                }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+                {
+                    Description = "Delete an existing product and returns true on succesful operation",
+                    Summary = "Delete an existing product",
+                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Product"
+                    }
+                }
                 });
         }
     }

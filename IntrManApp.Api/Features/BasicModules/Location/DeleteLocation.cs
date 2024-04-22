@@ -27,11 +27,11 @@ namespace IntrManApp.Api.Features.BasicModules
             {
 
 
-                var category = _context.ProductCategories
-                    .Where(c => c.Id.Equals(request.Id)).FirstOrDefault();
-                if (category != null)
+                var location = await _context.Locations
+                    .FindAsync(request.Id, cancellationToken);
+                if (location != null)
                 {
-                    _context.ProductCategories.Remove(category);
+                    _context.Locations.Remove(location);
                     await _context.SaveChangesAsync();
                     return true;
                 }
@@ -48,10 +48,10 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/deleteLocation",
-                async (DeleteLocationRequest request, ISender sender) =>
+            app.MapDelete("api/locations/{id}",
+                async (Guid id, ISender sender) =>
                 {
-                    var command = request.Adapt<DeleteLocation.Command>();
+                    var command = new DeleteLocation.Command { Id = id };
                     var result = await sender.Send(command);
 
                     if (result.IsFailure)
@@ -59,6 +59,17 @@ namespace IntrManApp.Api.Features.BasicModules
                         return Results.BadRequest(result.Error);
                     }
                     return Results.Ok(result.Value);
+                }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+                {
+                    Description = "Delete the existing location and returns true on succesful operation",
+                    Summary = "Delete location",
+                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Location"
+                    }
+                }
                 });
         }
     }

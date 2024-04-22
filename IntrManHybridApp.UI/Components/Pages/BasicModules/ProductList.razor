@@ -1,0 +1,210 @@
+@page "/ProductList"
+
+@using IntrManApp.Shared.Contract
+@using System.Diagnostics
+@using System.Text.Json
+@inject IHttpClientFactory HttpClientFactory;
+@inject NotificationService NotificationService;
+<RadzenTabs >
+    <Tabs>
+        <RadzenTabsItem Text="Raw Materials">
+            <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true"
+                            PageSize="25" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                            LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single"
+                            Data="@rawMaterials" @bind-Value="@selectedRawMaterials">
+                <Columns>
+                    <RadzenDataGridColumn Property="Names" Title="Product Name" Width="150px" Frozen="true" />
+                    <RadzenDataGridColumn Property="ProductNumber" Title="SKU" Width="50px" />
+                    <RadzenDataGridColumn Property="CategoryName" Title="Category" Width="80px" />
+                    <RadzenDataGridColumn Property="measurementUnitOrderName" Title="Measurement Unit" Width="70px" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn Property="DaysToExpire" Title="Days to Expire" Width="70px" TextAlign="TextAlign.Right" />
+                    <RadzenDataGridColumn Property="LocationName" Title="Default Location" Width="70px" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn Context="item" Width="50px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="item">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium"
+                                          Click="@(args => EditItem(item))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                          Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteItem(item))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="End Products">
+            <RadzenDataGrid 
+                AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" 
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" 
+                PageSize="25" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single" 
+                RowRender="@RowRender" ExpandMode="DataGridExpandMode.Single" TItem="ProductResponse" RowExpand="RowExpand"
+                Data="@items" @bind-Value="@selectedItems">
+                <Template Context="item">
+                    <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowSorting="true" Data="@item.Boms" IsLoading="@isLoadingBom">
+                        <HeaderTemplate>
+                            <RadzenText Text="Bill of Materials" />
+                        </HeaderTemplate>
+                        <Columns>
+                            <RadzenDataGridColumn Property="RawMaterialName" Title="Raw Material Name" Width="180px"/>
+                            <RadzenDataGridColumn Property="RawMaterialQuantity" Title="Quantity" Width="90px">
+                                <Template Context="bom">
+                                    @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}",bom.RawMaterialQuantity)
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="RawMaterialMeasurementUnitName" Title="Unit Measurement" Width="90px"/>
+                        </Columns>
+                    </RadzenDataGrid>
+                </Template>
+                <Columns>
+                    <RadzenDataGridColumn Property="Names" Title="Product Name" Width="150px" Frozen="true"/>
+                    <RadzenDataGridColumn Property="ProductNumber" Title="SKU" Width="50px" />
+                    <RadzenDataGridColumn Property="CategoryName" Title="Category"  Width="80px" />
+                    <RadzenDataGridColumn Property="measurementUnitOrderName" Title="Measurement Unit" Width="70px" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn Property="DaysToExpire" Title="Days to Expire" Width="70px" TextAlign="TextAlign.Right"/>
+                    <RadzenDataGridColumn Property="LocationName" Title="Default Location" Width="70px" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn Property="BomCount" Title="BOM Definition" Width="70px" TextAlign="TextAlign.Center" />
+                    <RadzenDataGridColumn Context="item" Width="50px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="item">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" 
+                                Click="@(args => EditItem(item))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" 
+                                Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteItem(item))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
+
+
+@code {
+    IEnumerable<ProductResponse> allItems=[];
+    IEnumerable<ProductResponse> items=[];
+    IList<ProductResponse> selectedItems=[];
+    IEnumerable<ProductResponse> rawMaterials=[];
+    IList<ProductResponse> selectedRawMaterials=[];
+
+    bool isLoadingBom = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await InitData();
+    }
+
+    async Task InitData()
+    {
+        try
+        {
+            using var client = HttpClientFactory.CreateClient("BackendAPI");
+            allItems = await client.GetFromJsonAsync<IEnumerable<ProductResponse>>("Products") ?? [];
+            if (allItems.ToList().Count > 0)
+            {
+                items = allItems.Where(x => x.IsFinishedGood==true);
+                selectedItems = new List<ProductResponse>() { items.FirstOrDefault() };
+                rawMaterials = allItems.Where(x => x.IsFinishedGood==false) ?? [];
+                selectedRawMaterials = new List<ProductResponse>() { rawMaterials.FirstOrDefault() };
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"{ex.Message}\n\n{ex}");
+        }
+    }
+
+    async Task DeleteItem(ProductResponse item)
+    {
+
+        if (allItems.Contains(item))
+        {
+            using var client = HttpClientFactory.CreateClient("BackendAPI");
+            try
+            {
+                var response = await client.DeleteAsync($"Products/{item.Id}");
+                if(response.IsSuccessStatusCode)
+                {
+                    allItems = allItems.Where(x => x.Id != item.Id);
+                    if(item.IsFinishedGood) 
+                        selectedItems = new List<ProductResponse>() { items.FirstOrDefault() };
+                    else
+                        selectedRawMaterials = new List<ProductResponse>() { rawMaterials.FirstOrDefault() };
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Warning,
+                        Duration = 10000,
+                        SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
+                        DetailContent = ns => @<RadzenText TextStyle="TextStyle.Body1">Please make sure this item has not been used in transactions</RadzenText>
+                    });
+                };
+                
+                await InitData();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(new NotificationMessage
+                { 
+                    Severity = NotificationSeverity.Error,
+                    Duration = 10000,
+                    SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
+                    DetailContent = ns => 
+                        @<RadzenText>
+                            <br />Please make sure the connection to the server is available.
+                            <br /><br />Technical detail:
+                            <br />@ex.Message
+                        </RadzenText>
+    });
+            };
+        }
+    }
+
+    void EditItem(ProductResponse item)
+    {
+        // NavigationManager.NavigateTo($"/ProductEdit/{item.Id}");
+    }
+
+    void RowRender(RowRenderEventArgs<ProductResponse> args)
+    {
+        args.Expandable = args.Data.BomCount>0;
+    }
+
+    void RowExpand(ProductResponse item)
+    {
+        if(item.Boms.Count==0)
+        {
+            isLoadingBom = true;
+            using var client = HttpClientFactory.CreateClient("BackendAPI");
+            try
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, $"boms/{item.Id}");
+                var httpResponse = client.Send(request); // GetFromJsonAsync<ICollection<BomSpecificationResponse>>($"boms/{item.Id}");
+                item.Boms = httpResponse.Content.ReadFromJsonAsync<List<BomSpecificationResponse>>().Result;
+                //item.Boms = JsonSerializer.Deserialize<List<BomSpecificationResponse>>(result);
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Duration = 10000,
+                        SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
+                    DetailContent = ns =>
+                        @<RadzenText>
+                            <br />Please make sure the connection to the server is available.
+                            <br /><br />Technical detail:
+                            <br />@ex.Message
+                        </RadzenText>
+                });
+            };
+            isLoadingBom = false;
+        }
+    }
+
+}

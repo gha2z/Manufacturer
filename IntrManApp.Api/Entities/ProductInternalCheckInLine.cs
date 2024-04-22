@@ -15,16 +15,16 @@ public partial class ProductInternalCheckInLine
 
     public Guid? LocationId { get; set; }
 
-    public string? RackingPalletCol { get; set; }
-
-    public short? RackingPalletRow { get; set; }
-
-    public byte? CheckinType { get; set; }
+    public Guid? RackingPalletId { get; set; }
 
     /// <summary>
     /// Finished Product CheckIn-Type: 0: New finished product 1: Move between locations (e.g from production to warehouse facilitiy)
     /// </summary>
     public DateTime ModifiedDate { get; set; }
+
+    public Guid? SourceLocationId { get; set; }
+
+    public Guid? SourceRackingPalletId { get; set; }
 
     public virtual ProductInternalCheckIn CheckIn { get; set; } = null!;
 
@@ -33,4 +33,10 @@ public partial class ProductInternalCheckInLine
     public virtual Location? Location { get; set; }
 
     public virtual MeasurementUnit? MeasurementUnit { get; set; }
+
+    public virtual RackingPallet? RackingPallet { get; set; }
+
+    public virtual Location? SourceLocation { get; set; }
+
+    public virtual RackingPallet? SourceRackingPallet { get; set; }
 }

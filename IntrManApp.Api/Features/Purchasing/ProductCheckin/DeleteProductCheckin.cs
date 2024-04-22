@@ -3,6 +3,9 @@ using IntrManApp.Api.Database;
 using IntrManApp.Shared.Common;
 using IntrManApp.Api.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Carter;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace IntrManApp.Api.Features.Purchasing.MaterialCheckin
 {
@@ -49,11 +52,59 @@ namespace IntrManApp.Api.Features.Purchasing.MaterialCheckin
                         new Error("DeleteProductCheckIn.Validation","Checkin not found"));
                 }
 
-                _context.ProductCheckIns.Remove(checkin);
-                await _context.SaveChangesAsync(cancellationToken);
+                try
+                {
+                    _context.ProductInventories
+                        .Where(p => p.TransIdReference.Equals(request.CheckinId))
+                        .ExecuteDelete();
 
-                return Result.Success(true);
+                    _context.ProductCheckIns.Remove(checkin);
+                    await _context.SaveChangesAsync(cancellationToken);
+
+                    return Result.Success(true);
+                } catch (Exception ex)
+                {
+                    return Result.Failure<bool>(new Error(
+                                               "DeleteProductCheckin.Validation", $"{ex.Message}\n\n{ex}"));
+                }
+
+              
             }
+        }
+    }
+
+    public class DeleteProductCheckInEndiPoint : ICarterModule
+    {
+        public void AddRoutes(IEndpointRouteBuilder app)
+        {
+            app.MapDelete("/api/productcheckins/{id}", async (Guid id, ISender sender) =>
+            {
+                var command = new DeleteProductCheckin.Command() { CheckinId = id };
+
+                var result = await sender.Send(command);
+
+                if (result.IsSuccess)
+                {
+                    return Results.Ok(result.Value);
+                }
+                else
+                {
+                    return Results.BadRequest(result.Error);
+                }
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Delete Raw Materials checkin in and " +
+                    "returns TRUE on successful operation." +
+                    "This will automatically remove the relevant product inventories.",
+                Summary = "Delete raw materials check-in",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Raw Materials Checkin"
+                    }
+                }
+            });
         }
     }
 }

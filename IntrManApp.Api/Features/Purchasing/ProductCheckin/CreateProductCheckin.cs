@@ -38,8 +38,7 @@ namespace IntrManApp.Api.Features.Purchasing
                     RuleFor(product => product.ProductionDate).NotEmpty();
                     RuleFor(product => product.ExpirationDate).NotEmpty();
                     RuleFor(product => product.UnitMeasurementId).NotEmpty();
-                    RuleFor(product => product.RackingPalletCol).NotEmpty();
-                    RuleFor(product => product.RackingPalletRow).NotEmpty();
+                    RuleFor(product => product.RackingPalleteId).NotEmpty();
                 }
             }
 
@@ -91,8 +90,7 @@ namespace IntrManApp.Api.Features.Purchasing
                                 ProductionDate = item.ProductionDate,
                                 ExpirationDate = item.ExpirationDate,
                                 LocationId = item.LocationId,
-                                RackingPalletCol = item.RackingPalletCol,
-                                RackingPalletRow = item.RackingPalletRow
+                                RackingPalletId = item.RackingPalleteId,
                             };
                             productCheckIn.ProductCheckInLines.Add(productCheckInLine);
                         }
@@ -148,9 +146,9 @@ namespace IntrManApp.Api.Features.Purchasing
                                     ProductionDate = productCheckInLine.ProductionDate,
                                     ExpirationDate = productCheckInLine.ExpirationDate,
                                     LocationId = productCheckInLine.LocationId,
-                                    RackingPalletCol = productCheckInLine.RackingPalletCol,
-                                    RackingPalletRow = productCheckInLine.RackingPalletRow,
-                                    ModifiedDate = DateTime.Now
+                                    RackingPalletId = productCheckInLine.RackingPalletId,
+                                    ModifiedDate = DateTime.Now,
+                                    TransIdReference = productCheckIn.Id
                                 };
                                 _context.ProductInventories.Add(productInventory);
                             }
@@ -162,6 +160,7 @@ namespace IntrManApp.Api.Features.Purchasing
                     }
                     catch (Exception ex)
                     {
+                        await transaction.RollbackAsync(cancellationToken);
                         return Result.Failure<Guid>(new Error(
                            "CreateProductCheckIn.Validation", $"{ex.Message}\n\n{ex}"));
                     }
@@ -173,7 +172,7 @@ namespace IntrManApp.Api.Features.Purchasing
         {
             public void AddRoutes(IEndpointRouteBuilder app)
             {
-                app.MapPost("api/ProductCheckIn", async (ProductCheckinRequest request, ISender sender) =>
+                app.MapPost("api/ProductCheckIns", async (ProductCheckinRequest request, ISender sender) =>
                 {
                     var command = request.Adapt<CreateProductCheckIn.Command>();
 
@@ -184,9 +183,21 @@ namespace IntrManApp.Api.Features.Purchasing
                         return Results.BadRequest(result.Error);
                     }
                     return Results.Ok(result.Value);
+                }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+                {
+                    Description = "Creates a bulk of raw materials checkin in and " +
+                    "returns the new created checkin id on successful operation." +
+                    "This will generate product inventories with automatic CartonId",
+                    Summary = "Create a new raw materials checkin",
+                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Raw Materials Checkin"
+                    }
+                }
                 });
             }
-
         }
     }
 

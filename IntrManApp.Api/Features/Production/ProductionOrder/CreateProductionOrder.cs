@@ -61,8 +61,8 @@ public static class CreateProductionOrder
 
             using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-            //try
-            //{
+            try
+            {
                 var productionOrder = new ProductionOrder
                 {
                     OrderDate = request.OrderDate,
@@ -101,7 +101,7 @@ public static class CreateProductionOrder
                         var batchNumber = string.Empty;
                         while (batchExists)
                         {
-                            batchNumber = $"{request.OrderDate:ddMMyy}-{productionOfDayCount + 1}";
+                            batchNumber = $"{request.OrderDate:ddMMyy}{productionOfDayCount + 1}";
                             batchExists = await _context.ProductionOrderLineDetails
                                 .AnyAsync(x => x.BatchNumber == batchNumber, cancellationToken);
                             productionOfDayCount++;
@@ -133,7 +133,8 @@ public static class CreateProductionOrder
                                 BatchNumber = lineDetail.BatchNumber,
                                 ProductionDate = line.StartDate,
                                 ExpirationDate = line.ExpirationDate,
-                                Flag = 5 //In production
+                                Flag = 5, //In production
+                                TransIdReference = productionOrder.Id
                             };
                             _context.ProductInventories.Add(productInventory);
 
@@ -145,7 +146,6 @@ public static class CreateProductionOrder
                             {
                                 var orderLineDetailResource = new ProductionOrderLineDetailResource
                                 {
-                                    InventoryId = lineDetail.InventoryId,
                                     RawMaterialId = item.RawMaterialId,
                                     Quantity = item.RawMaterialQuantity * line.QuantityPerBatch,
                                     MeasurementUnitId = item.RawMaterialMeasurementUnitId
@@ -161,12 +161,12 @@ public static class CreateProductionOrder
                 await transaction.CommitAsync(cancellationToken);
 
                 return Result<Guid>.Success(productionOrder.Id);
-            //} catch (Exception ex)
-            //{
-                 
-            //    return Result.Failure<Guid>(new Error("CreateProductionOrder.Error", $"{ex.Message}\n\n{ex}"));
-            //}    
-        }
+        } catch (Exception ex)
+            {
+                await _context.Database.RollbackTransactionAsync(cancellationToken);
+                return Result.Failure<Guid>(new Error("CreateProductionOrder.Error", $"{ex.Message}\n\n{ex}"));
+            }
+}
     }
 
 }
@@ -175,7 +175,7 @@ public class CreateProductionOrderEndPoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/ProductionOrder", async (ProductionOrderRequest request, ISender sender) =>
+        app.MapPost("/api/ProductionOrders", async (ProductionOrderRequest request, ISender sender) =>
         {
             var command = request.Adapt<CreateProductionOrder.Command>();
             var result = await sender.Send(command);
@@ -184,6 +184,17 @@ public class CreateProductionOrderEndPoint : ICarterModule
                 return Results.BadRequest(result.Error);
             }
             return Results.Ok(result.Value);
+        }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+        {
+            Description = "Creates a new production order and returns the new created production order id on successful operation",
+            Summary = "Create a new production order",
+            Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Production Order"
+                    }
+                }
         });
     }
 }

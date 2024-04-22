@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace IntrManApp.Shared.Contract;
+
+public class RackingPalletResponse
+{
+    public Guid Id { get; set; }
+    public string Col { get; set; } = string.Empty;
+    public short Row { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public string ColRow { get; set; } = string.Empty;
+}

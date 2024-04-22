@@ -76,9 +76,7 @@ namespace IntrManApp.Api.Features.Production
                             billOfMaterial.RawMaterialId = bom.RawMaterialId;
                             billOfMaterial.RawMaterialMeasurementUnitId = bom.RawMaterialMeasurementUnitId;
                             billOfMaterial.RawMaterialQuantity = bom.RowMaterialQuantity;
-                          
                         };
-                        
                     }
                     await _context.SaveChangesAsync(cancellationToken);
 
@@ -97,7 +95,7 @@ namespace IntrManApp.Api.Features.Production
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/bom", async (BomRequest request, ISender sender) =>
+            app.MapPost("api/boms", async (BomRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateBom.Command>();
 
@@ -108,6 +106,17 @@ namespace IntrManApp.Api.Features.Production
                     return Results.BadRequest(result.Error);
                 }
                 return Results.Ok(result.Value);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Defines bill of maaterials to manufacture an end product and returns TRUE on successful operation",
+                Summary = "Defines bill of materials",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Bill of Materials"
+                    }
+                }
             });
         }
 

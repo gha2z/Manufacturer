@@ -44,12 +44,14 @@ namespace IntrManApp.Api.Features.BasicModules
                     return Result.Failure<Guid>(new Error(
                         "UpdateLocation.Validation", validationResult.ToString()));
                 }
-                var item = _context.Locations
-                    .Where(c => c.Id.Equals(request.Id)).FirstOrDefault();
+                
+                var item = await _context.Locations
+                    .FindAsync(request.Id, cancellationToken);
+
                 if (item != null)
                 {
                     item.Name = request.Name;
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync(cancellationToken);
                     return item.Id;
                 }
                 else
@@ -65,7 +67,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/updateLocation",
+            app.MapPut("api/locations",
                 async (UpdateLocationRequest request, ISender sender) =>
                 {
                     var command = request.Adapt<UpdateLocation.Command>();
@@ -76,6 +78,17 @@ namespace IntrManApp.Api.Features.BasicModules
                         return Results.BadRequest(result.Error);
                     }
                     return Results.Ok(result.Value);
+                }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+                {
+                    Description = "Update the existing location and returns the location id",
+                    Summary = "Update location",
+                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Location"
+                    }
+                }
                 });
         }
 

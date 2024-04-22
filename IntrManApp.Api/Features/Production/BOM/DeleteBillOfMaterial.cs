@@ -64,7 +64,7 @@ namespace IntrManApp.Api.Features.Production
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapDelete("api/bom/{id}", async (Guid id, ISender sender) =>
+            app.MapDelete("api/boms/{id}", async (Guid id, ISender sender) =>
             {
                 var command = new DeleteBom.Command() { ProductId = id };
 
@@ -75,6 +75,17 @@ namespace IntrManApp.Api.Features.Production
                     return Results.BadRequest(result.Error);
                 }
                 return Results.Ok(result.Value);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Deletes an existing Bill of Materials for a specified product and returns TRUE on successful operation",
+                Summary = "Deletes Bill of Materials",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Bill of Materials"
+                    }
+                }
             });
         }
 

@@ -1,0 +1,12 @@
+﻿global using CommunityToolkit.Mvvm.ComponentModel;
+global using CommunityToolkit.Mvvm.Input;
+global using IntrManHyridApp.UI.View;
+global using IntrManHyridApp.UI.ViewModel;
+global using IntrManHyridApp.Shared.Contract;
+global using System.Collections.ObjectModel;
+global using System.ComponentModel;
+global using System.Diagnostics;
+global using System.Runtime.CompilerServices;
+global using System.Text.Json;
+global using IntrManHyridApp.UI.Services;
+global using IntrManHyridApp.UI.View.Products;

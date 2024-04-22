@@ -1,0 +1,109 @@
+﻿@inherits LayoutComponentBase
+
+
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+@inject ContextMenuService ContextMenuService
+@inject TooltipService TooltipService
+@inject NotificationService NotificationService
+
+<RadzenComponents />
+
+<RadzenLayout style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body';">
+    <RadzenHeader>
+        <RadzenRow JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Gap="0">
+            <RadzenColumn Size="5">
+                <RadzenStack AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" Gap="3">
+                    <RadzenSidebarToggle Style="margin-right:2px" Click="@SidebarToggleClick"></RadzenSidebarToggle>
+                    <RadzenIcon Icon="@activeIcon" />
+                    @activeWindow
+                </RadzenStack>
+            </RadzenColumn>
+           
+            <RadzenColumn Size="7">
+               
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenHeader>
+    <RadzenBody Expanded="@sidebarExpanded">
+        <RadzenRow class="rz-mx-auto rz-px-4 rz-pt-2 rz-pt-md-4 rz-pt-lg-6 rz-pt-xl-12 rz-pb-2 rz-pb-lg-12" Style="max-width: 1440px;">
+            <RadzenColumn Size="12">
+            @Body
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenBody>
+    <RadzenSidebar Expanded="@sidebarExpanded" style="z-index: 2">
+        <RadzenStack AlignItems="Radzen.AlignItems.Center" class="rz-py-4 rz-py-lg-6" Style="padding: var(--rz-panel-menu-item-padding); border-bottom: var(--rz-panel-menu-item-border);">
+            <RadzenImage Path="images/logo.png"  style="width: 96px; height: 96px;" AlternateText="Application logo"></RadzenImage>
+            <RadzenText Text="Intrepid Manufacture App" TextStyle="Radzen.Blazor.TextStyle.Subtitle1" class="rz-mb-0" style="color: var(--rz-sidebar-color);" />
+        </RadzenStack>
+        <RadzenPanelMenu>
+            <RadzenPanelMenuItem Text="Basic Data" Icon="dataset" >
+                <RadzenPanelMenuItem Text="Product" Icon="category" Path="/ProductList" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Location" Icon="holiday_village" Path="/LocationList" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Supplier" Icon="add_business" Path="/SupplierList" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Customer" Icon="storefront" Path="/CustomerList" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="User" Icon="manage_accounts" Style="margin-left:6px" Click="setActiveWindow" />
+            </RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Purchasing" Icon="shop_two">
+                <RadzenPanelMenuItem Text="Raw Material Check-in" Icon="add_shopping_cart" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Supplier" Icon="add_business" Path="/SupplierList" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Reports" Icon="insert_chart" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+            </RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Production" Icon="factory">
+                <RadzenPanelMenuItem Text="Production Order" Icon="add_shopping_cart" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Raw Material Check-out" Icon="send_and_archive" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="End Product Check-in" Icon="add_task" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Product Inventory" Icon="inventory" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Reports" Icon="insert_chart" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+            </RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Dispatching" Icon="local_shipping">
+                <RadzenPanelMenuItem Text="Dispatch End Product" Icon="shopping_cart_checkout" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Customer" Icon="storefront" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Reports" Icon="insert_chart" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+            </RadzenPanelMenuItem>
+        </RadzenPanelMenu>
+        <RadzenStack AlignItems="Radzen.AlignItems.Center" Gap="0" class="rz-py-4 rz-py-lg-6" Style="padding: var(--rz-panel-menu-item-padding);">
+            <RadzenText Text="Intrepid Manufacture App v1.0.0" TextStyle="Radzen.Blazor.TextStyle.Caption" TagName="Radzen.Blazor.TagName.P" TextAlign="Radzen.TextAlign.Center" />
+            <RadzenText Text="Copyright Ⓒ 2024" TextStyle="Radzen.Blazor.TextStyle.Caption" class="rz-mb-0" TagName="Radzen.Blazor.TagName.P" TextAlign="Radzen.TextAlign.Center" />
+        </RadzenStack>
+    </RadzenSidebar>
+</RadzenLayout>
+
+@code {
+    bool sidebarExpanded = true;
+    string activeWindow = "Home";
+    string activeIcon = "home";
+    Dictionary<string, string> iconMap = new Dictionary<string, string>
+    {
+        {"Product", "category"},
+        {"Location", "holiday_village"},
+        {"Supplier", "add_business"},
+        {"Customer", "storefront"},
+        {"User", "manage_accounts"},
+        {"Raw Material Check-in", "add_shopping_cart"},
+        {"Reports", "insert_chart"},
+        {"Production Order", "add_shopping_cart"},
+        {"Raw Material Check-out", "send_and_archive"},
+        {"End Product Check-in", "add_task"},
+        {"Product Inventory", "inventory"},
+        {"Dispatch End Product", "shopping_cart_checkout"},
+        {"Dispatching", "local_shipping"},
+        {"Basic Data", "dataset"},
+        {"Purchasing", "shop_two"},
+        {"Production", "factory"},
+        {"Home", "home"}
+    };
+
+    void SidebarToggleClick()
+    {
+        sidebarExpanded = !sidebarExpanded;
+    }
+
+    void setActiveWindow(MenuItemEventArgs args)
+    {
+        activeWindow = args.Text;
+        activeIcon = iconMap[activeWindow];
+   }
+}

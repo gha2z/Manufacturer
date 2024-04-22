@@ -32,8 +32,8 @@ namespace IntrManApp.Api.Features.Production
                 RuleFor(product => product.InventoryId).NotEmpty();
                 RuleFor(product => product.Quantity).GreaterThan(0);
                 RuleFor(product => product.UnitMeasurementId).NotEmpty();
-                RuleFor(product => product.RackingPalletCol).NotEmpty();
-                RuleFor(product => product.RackingPalletRow).NotEmpty();
+                RuleFor(product => product.LocationId).NotEmpty();
+                RuleFor(product => product.RackingPalleteId).NotEmpty();
             }
         }
 
@@ -59,6 +59,7 @@ namespace IntrManApp.Api.Features.Production
                 try
                 {
                     var productCheckout = new ProductCheckout() { CheckOutDate = request.CheckoutDate};
+                   
                     foreach (var item in request.ProductCheckoutDetail)
                     {
                         var inventory = await _context.ProductInventories.FindAsync(item.InventoryId, cancellationToken);
@@ -74,12 +75,12 @@ namespace IntrManApp.Api.Features.Production
                                 MeasurementUnitId = item.UnitMeasurementId,
                                 Quantity = item.Quantity,
                                 LocationId = item.LocationId,
-                                RackingPalletCol = item.RackingPalletCol,
-                                RackingPalletRow = item.RackingPalletRow
+                                RackingPalletId = item.RackingPalleteId,
+                                SourceLocationId = inventory.LocationId,
+                                SourceRackingPalletId = inventory.RackingPalletId
                             });
                         inventory.LocationId = item.LocationId;
-                        inventory.RackingPalletCol = item.RackingPalletCol;
-                        inventory.RackingPalletRow = item.RackingPalletRow;
+                        inventory.RackingPalletId = item.RackingPalleteId;
                     }
                     _context.ProductCheckouts.Add(productCheckout);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -110,6 +111,17 @@ namespace IntrManApp.Api.Features.Production
                     return Results.BadRequest(result.Error);
                 }
                 return Results.Ok(result.Value);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Creates a bulk of raw materials check out for production and returns the new created checkout id on successful operation",
+                Summary = "Create a bulk of raw materials checkout",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Raw Materials Checkout"
+                    }
+                }
             });
         }
 

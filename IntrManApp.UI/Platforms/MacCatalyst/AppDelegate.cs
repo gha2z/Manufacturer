@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace IntrManApp.UI
+namespace IntrManHyridApp.UI
 {
     [Register("AppDelegate")]
     public class AppDelegate : MauiUIApplicationDelegate

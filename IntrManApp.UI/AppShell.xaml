@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Shell
-    x:Class="IntrManApp.UI.AppShell"
+    x:Class="IntrManHyridApp.UI.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:IntrManApp.UI"
+    xmlns:local="clr-namespace:IntrManHyridApp.UI"
     Shell.FlyoutBehavior="Disabled"
-    Title="IntrManApp.UI">
+    xmlns:view="clr-namespace:IntrManHyridApp.UI.View"
+    xmlns:product="clr-namespace:IntrManHyridApp.UI.View.Products">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <Tab 
+            Title="Products">
+            <ShellContent ContentTemplate="{DataTemplate product:NewPage1}" />
+        </Tab>
+        <Tab 
+            Title="Suppliers">
+            <ShellContent ContentTemplate="{DataTemplate product:NewPage2}" />
+        </Tab>
+    </TabBar>
 
 </Shell>

@@ -37,9 +37,7 @@ public partial class Product
 
     public Guid LocationId { get; set; }
 
-    public string? ProductRackingPalletCol { get; set; }
-
-    public short? ProductRackingPalletRow { get; set; }
+    public Guid? RackingPalletId { get; set; }
 
     public string? AdditionalInfo { get; set; }
 
@@ -66,4 +64,6 @@ public partial class Product
     public virtual ICollection<ProductionOrderLineDetailResource> ProductionOrderLineDetailResources { get; set; } = new List<ProductionOrderLineDetailResource>();
 
     public virtual ICollection<ProductionOrderLine> ProductionOrderLines { get; set; } = new List<ProductionOrderLine>();
+
+    public virtual RackingPallet? RackingPallet { get; set; }
 }

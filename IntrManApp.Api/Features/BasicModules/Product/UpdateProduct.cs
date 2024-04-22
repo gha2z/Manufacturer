@@ -47,9 +47,7 @@ namespace IntrManApp.Api.Features.BasicModules
 
             public Guid LocationId { get; set; } = Guid.Empty;
 
-            public string? ProductRackingPalletCol { get; set; } = string.Empty;
-
-            public short? ProductRackingPalletRow { get; set; } = -1;
+            public Guid RackingPalletId { get; set; } = Guid.Empty;
 
             public string? AdditionalInfo { get; set; }
 
@@ -165,8 +163,7 @@ namespace IntrManApp.Api.Features.BasicModules
                 product.DaysToManufacture = request.DaysToManufacture;
                 product.DaysToExpire = request.DaysToExpire;
                 product.LocationId = location.Id;
-                product.ProductRackingPalletCol = request.ProductRackingPalletCol;
-                product.ProductRackingPalletRow = request.ProductRackingPalletRow;
+                product.RackingPalletId = request.RackingPalletId;
                 product.AdditionalInfo = request.AdditionalInfo;
 
                 product.ProductNameAndDescriptionCultures.Clear();
@@ -193,7 +190,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPut("api/UpdateProduct", async (UpdateProductRequest request, ISender sender) =>
+            app.MapPut("api/products", async (UpdateProductRequest request, ISender sender) =>
             {
                 var command = request.Adapt<UpdateProduct.Command>();
                 var result = await sender.Send(command);
@@ -203,6 +200,17 @@ namespace IntrManApp.Api.Features.BasicModules
                     return Results.BadRequest(result.Error);
                 }
                 return Results.Ok(result.Value);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Updates the existing product and returns the updated product id on succesful operation",
+                Summary = "Update an existing product",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Product"
+                    }
+                }
             });
         }
 

@@ -15,9 +15,11 @@ public partial class ProductInternalCheckOutLine
 
     public Guid? LocationId { get; set; }
 
-    public string? RackingPalletCol { get; set; }
+    public Guid? RackingPalletId { get; set; }
 
-    public short? RackingPalletRow { get; set; }
+    public Guid? SourceLocationId { get; set; }
+
+    public Guid? SourceRackingPalletId { get; set; }
 
     public DateTime? ModifiedDate { get; set; }
 
@@ -28,4 +30,10 @@ public partial class ProductInternalCheckOutLine
     public virtual Location? Location { get; set; }
 
     public virtual MeasurementUnit? MeasurementUnit { get; set; }
+
+    public virtual RackingPallet? RackingPallet { get; set; }
+
+    public virtual Location? SourceLocation { get; set; }
+
+    public virtual RackingPallet? SourceRackingPallet { get; set; }
 }

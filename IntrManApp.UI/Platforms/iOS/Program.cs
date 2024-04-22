@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace IntrManApp.UI
+namespace IntrManHyridApp.UI
 {
     public class Program
     {

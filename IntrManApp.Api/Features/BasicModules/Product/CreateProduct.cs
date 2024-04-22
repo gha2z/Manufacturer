@@ -47,9 +47,7 @@ namespace IntrManApp.Api.Features.BasicModules
 
             public Guid LocationId { get; set; } = Guid.Empty;
 
-            public string? ProductRackingPalletCol { get; set; } = string.Empty;
-
-            public short? ProductRackingPalletRow { get; set; } = -1;
+            public Guid RackingPalletId { get; set; } = Guid.Empty;
 
             public string? AdditionalInfo { get; set; }
 
@@ -99,8 +97,6 @@ namespace IntrManApp.Api.Features.BasicModules
                         OrderQuantity = request.OrderQuantity,
                         DaysToManufacture = request.DaysToManufacture,
                         DaysToExpire = request.DaysToExpire,
-                        ProductRackingPalletCol = request.ProductRackingPalletCol,
-                        ProductRackingPalletRow = request.ProductRackingPalletRow,
                         AdditionalInfo = request.AdditionalInfo
                     };
                     ProductCategory? category;
@@ -216,6 +212,35 @@ namespace IntrManApp.Api.Features.BasicModules
                     }
                     product.Location = location;
 
+                    RackingPallet? rackingPallet = null;
+                    if (request.RackingPalletId.Equals(Guid.Empty))
+                    {
+                        if (_context.RackingPallets.Count() == 0)
+                        {
+                            rackingPallet = new RackingPallet()
+                            {
+                                Col = "A",
+                                Row = 1,
+                                Description = "A-1"
+                            };
+                        }
+                        else
+                        {
+                            rackingPallet = _context.RackingPallets.FirstOrDefault();
+                        }
+                    }
+                    else
+                    {
+                        rackingPallet = _context.RackingPallets
+                            .Where(l => l.Id.Equals(request.RackingPalletId)).FirstOrDefault();
+                    }
+                    if (rackingPallet == null)
+                    {
+                        return Result.Failure<Guid>(new Error(
+                          "CreateProduct.Validation", "Default Racking Pallet not found"));
+                    }
+                    product.RackingPallet = rackingPallet;
+
 
                     if (_context.Cultures.Count() == 0)
                     {
@@ -266,7 +291,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/createProduct", async (CreateProductRequest request, ISender sender) =>
+            app.MapPost("api/products", async (CreateProductRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateProduct.Command>();
                 var result = await sender.Send(command);
@@ -276,6 +301,17 @@ namespace IntrManApp.Api.Features.BasicModules
                     return Results.BadRequest(result.Error);
                 }
                 return Results.Ok(result.Value);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Create new product and returns true on succesful operation",
+                Summary = "Create Product",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Product"
+                    }
+                }
             });
         }
 

@@ -8,7 +8,7 @@ using MediatR;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
-    public class DeleteProductCategory
+    public static class DeleteProductCategory
     {
         public class Command : IRequest<Result<bool>>
         {
@@ -47,10 +47,10 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/deleteProductCategory",
-                async (DeleteProductCategoryRequest request, ISender sender) =>
+            app.MapDelete("api/productCategories/{id}",
+                async (Guid id, ISender sender) =>
                 {
-                    var command = request.Adapt<DeleteProductCategory.Command>();
+                    var command = new DeleteProductCategory.Command { Id = id };
                     var result = await sender.Send(command);
 
                     if (result.IsFailure)
@@ -58,6 +58,17 @@ namespace IntrManApp.Api.Features.BasicModules
                         return Results.BadRequest(result.Error);
                     }
                     return Results.Ok(result.Value);
+                }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+                {
+                    Description = "Deletes an existing product category and returns True on successful operation",
+                    Summary = "Delete a product category",
+                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Product"
+                    }
+                }
                 });
         }
     }

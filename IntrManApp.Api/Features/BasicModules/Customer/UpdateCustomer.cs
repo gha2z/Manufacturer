@@ -13,6 +13,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public class Command : IRequest<Result<Guid>>
         {
+            public Guid Id { get; set; }
             public Guid BusinessEntityId { get; set; }
             public string Name { get; set; } = string.Empty;
         }
@@ -45,9 +46,10 @@ namespace IntrManApp.Api.Features.BasicModules
                         "UpdateCustomer.Validation", validationResult.ToString()));
                 }
                 var item = _context.Customers
-                    .Where(c => c.BusinessEntityId.Equals(request.BusinessEntityId)).FirstOrDefault();
+                    .Where(c => c.BusinessEntityId.Equals(request.Id)).FirstOrDefault();
                 if (item != null)
                 {
+                    item.BusinessEntityId = request.BusinessEntityId;
                     item.Name = request.Name;
                     await _context.SaveChangesAsync();
                     return item.BusinessEntityId;
@@ -65,7 +67,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/updateCustomer",
+            app.MapPut("api/customers/",
                 async (UpdateCustomerRequest request, ISender sender) =>
                 {
                     var command = request.Adapt<UpdateCustomer.Command>();
@@ -76,6 +78,17 @@ namespace IntrManApp.Api.Features.BasicModules
                         return Results.BadRequest(result.Error);
                     }
                     return Results.Ok(result.Value);
+                }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+                {
+                    Description = "Update the existing customer and returns the generated customer Id",
+                    Summary = "Update customer",
+                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Customer"
+                    }
+                }
                 });
         }
 

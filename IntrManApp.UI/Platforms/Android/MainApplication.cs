@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace IntrManApp.UI
+namespace IntrManHyridApp.UI
 {
     [Application]
     public class MainApplication : MauiApplication

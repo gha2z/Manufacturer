@@ -1,4 +1,6 @@
-﻿namespace IntrManApp.UI
+﻿using IntrManHyridApp.UI.View.Products;
+
+namespace IntrManHyridApp.UI
 {
     public partial class App : Application
     {
@@ -7,6 +9,7 @@
             InitializeComponent();
 
             MainPage = new AppShell();
+            
         }
     }
 }

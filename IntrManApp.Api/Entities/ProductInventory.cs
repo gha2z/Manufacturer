@@ -13,9 +13,7 @@ public partial class ProductInventory
 
     public Guid? LocationId { get; set; }
 
-    public string? RackingPalletCol { get; set; }
-
-    public short? RackingPalletRow { get; set; }
+    public Guid? RackingPalletId { get; set; }
 
     public decimal Quantity { get; set; }
 
@@ -26,11 +24,15 @@ public partial class ProductInventory
     public DateTime? ExpirationDate { get; set; }
 
     /// <summary>
-    /// 1. CheckIn (purchase) 2. CheckOut for Production 3. Return from Production 4. Waiting for Production 5. In production 6. Check-In from production 7. New Delivery Order 8. Packing 9. Packed 10. Dispatched
+    /// 1. CheckIn (purchase) 2. CheckOut for Production 3. Return from Production 4. Waiting for Production 5. In production 6. Check-In from production 7. New Delivery Order 8. Packing 9. Packed 10. Dispatched 11. Move location
     /// </summary>
     public byte? Flag { get; set; }
 
     public DateTime? ModifiedDate { get; set; }
+
+    public Guid? TransIdReference { get; set; }
+
+    public virtual InventoryFlag? FlagNavigation { get; set; }
 
     public virtual Location? Location { get; set; }
 
@@ -38,9 +40,13 @@ public partial class ProductInventory
 
     public virtual Product? Product { get; set; }
 
+    public virtual ICollection<ProductCheckOutLine> ProductCheckOutLines { get; set; } = new List<ProductCheckOutLine>();
+
     public virtual ICollection<ProductInternalCheckInLine> ProductInternalCheckInLines { get; set; } = new List<ProductInternalCheckInLine>();
 
     public virtual ICollection<ProductInternalCheckOutLine> ProductInternalCheckOutLines { get; set; } = new List<ProductInternalCheckOutLine>();
+
+    public virtual RackingPallet? RackingPallet { get; set; }
 
     public virtual ICollection<SalesOrderLine> SalesOrderLines { get; set; } = new List<SalesOrderLine>();
 

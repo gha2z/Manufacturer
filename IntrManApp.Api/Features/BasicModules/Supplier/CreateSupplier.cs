@@ -15,6 +15,7 @@ namespace IntrManApp.Api.Features.BasicModules
         {
             public Guid BusinessEntityId { get; set; } = Guid.Empty;
             public string Name { get; set; } = string.Empty;
+            public bool IsActive { get; set; } = true; 
         }
 
         public class Validator : AbstractValidator<Command>
@@ -61,7 +62,7 @@ namespace IntrManApp.Api.Features.BasicModules
                     {
                         BusinessEntityId = entity.Id,
                         Name = request.Name,
-                        IsActive = true
+                        IsActive = request.IsActive
                     };
                     _context.Add(item);
                     await _context.SaveChangesAsync();
@@ -79,7 +80,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/createSupplier", async (CreateSupplierRequest request, ISender sender) =>
+            app.MapPost("api/suppliers", async (CreateSupplierRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateSupplier.Command>();
                 var result = await sender.Send(command);
@@ -89,6 +90,17 @@ namespace IntrManApp.Api.Features.BasicModules
                     return Results.BadRequest(result.Error);
                 }
                 return Results.Ok(result.Value);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Creates a new supplier and returns the new created supplier id on successful operation",
+                Summary = "Create a new supplier",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Supplier"
+                    }
+                }
             });
         }
 
