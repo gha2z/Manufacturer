@@ -68,7 +68,7 @@ namespace IntrManApp.Api.Features.BasicModules
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapPut("api/locations",
-                async (UpdateLocationRequest request, ISender sender) =>
+                async (LocationRequest request, ISender sender) =>
                 {
                     var command = request.Adapt<UpdateLocation.Command>();
                     var result = await sender.Send(command);

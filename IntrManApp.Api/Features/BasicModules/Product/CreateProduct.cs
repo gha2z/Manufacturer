@@ -14,12 +14,12 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public class Command : IRequest<Result<Guid>>
         {
-            public Guid? CategoryId { get; set; }
+            public Guid Id { get; set; } = Guid.Empty;
+            public Guid CategoryId { get; set; }
 
             public string ProductNumber { get; set; } = null!;
 
-            public virtual ICollection<ProductNameAndDescriptionCulture> ProductNameAndDescriptionCultures { get; set; } = 
-                new List<ProductNameAndDescriptionCulture>();
+            public virtual ICollection<ProductNameRequest> ProductNameAndDescriptionCultures { get; set; } = [];
 
             public bool IsFinishedGood { get; set; }
 
@@ -100,9 +100,9 @@ namespace IntrManApp.Api.Features.BasicModules
                         AdditionalInfo = request.AdditionalInfo
                     };
                     ProductCategory? category;
-                    if (request.CategoryId == null || request.CategoryId == Guid.Empty)
+                    if (request.CategoryId == Guid.Empty)
                     {
-                        if (_context.ProductCategories.Count() == 0)
+                        if (!_context.ProductCategories.Any())
                         {
                             category = new ProductCategory()
                             {
@@ -131,7 +131,7 @@ namespace IntrManApp.Api.Features.BasicModules
                     MeasurementUnit? measurementUnitOrder = null;
                     if (request.MeasurementUnitGroupId == Guid.Empty)
                     {
-                        if (_context.MeasurementUnitGroups.Count() == 0)
+                        if (!_context.MeasurementUnitGroups.Any())
                         {
                             measurementUnitGroup = new()
                             {
@@ -188,7 +188,7 @@ namespace IntrManApp.Api.Features.BasicModules
                     Location? location = null;
                     if (request.LocationId.Equals(Guid.Empty))
                     {
-                        if (_context.Locations.Count() == 0)
+                        if (!_context.Locations.Any())
                         {
                             location = new Location()
                             {
@@ -215,7 +215,7 @@ namespace IntrManApp.Api.Features.BasicModules
                     RackingPallet? rackingPallet = null;
                     if (request.RackingPalletId.Equals(Guid.Empty))
                     {
-                        if (_context.RackingPallets.Count() == 0)
+                        if (!_context.RackingPallets.Any())
                         {
                             rackingPallet = new RackingPallet()
                             {
@@ -242,7 +242,7 @@ namespace IntrManApp.Api.Features.BasicModules
                     product.RackingPallet = rackingPallet;
 
 
-                    if (_context.Cultures.Count() == 0)
+                    if (!_context.Cultures.Any())
                     {
                         var culture = new Culture()
                         {
@@ -260,7 +260,7 @@ namespace IntrManApp.Api.Features.BasicModules
                             ModifiedDate = DateTime.Now
                         };
 
-                        _context.Cultures.AddRange(new[] { culture, chineseCulture });
+                        _context.Cultures.AddRange([culture, chineseCulture]);
                     }
 
                     foreach (var culture in request.ProductNameAndDescriptionCultures)
@@ -269,7 +269,7 @@ namespace IntrManApp.Api.Features.BasicModules
                         {
                             CultureId = culture.CultureId,
                             Name = culture.Name,
-                            Description = culture.Description
+                            Description = culture.Description ?? string.Empty
                         };
                         product.ProductNameAndDescriptionCultures.Add(newCulture);
                     }
@@ -291,7 +291,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/products", async (CreateProductRequest request, ISender sender) =>
+            app.MapPost("api/products", async (ProductRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateProduct.Command>();
                 var result = await sender.Send(command);
@@ -305,13 +305,7 @@ namespace IntrManApp.Api.Features.BasicModules
             {
                 Description = "Create new product and returns true on succesful operation",
                 Summary = "Create Product",
-                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
-                {
-                    new Microsoft.OpenApi.Models.OpenApiTag
-                    {
-                        Name = "Product"
-                    }
-                }
+                Tags = [ new() { Name = "Product" } ]
             });
         }
 

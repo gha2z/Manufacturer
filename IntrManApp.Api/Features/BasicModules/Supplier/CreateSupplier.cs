@@ -26,16 +26,11 @@ namespace IntrManApp.Api.Features.BasicModules
             }
         }
 
-        internal sealed class Handler : IRequestHandler<Command, Result<Guid>>
+        internal sealed class Handler(IntrManDbContext dbContext, IValidator<CreateSupplier.Command> validator) : IRequestHandler<Command, Result<Guid>>
         {
-            private readonly IntrManDbContext _context;
-            private readonly IValidator<Command> _validator;
+            private readonly IntrManDbContext _context = dbContext;
+            private readonly IValidator<Command> _validator = validator;
 
-            public Handler(IntrManDbContext dbContext, IValidator<Command> validator)
-            {
-                _context = dbContext;
-                _validator = validator;
-            }
             public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
             {
                 var validationResult = _validator.Validate(request);
@@ -45,7 +40,7 @@ namespace IntrManApp.Api.Features.BasicModules
                         "CreateSupplier.Validation", validationResult.ToString()));
                 }
                 Supplier item;
-                BusinessEntity entity;
+                BusinessEntity? entity;
                 if(request.BusinessEntityId == Guid.Empty)
                 {
                     entity = new();
@@ -80,7 +75,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/suppliers", async (CreateSupplierRequest request, ISender sender) =>
+            app.MapPost("api/suppliers", async (SupplierRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateSupplier.Command>();
                 var result = await sender.Send(command);

@@ -13,9 +13,9 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public class Command : IRequest<Result<Guid>>
         {
-            public Guid Id { get; set; }
             public Guid BusinessEntityId { get; set; }
             public string Name { get; set; } = string.Empty;
+            public bool IsActive { get; set; } = true;
         }
 
         public class Validator : AbstractValidator<Command>
@@ -46,11 +46,12 @@ namespace IntrManApp.Api.Features.BasicModules
                         "UpdateCustomer.Validation", validationResult.ToString()));
                 }
                 var item = _context.Customers
-                    .Where(c => c.BusinessEntityId.Equals(request.Id)).FirstOrDefault();
+                    .Where(c => c.BusinessEntityId.Equals(request.BusinessEntityId)).FirstOrDefault();
                 if (item != null)
                 {
                     item.BusinessEntityId = request.BusinessEntityId;
                     item.Name = request.Name;
+                    item.IsActive = request.IsActive;
                     await _context.SaveChangesAsync();
                     return item.BusinessEntityId;
                 }
@@ -68,7 +69,7 @@ namespace IntrManApp.Api.Features.BasicModules
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapPut("api/customers/",
-                async (UpdateCustomerRequest request, ISender sender) =>
+                async (Customer request, ISender sender) =>
                 {
                     var command = request.Adapt<UpdateCustomer.Command>();
                     var result = await sender.Send(command);

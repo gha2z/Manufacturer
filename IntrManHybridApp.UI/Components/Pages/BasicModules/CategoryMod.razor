@@ -1,0 +1,72 @@
+﻿@page "/CategoryMod/{id:guid?}"
+
+@using IntrManApp.Shared.Contract
+@using IntrManHybridApp.UI.Services
+@using Mapster
+
+@inject Radzen.DialogService dialogService
+@inject Radzen.NotificationService notificationService
+@inject IProductService service
+@inject ILogger<ProductMod> logger
+
+<RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
+    <RadzenStack>
+        <RadzenFormField Text="Product Name">
+            <RadzenTextBox @bind-Value="@item.Name" />
+        </RadzenFormField>
+       
+    </RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Click="Save" Variant="Variant.Flat" Text="Save" Style="width: 120px" />
+        <RadzenButton Click="@((args) => dialogService.Close(true))" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    ProductCategoryRequest item = new ProductCategoryRequest();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != Guid.Empty)
+        {
+            logger.LogInformation($"ProductCategoryMod.OnInitializedAsync - get Product Category Id:{Id}");
+            var response = await service.GetProductCategoryAsync(Id);
+            response.Adapt(item);
+        };
+        logger.LogInformation("ProductCategoryMod.OnInitializedAsync - initializing base");
+        await base.OnInitializedAsync();
+    }
+
+    async Task Save()
+    {
+        Guid response = Guid.Empty;
+
+        if (Id != Guid.Empty)
+        {
+            logger.LogInformation("Update Product Category");
+            response = await service.UpdateProductCategoryAsync(item);
+        }
+        else
+        {
+            logger.LogInformation("create a new Product Category");
+            response = await service.CreateProductCategoryAsync(item);
+        }
+        if (response != Guid.Empty)
+        {
+            dialogService.Close(true);
+        }
+        else
+        {
+            logger.LogError("Failed to save Product Category");
+            notificationService.Notify(
+                new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Failed to save Product Category"
+                    });
+        }
+    }
+
+}

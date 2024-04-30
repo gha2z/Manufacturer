@@ -3,97 +3,134 @@
 @using IntrManApp.Shared.Contract
 @using System.Diagnostics
 @using System.Text.Json
-@inject IHttpClientFactory HttpClientFactory
+@using IntrManHybridApp.UI.Services
+
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject ILocationService service
+@inject ILogger<LocationList> logger
 
-
-<RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
+<RadzenTabs>
+    <Tabs>
+        <RadzenTabsItem Text="Locations">
+            <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true"
                 PageSize="25" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                 LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single"
-                Data="@items" @bind-Value="@selectedItems">
-    <HeaderTemplate>
-        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="New Location" Click="@NewItem" />
-    </HeaderTemplate>
-    <Columns>
-        <RadzenDataGridColumn Property="Name" Title="Name" Width="150px" Frozen="true" />
-        <RadzenDataGridColumn Property="BusinessEntityId" Title="Business Entity Id" Width="100px" />
+                Data="@items" @bind-Value="@selectedItems" Density="Density.Compact">
+                <HeaderTemplate>
+                    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="New Location" Click="@NewLocation" />
+                </HeaderTemplate>
+                <Columns>
+                    <RadzenDataGridColumn Property="Name" Title="Name" Width="150px" Frozen="true" />
+                    <RadzenDataGridColumn Property="Id" Title="Location Id" Width="100px" />
 
-        <RadzenDataGridColumn Context="item" Width="50px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
-            <Template Context="item">
-                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium"
-                              Click="@(args => EditItem(item))" @onclick:stopPropagation="true">
-                </RadzenButton>
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
-                              Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteItem(item))" @onclick:stopPropagation="true">
-                </RadzenButton>
-            </Template>
-        </RadzenDataGridColumn>
-    </Columns>
-</RadzenDataGrid>
+                    <RadzenDataGridColumn Context="item" Width="50px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="item">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium"
+                                          Click="@(args => UpdateLocation(item))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                          Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteLocation(item))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="Racking Pallets">
+            <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true"
+                PageSize="25" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single"
+                Data="@rackingPallets" @bind-Value="@selectedRackingPallets" Density="Density.Compact">
+                <HeaderTemplate>
+                    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="New Racking Pallet" Click="@NewRackingPallet" />
+                </HeaderTemplate>
+                <Columns>
+                    <RadzenDataGridColumn Property="ColRow" Title="Name" Width="80px" Frozen="true" />
+                    <RadzenDataGridColumn Property="Description" Title="Location Id" Width="100px" />
 
+                    <RadzenDataGridColumn Context="rackingPalletItem" Width="50px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="rackingPalletItem">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium"
+                                          Click="@(args => UpdateRackingPallet(rackingPalletItem))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                          Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRackingPallet(rackingPalletItem))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
 
 @code {
     IEnumerable<LocationResponse> items = [];
     IList<LocationResponse> selectedItems = [];
-
-    bool isLoading = false;
+    IEnumerable<RackingPalletResponse> rackingPallets = [];
+    IList<RackingPalletResponse> selectedRackingPallets = [];
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        await InitData();
+        await InitLocation();
+        await InitRackingPallet();
     }
 
-    async Task InitData()
+    #region Location
+
+    async Task InitLocation()
     {
         try
         {
-            using var client = HttpClientFactory.CreateClient("BackendAPI");
-            items = await client.GetFromJsonAsync<IEnumerable<LocationResponse>>("locations") ?? [];
-            if (items.ToList().Count > 0)
-            {
-                selectedItems = new List<LocationResponse>() { items.FirstOrDefault() };
-            }
+            logger.LogInformation("LocationList.InitData - get Location list");
+            items = await service.GetLocationsAsync();
+            selectedItems = (items.Count()>0) ? new List<LocationResponse>() { items.First() } : [];
         }
         catch (Exception ex)
         {
+            logger.LogError($"InitData - Error: {ex.Message}{Environment.NewLine}{ex}");
             NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Error,
                     Duration = 10000,
                     SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to load data</RadzenText>,
             DetailContent = ns =>
-    @<RadzenText>
-        <br /><br />Please make sure the connection to the server is available.
-        <br /><br />Technical detail:
-        <br />@ex.Message
-    </RadzenText>
+                @<RadzenText>
+                    <br /><br />Please make sure the connection to the server is available.
+                    <br /><br />Technical detail:
+                    <br />@ex.Message
+                </RadzenText>
             });
         }
     }
 
-    async Task NewItem()
+    async Task NewLocation()
     {
-        await DialogService.OpenAsync<SupplierMod>("New Customer",
+        logger.LogInformation("LocationList.NewItem - open new Location dialog");
+
+        await DialogService.OpenAsync<LocationMod>("New Location",
               new Dictionary<string, object>() { { "Id", Guid.Empty } },
-              new DialogOptions() { Width = "700px", Height = "312px", Resizable = true, Draggable = true });
+              new DialogOptions() { Width = "700px", Height = "220px", Resizable = true, Draggable = true });
+
+        await InitLocation();
     }
 
-    async Task DeleteItem(LocationResponse item)
+    async Task DeleteLocation(LocationResponse item)
     {
-
         if (items.Contains(item))
         {
-            using var client = HttpClientFactory.CreateClient("BackendAPI");
             try
             {
-                var response = await client.DeleteAsync($"locations/{item.Id}");
-                if (response.IsSuccessStatusCode)
+                logger.LogInformation($"LocationList - delete Location {item.Id}");
+                var succeed = await service.DeleteLocationAsync(item.Id);
+                if (succeed)
                 {
                     items = items.Where(x => x.Id != item.Id);
-                    selectedItems = new List<LocationResponse>() { items.FirstOrDefault() };
+                    selectedItems = (items.Count() > 0) ? new List<LocationResponse>() { items.First() } : [];
                 }
                 else
                 {
@@ -105,32 +142,133 @@
                         DetailContent = ns => @<RadzenText TextStyle="TextStyle.Body1">Please make sure this item has not been used in transactions</RadzenText>
                     });
                 };
-
-                await InitData();
             }
             catch (Exception ex)
             {
+                logger.LogError($"LocationList.DeleteItem {item.Id} - Error: {ex.Message}{Environment.NewLine}{ex}");
                 NotificationService.Notify(new NotificationMessage
                     {
                         Severity = NotificationSeverity.Error,
                         Duration = 10000,
                         SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
                     DetailContent = ns =>
-    @<RadzenText>
-        <br />Please make sure the connection to the server is available.
-        <br /><br />Technical detail:
-        <br />@ex.Message
-    </RadzenText>
+                        @<RadzenText>
+                            <br />Please make sure the connection to the server is available.
+                            <br /><br />Technical detail:
+                            <br />@ex.Message
+                        </RadzenText>
+                    });
+            };
+        }
+    }
+
+    async Task UpdateLocation(LocationResponse item)
+    {
+        logger.LogInformation($"LocationList.EditItem - open edit location dialog {item.Id}");
+
+        await DialogService.OpenAsync<LocationMod>("Edit Location",
+              new Dictionary<string, object>() { { "Id", item.Id } },
+              new DialogOptions() { Width = "700px", Height = "220x", Resizable = true, Draggable = true });
+
+        await InitLocation();
+    }
+    #endregion
+
+    #region RackingPallet
+
+    async Task InitRackingPallet()
+    {
+        try
+        {
+            logger.LogInformation("RackingPalletList.InitData - get RackingPallet list");
+            rackingPallets = await service.GetRackingPalletsAsync();
+            selectedRackingPallets = rackingPallets.Count()>0 ? new List<RackingPalletResponse>() { rackingPallets.First() } : [];
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"InitData - Error: {ex.Message}{Environment.NewLine}{ex}");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Duration = 10000,
+                SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to load data</RadzenText>,
+                DetailContent = ns =>
+                    @<RadzenText>
+                        <br /><br />Please make sure the connection to the server is available.
+                        <br /><br />Technical detail:
+                        <br />@ex.Message
+                    </RadzenText>
+            });
+        }
+    }
+
+    async Task NewRackingPallet()
+    {
+        logger.LogInformation("RackingPalletList.NewItem - open new RackingPallet dialog");
+
+        await DialogService.OpenAsync<RackingPalletMod>("New RackingPallet",
+              new Dictionary<string, object>() { { "Id", Guid.Empty } },
+              new DialogOptions() { Width = "700px", Height = "275px", Resizable = true, Draggable = true });
+
+        await InitRackingPallet();
+    }
+
+    async Task DeleteRackingPallet(RackingPalletResponse item)
+    {
+        if (rackingPallets.Contains(item))
+        {
+            try
+            {
+                logger.LogInformation($"RackingPalletList - delete RackingPallet {item.Id}");
+                var succeed = await service.DeleteRackingPalletAsync(item.Id);
+                if (succeed)
+                {
+                    rackingPallets = rackingPallets.Where(x => x.Id != item.Id);
+                    selectedRackingPallets = (rackingPallets.Count() > 0) ? new List<RackingPalletResponse>() { rackingPallets.First() } : [];
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Warning,
+                            Duration = 10000,
+                            SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
+                        DetailContent = ns => @<RadzenText TextStyle="TextStyle.Body1">Please make sure this item has not been used in transactions</RadzenText>
+                    });
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"RackingPalletList.DeleteItem {item.Id} - Error: {ex.Message}{Environment.NewLine}{ex}");
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Duration = 10000,
+                    SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
+                    DetailContent = ns =>
+                        @<RadzenText>
+                            <br />Please make sure the connection to the server is available.
+                            <br /><br />Technical detail:
+                            <br />@ex.Message
+                        </RadzenText>
                 });
             };
         }
     }
 
-    void EditItem(LocationResponse item)
+    async Task UpdateRackingPallet(RackingPalletResponse item)
     {
-        // NavigationManager.NavigateTo($"/ProductEdit/{item.Id}");
-    }
+        logger.LogInformation($"RackingPalletList.EditItem - open edit RackingPallet dialog {item.Id}");
 
+        await DialogService.OpenAsync<RackingPalletMod>("Edit RackingPallet",
+              new Dictionary<string, object>() { { "Id", item.Id } },
+              new DialogOptions() { Width = "700px", Height = "275x", Resizable = true, Draggable = true });
+
+        await InitRackingPallet();
+    }
+        
+
+    #endregion
 
 
 }

@@ -8,14 +8,7 @@ namespace IntrManApp.Shared.Contract;
 
 public class ProductCheckinRequest
 {
-    public Guid SupplierId { get; set; }
-    public DateTime? CheckInDate { get; set; }
-    public List<ProductCheckInLineRequest> ProductCheckInDetail { get; set; } = [];
-}
-
-public class UpdateProductCheckinRequest
-{
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.Empty;
     public Guid SupplierId { get; set; }
     public DateTime? CheckInDate { get; set; }
     public List<ProductCheckInLineRequest> ProductCheckInDetail { get; set; } = [];
@@ -31,6 +24,11 @@ public class ProductCheckInLineRequest
     public DateTime ProductionDate { get; set; }
     public DateTime ExpirationDate { get; set; }
     public Guid LocationId { get; set; }
-    public Guid RackingPalleteId { get; set; }
+    public Guid RackingPalletId { get; set; }
+   
+    public RawMaterialsForCheckin? RawMaterial { get; set; }
+    public LocationResponse? Location { get; set; }
+    public RackingPalletResponse? RackingPallet { get; set; }
+    
 
 }

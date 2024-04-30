@@ -5,7 +5,7 @@ namespace IntrManApp.Shared.Contract;
 public class ProductResponse
 {
     public Guid CategoryId { get; set; }
-    public string CategoryName { get; set; } 
+    public string CategoryName { get; set; } = string.Empty;
 
     public Guid Id { get; set; }
     public string Names { get; set; } = string.Empty;
@@ -26,10 +26,10 @@ public class ProductResponse
     public decimal? ListPrice { get; set; }
 
     public Guid MeasurementUnitGroupId { get; set; }
-    public string MeasurementUnitGroupName { get; set; }
+    public string MeasurementUnitGroupName { get; set; } = string.Empty;
 
     public Guid MeasurementUnitOrderId { get; set; } 
-    public string measurementUnitOrderName { get; set; }
+    public string measurementUnitOrderName { get; set; } = string.Empty;
     public decimal? OrderQuantity { get; set; }
 
     public int? DaysToManufacture { get; set; }
@@ -37,15 +37,16 @@ public class ProductResponse
     public int? DaysToExpire { get; set; }
 
     public Guid LocationId { get; set; } 
-    public string LocationName { get; set; }
+    public string LocationName { get; set; } = string.Empty;
 
     public Guid RackingPalletId { get; set; } 
-    public string RackingPalletName { get; set; }
-    public string RackingPalletCol { get; set; }
+    public string RackingPalletName { get; set; } = string.Empty;
+    public string RackingPalletCol { get; set; } = string.Empty;
     public short RackingPalletRow { get; set; }
     public string? AdditionalInfo { get; set; }
     public short BomCount { get; set; }
     public ICollection<BomSpecificationResponse> Boms { get; set; } = [];
+    public ICollection<ProductNameResponse> ProductNameAndDescriptionCultures { get; set; } = [];
 }
 
 [JsonSerializable(typeof(List<ProductResponse>))]

@@ -6,6 +6,7 @@ using IntrManApp.Shared.Contract;
 using IntrManApp.Api.Entities;
 using Mapster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
@@ -14,12 +15,11 @@ namespace IntrManApp.Api.Features.BasicModules
         public class Command : IRequest<Result<Guid>>
         {
             public Guid Id { get; set; }
-            public Guid? CategoryId { get; set; }
+            public Guid CategoryId { get; set; }
 
             public string ProductNumber { get; set; } = null!;
 
-            public virtual ICollection<ProductNameAndDescriptionCulture> ProductNameAndDescriptionCultures { get; set; } =
-                new List<ProductNameAndDescriptionCulture>();
+            public virtual ICollection<ProductNameRequest> ProductNameAndDescriptionCultures { get; set; } = [];
 
             public bool IsFinishedGood { get; set; }
 
@@ -62,16 +62,11 @@ namespace IntrManApp.Api.Features.BasicModules
             }
         }
 
-        internal sealed class Handler : IRequestHandler<Command, Result<Guid>>
+        internal sealed class Handler(IntrManDbContext dbContext, IValidator<UpdateProduct.Command> validator) : IRequestHandler<Command, Result<Guid>>
         {
-            private readonly IntrManDbContext _context;
-            private readonly IValidator<Command> _validator;
+            private readonly IntrManDbContext _context = dbContext;
+            private readonly IValidator<Command> _validator = validator;
 
-            public Handler(IntrManDbContext dbContext, IValidator<Command> validator)
-            {
-                _context = dbContext;
-                _validator = validator;
-            }
             public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
             {
                 var validationResult = _validator.Validate(request);
@@ -81,7 +76,8 @@ namespace IntrManApp.Api.Features.BasicModules
                         "UpdateProduct.Validation", validationResult.ToString()));
                 }
                 var product = _context.Products
-                    .Where(p => p.Id.Equals(request.Id)).FirstOrDefault();
+                    .Include(p=>p.ProductNameAndDescriptionCultures)
+                    .FirstOrDefault(p => p.Id.Equals(request.Id));
 
                 if (product == null)
                 {
@@ -108,7 +104,7 @@ namespace IntrManApp.Api.Features.BasicModules
                 else
                 { 
                     measurementUnitOrder = _context.MeasurementUnits
-                        .Where(u => u.GroupId.Equals(request.MeasurementUnitOrderId)).FirstOrDefault();
+                        .Where(u => u.Id.Equals(request.MeasurementUnitOrderId)).FirstOrDefault();
                 }
                 if (measurementUnitGroup == null || measurementUnitOrder == null)
                 {
@@ -166,20 +162,19 @@ namespace IntrManApp.Api.Features.BasicModules
                 product.RackingPalletId = request.RackingPalletId;
                 product.AdditionalInfo = request.AdditionalInfo;
 
-                product.ProductNameAndDescriptionCultures.Clear();
-                await _context.SaveChangesAsync();
+               
+            
                 foreach (var culture in request.ProductNameAndDescriptionCultures)
                 {
-                    var newCulture = new ProductNameAndDescriptionCulture()
+                    var existingCulture = product.ProductNameAndDescriptionCultures
+                        .Where(c => c.CultureId.Trim().Equals(culture.CultureId.Trim())).FirstOrDefault();
+                    if (existingCulture != null)
                     {
-                        ProductId = product.Id,
-                        CultureId = culture.CultureId,
-                        Name = culture.Name,
-                        Description = culture.Description
+                        existingCulture.Name = culture.Name;
+                        existingCulture.Description = culture.Description ?? string.Empty;
                     };
-                    _context.Add(newCulture);
                 }
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(cancellationToken);
 
                 return product.Id;
             }
@@ -190,7 +185,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPut("api/products", async (UpdateProductRequest request, ISender sender) =>
+            app.MapPut("api/products", async (ProductRequest request, ISender sender) =>
             {
                 var command = request.Adapt<UpdateProduct.Command>();
                 var result = await sender.Send(command);
@@ -204,13 +199,12 @@ namespace IntrManApp.Api.Features.BasicModules
             {
                 Description = "Updates the existing product and returns the updated product id on succesful operation",
                 Summary = "Update an existing product",
-                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
-                {
-                    new Microsoft.OpenApi.Models.OpenApiTag
-                    {
+                Tags =
+                [
+                    new() {
                         Name = "Product"
                     }
-                }
+                ]
             });
         }
 

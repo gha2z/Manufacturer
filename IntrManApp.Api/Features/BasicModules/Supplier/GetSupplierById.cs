@@ -62,13 +62,12 @@ public class GetSupplierByIdEndPoint : ICarterModule
         {
             Description = "Get a supplier by BusinessEntityId",
             Summary = "Get a supplier",
-            Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
-            {
-                new Microsoft.OpenApi.Models.OpenApiTag
-                {
+            Tags =
+            [
+                new() {
                     Name = "Supplier"
                 }
-            }
+            ]
         });
     }
 }

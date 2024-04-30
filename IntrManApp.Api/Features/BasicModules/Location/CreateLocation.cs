@@ -13,6 +13,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public class Command : IRequest<Result<Guid>>
         {
+            public Guid Id { get; set; } = Guid.Empty;
             public string Name { get; set; } = string.Empty;
         }
 
@@ -57,7 +58,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/locations", async (CreateLocationRequest request, ISender sender) =>
+            app.MapPost("api/locations", async (LocationRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateLocation.Command>();
                 var result = await sender.Send(command);

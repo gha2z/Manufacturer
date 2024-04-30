@@ -14,8 +14,9 @@ namespace IntrManApp.Api.Features.Purchasing
         {
             public class Command : IRequest<Result<Guid>>
             {
+                public Guid Id { get; set; } = Guid.Empty;
                 public Guid SupplierId { get; set; }
-                public DateTime? checkinDate { get; set; }
+                public DateTime? CheckinDate { get; set; }
                 public List<ProductCheckInLineRequest> ProductCheckInDetail { get; set; } = [];
             }
 
@@ -38,7 +39,7 @@ namespace IntrManApp.Api.Features.Purchasing
                     RuleFor(product => product.ProductionDate).NotEmpty();
                     RuleFor(product => product.ExpirationDate).NotEmpty();
                     RuleFor(product => product.UnitMeasurementId).NotEmpty();
-                    RuleFor(product => product.RackingPalleteId).NotEmpty();
+                    RuleFor(product => product.RackingPalletId).NotEmpty();
                 }
             }
 
@@ -67,13 +68,13 @@ namespace IntrManApp.Api.Features.Purchasing
                     {
                         var productCheckIn = new ProductCheckIn() 
                         { 
-                            CheckInDate = request.checkinDate,
+                            CheckInDate = request.CheckinDate,
                             SupplierId = request.SupplierId
                         };
                         for(short i = 0; i < request.ProductCheckInDetail.Count; i++)
                         {
                             var item = request.ProductCheckInDetail[i];
-                            var product = await _context.Products.FindAsync(item.ProductId, cancellationToken);
+                        var product = await _context.Products.FindAsync([item.ProductId, cancellationToken], cancellationToken: cancellationToken);
                             if (product == null)
                             {
                                 return Result.Failure<Guid>(new Error(
@@ -90,7 +91,7 @@ namespace IntrManApp.Api.Features.Purchasing
                                 ProductionDate = item.ProductionDate,
                                 ExpirationDate = item.ExpirationDate,
                                 LocationId = item.LocationId,
-                                RackingPalletId = item.RackingPalleteId,
+                                RackingPalletId = item.RackingPalletId,
                             };
                             productCheckIn.ProductCheckInLines.Add(productCheckInLine);
                         }
@@ -101,7 +102,7 @@ namespace IntrManApp.Api.Features.Purchasing
                         var productsCheckInLines = productCheckIn.ProductCheckInLines.ToList();
                         //get the number of checkins for the day
                         var checkInCount = await _context.ProductCheckIns
-                            .Where(x => x.CheckInDate == request.checkinDate)
+                            .Where(x => x.CheckInDate == request.CheckinDate)
                             .CountAsync(cancellationToken);
 
                         //generate unique batch numbers for each product checkin based on the checkin date and total batches
@@ -172,7 +173,7 @@ namespace IntrManApp.Api.Features.Purchasing
         {
             public void AddRoutes(IEndpointRouteBuilder app)
             {
-                app.MapPost("api/ProductCheckIns", async (ProductCheckinRequest request, ISender sender) =>
+                app.MapPost("api/productCheckins", async (ProductCheckinRequest request, ISender sender) =>
                 {
                     var command = request.Adapt<CreateProductCheckIn.Command>();
 
@@ -189,14 +190,9 @@ namespace IntrManApp.Api.Features.Purchasing
                     "returns the new created checkin id on successful operation." +
                     "This will generate product inventories with automatic CartonId",
                     Summary = "Create a new raw materials checkin",
-                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
-                {
-                    new Microsoft.OpenApi.Models.OpenApiTag
-                    {
-                        Name = "Raw Materials Checkin"
-                    }
+                    Tags = [ new() { Name = "Raw Materials Checkin"} ]
                 }
-                });
+                );
             }
         }
     }

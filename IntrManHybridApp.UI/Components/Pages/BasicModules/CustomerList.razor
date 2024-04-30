@@ -1,26 +1,34 @@
 ﻿@page "/CustomerList"
 
-
 @using IntrManApp.Shared.Contract
 @using System.Diagnostics
 @using System.Text.Json
-@inject IHttpClientFactory HttpClientFactory
+@using IntrManHybridApp.UI.Services
+
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject ICustomerService service
+@inject ILogger<CustomerList> logger
 
 
 <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true"
                 PageSize="25" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                 LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single"
-                Data="@items" @bind-Value="@selectedItems">
+                Data="@items" @bind-Value="@selectedItems" TItem="CustomerResponse" Density="Density.Compact">
     <HeaderTemplate>
         <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" Text="New Customer" Click="@NewItem" />
     </HeaderTemplate>
     <Columns>
+       
         <RadzenDataGridColumn Property="Name" Title="Name" Width="150px" Frozen="true" />
+        <RadzenDataGridColumn Property="IsActive" Title="Status" Width="100px">
+            <Template Context="data">
+                @((data.IsActive) ? "Active" : "Inactive")
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn Property="BusinessEntityId" Title="Business Entity Id" Width="100px" />
-
+       
         <RadzenDataGridColumn Context="item" Width="50px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
             <Template Context="item">
                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium"
@@ -39,8 +47,6 @@
     IEnumerable<CustomerResponse> items = [];
     IList<CustomerResponse> selectedItems = [];
 
-    bool isLoading = false;
-
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -51,15 +57,16 @@
     {
         try
         {
-            using var client = HttpClientFactory.CreateClient("BackendAPI");
-            items = await client.GetFromJsonAsync<IEnumerable<CustomerResponse>>("customers") ?? [];
+            logger.LogInformation("CustomerList.InitData - get Customer list");
+            items = await service.GetCustomersAsync();
             if (items.ToList().Count > 0)
             {
-                selectedItems = new List<CustomerResponse>() { items.FirstOrDefault() };
+                selectedItems = new List<CustomerResponse>() { items.First() };
             }
         }
         catch (Exception ex)
         {
+            logger.LogError($"InitData - Error: {ex.Message}{Environment.NewLine}{ex}");
             NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Error,
@@ -77,9 +84,13 @@
 
     async Task NewItem()
     {
-        await DialogService.OpenAsync<SupplierMod>("New Customer",
+        logger.LogInformation("CustomerList.NewItem - open new Customer dialog");
+
+        var res = await DialogService.OpenAsync<CustomerMod>("New Customer",
               new Dictionary<string, object>() { { "Id", Guid.Empty } },
               new DialogOptions() { Width = "700px", Height = "312px", Resizable = true, Draggable = true });
+
+        await InitData();
     }
 
     async Task DeleteItem(CustomerResponse item)
@@ -87,14 +98,15 @@
 
         if (items.Contains(item))
         {
-            using var client = HttpClientFactory.CreateClient("BackendAPI");
+
             try
             {
-                var response = await client.DeleteAsync($"customers/{item.BusinessEntityId}");
-                if (response.IsSuccessStatusCode)
+                logger.LogInformation($"CustomerList - delete Customer {item.BusinessEntityId}");
+                var succeed = await service.DeleteCustomerAsync(item.BusinessEntityId);
+                if (succeed)
                 {
                     items = items.Where(x => x.BusinessEntityId != item.BusinessEntityId);
-                    selectedItems = new List<CustomerResponse>() { items.FirstOrDefault() };
+                    selectedItems = (items.Count()>0) ? new List<CustomerResponse>() { items.First() } : [];
                 }
                 else
                 {
@@ -107,10 +119,11 @@
                     });
                 };
 
-                await InitData();
+                
             }
             catch (Exception ex)
             {
+                logger.LogError($"CustomerList.DeleteItem {item.BusinessEntityId} - Error: {ex.Message}{Environment.NewLine}{ex}");
                 NotificationService.Notify(new NotificationMessage
                     {
                         Severity = NotificationSeverity.Error,
@@ -127,11 +140,14 @@
         }
     }
 
-    void EditItem(CustomerResponse item)
+    async Task EditItem(CustomerResponse item)
     {
-        // NavigationManager.NavigateTo($"/ProductEdit/{item.Id}");
+        logger.LogInformation($"CustomerList.EditItem {item.BusinessEntityId} - Opening CustomerMod dialog service");
+
+        await DialogService.OpenAsync<CustomerMod>("Update Customer",
+            new Dictionary<string, object>() { { "Id", item.BusinessEntityId } },
+            new DialogOptions() { Width = "700px", Height = "312px", Resizable = true, Draggable = true });
+
+        await InitData();
     }
-
-
-
 }

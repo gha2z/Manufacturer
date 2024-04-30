@@ -1,7 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 using System.Data;
-using System.Data.SqlTypes;
 
 namespace IntrManApp.Api.Database
 {
@@ -21,22 +20,20 @@ namespace IntrManApp.Api.Database
 
         public IDbConnection CreateOpenConnection()
         {
+            var connection = new SqlConnection(_connectionString);
             try
             {
-                var connection = new SqlConnection(_connectionString);
                 connection.Open();
-                return connection;
             }
-            catch (Exception ex)
+            catch 
             {
-                // Log the exception and rethrow, or handle it as appropriate for your application.
-                return null;
-                
+                // Log the exception and rethrow, or handle it as appropriate for your application.   
             }
+            return connection;
         }
     }
     public class ConnectionStrings
     {
-        public string Database { get; set; }
+        public string Database { get; set; } = string.Empty;
     }
 }

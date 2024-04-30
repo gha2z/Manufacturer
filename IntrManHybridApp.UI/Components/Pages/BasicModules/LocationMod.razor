@@ -1,0 +1,69 @@
+﻿@page "/LocationMod/{id:guid?}"
+
+@using IntrManApp.Shared.Contract
+@using IntrManHybridApp.UI.Services
+@using Mapster
+@inject Radzen.DialogService dialogService
+@inject Radzen.NotificationService notificationService
+@inject ILocationService service
+@inject ILogger<LocationMod> logger
+
+<RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
+    <RadzenStack>
+        <RadzenFormField Text="Location Name">
+            <RadzenTextBox @bind-Value="@item.Name" />
+        </RadzenFormField>
+    </RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Click="Save" Variant="Variant.Flat" Text="Save" Style="width: 120px" />
+        <RadzenButton Click="@((args) => dialogService.Close(true))" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    LocationRequest item = new LocationRequest();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != Guid.Empty)
+        {
+
+            var response = await service.GetLocationAsync(Id);
+            if (response != null)
+            {
+                response.Adapt(item);
+                // item.Id = response.Id;
+                // item.Name = response.Name;
+            }
+        };
+
+        await base.OnInitializedAsync();
+    }
+
+    async Task Save()
+    {
+        Guid response = Guid.Empty;
+
+        if (Id != Guid.Empty)
+            response = await service.UpdateLocationAsync(item);
+        else
+            response = await service.CreateLocationAsync(item);
+
+        if (response != Guid.Empty)
+        {
+            dialogService.Close(true);
+        }
+        else
+        {
+            notificationService.Notify(
+                new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Failed to save Location"
+                    });
+        }
+    }
+
+}

@@ -7,14 +7,16 @@ public class ProductNameRequest
     public string? Description { get; set; } = string.Empty;
 }
 
-public class CreateProductRequest
+
+
+public class ProductRequest
 {
+    public Guid Id { get; set; }
     public Guid? CategoryId { get; set; } = Guid.Empty;
 
     public string ProductNumber { get; set; } = null!;
 
-    public virtual ICollection<ProductNameRequest> ProductNameAndDescriptionCultures { get; set; } =
-        new List<ProductNameRequest>();
+    public virtual ICollection<ProductNameRequest> ProductNameAndDescriptionCultures { get; set; } = [];
 
     public bool IsFinishedGood { get; set; }
 
@@ -45,50 +47,4 @@ public class CreateProductRequest
     public Guid RackingPalletId { get; set; } = Guid.Empty;
 
     public string? AdditionalInfo { get; set; }
-}
-
-public class UpdateProductRequest
-{
-    public Guid Id { get; set; }
-    public Guid? CategoryId { get; set; } = Guid.Empty;
-
-    public string ProductNumber { get; set; } = null!;
-
-    public virtual ICollection<ProductNameRequest> ProductNameAndDescriptionCultures { get; set; } =
-        new List<ProductNameRequest>();
-
-    public bool IsFinishedGood { get; set; }
-
-    public bool? IsSalable { get; set; }
-
-    public bool? IsUniqueBatchPerOrder { get; set; }
-
-    public decimal? SafetyStockLevel { get; set; }
-
-    public decimal? ReorderPoint { get; set; }
-
-    public decimal? StandardCost { get; set; }
-
-    public decimal? ListPrice { get; set; }
-
-    public Guid MeasurementUnitGroupId { get; set; } = Guid.Empty;
-
-    public Guid MeasurementUnitOrderId { get; set; } = Guid.Empty;
-
-    public decimal? OrderQuantity { get; set; }
-
-    public int? DaysToManufacture { get; set; }
-
-    public int? DaysToExpire { get; set; }
-
-    public Guid LocationId { get; set; } = Guid.Empty;
-
-    public Guid RacketPalletId { get; set; } = Guid.Empty;
-
-    public string? AdditionalInfo { get; set; }
-}
-
-public class DeleteProductRequest
-{
-    public Guid Id { get; set;}
 }

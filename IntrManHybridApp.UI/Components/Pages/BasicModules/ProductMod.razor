@@ -1,0 +1,304 @@
+﻿@page "/ProductMod/{id:guid?}/{isFinishedGood:bool?}"
+
+@using IntrManApp.Shared.Contract
+@using IntrManHybridApp.UI.Services
+@using Mapster
+
+@inject Radzen.DialogService dialogService
+@inject Radzen.NotificationService notificationService
+@inject IProductService service
+@inject ILocationService locationService
+@inject ILogger<RackingPalletMod> logger
+
+
+<RadzenTemplateForm TItem="ProductRequest" Data=@item Submit=@Save>
+    <RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenCard>
+            <RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenStack>
+                    <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" >
+                        <RadzenFormField Text="Product Category">
+                            <RadzenDropDown Data="@categories" @bind-Value="item.CategoryId" ValueProperty="Id" TextProperty="Name" 
+                             Name="Category" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />            
+                        </RadzenFormField>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.End">
+                            <RadzenButton Icon="add" Click="@NewCategory" 
+                                ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
+                            <RadzenButton Icon="edit" Click="@(args=>EditCategory(item.CategoryId))" 
+                                ButtonStyle="ButtonStyle.Warning" Style="width:20px; height:20px; margin-top:10px" />
+                            <RadzenButton Icon="delete" Click="@(args=>DeleteCategory(item.CategoryId))"
+                                          ButtonStyle="ButtonStyle.Danger" Style="width:20px; height:20px; margin-top:10px" />
+                        </RadzenStack>
+                    </RadzenStack>
+                    <RadzenRequiredValidator Component="Category" Text="Category is required" />
+                </RadzenStack>
+
+                <RadzenStack >
+                    <RadzenFormField Text="SKU">
+                        <RadzenTextBox @bind-Value="item.ProductNumber" Name="Sku"/>
+                    </RadzenFormField>
+                    <RadzenRequiredValidator Component="Sku" Text="SKU is required" />
+                </RadzenStack>
+       
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" JustifyContent="JustifyContent.Start">
+                    <RadzenFormField Text="English Name">
+                        <RadzenTextBox @bind-Value="englishName" Name="EngName" />
+                    </RadzenFormField>
+                    <RadzenRequiredValidator Component="EngName" Text="Item name in english is required" />
+                    <RadzenFormField Text="Chinese Name">
+                        <RadzenTextBox @bind-Value="chineseName" Name="ChName" />
+                    </RadzenFormField>
+                    <RadzenRequiredValidator Component="ChName" Text="Item name in chinese is required" />
+                </RadzenStack>
+
+                <RadzenStack>
+                    <RadzenFormField Text="Default Days to Expire">
+                        <RadzenNumeric @bind-Value="item.DaysToExpire" Name="DaysToExp" />
+                    </RadzenFormField>
+                    <RadzenNumericRangeValidator Component="DaysToExp" Min="1" Max="3650"/>
+                </RadzenStack>
+
+                <RadzenStack>
+                    <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenFormField Text="Default Location" >
+                            <RadzenDropDown Data="@locations" @bind-Value="item.LocationId" ValueProperty="Id" TextProperty="Name" 
+                             Name="Location" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />            
+                        </RadzenFormField>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.End">
+                            <RadzenButton Icon="add" Click="@NewLocation"
+                                ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
+                            <RadzenButton Icon="edit" Click="@(args => EditLocation(item.LocationId))" 
+                                ButtonStyle="ButtonStyle.Warning" Style="width:20px; height:20px; margin-top:10px" />
+                            <RadzenButton Icon="delete" Click="@(args => DeleteLocation(item.LocationId))"
+                                ButtonStyle="ButtonStyle.Danger" Style="width:20px; height:20px; margin-top:10px" />
+                        </RadzenStack>
+                    </RadzenStack>
+                    <RadzenRequiredValidator Component="Location" Text="Location is required" />
+                </RadzenStack>
+
+           
+                <RadzenStack>
+                    <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenFormField Text="Default Racking Pallet" >
+                            <RadzenDropDown Data="@rackingPallets" @bind-Value="item.RackingPalletId" ValueProperty="Id" TextProperty="ColRow" 
+                             Name="RackingPallet" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />            
+                        </RadzenFormField>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.End">
+                            <RadzenButton Icon="add" Click="@NewRackingPallet" 
+                                ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
+                            <RadzenButton Icon="edit" Click="@(args => EditRackingPallet(item.RackingPalletId))" 
+                                ButtonStyle="ButtonStyle.Warning" Style="width:20px; height:20px; margin-top:10px" />
+                            <RadzenButton Icon="delete" Click="@((args) => DeleteRackingPallet(item.RackingPalletId))" 
+                                ButtonStyle="ButtonStyle.Danger" Style="width:20px; height:20px; margin-top:10px" />
+                        </RadzenStack>
+                    </RadzenStack>
+                    <RadzenRequiredValidator Component="RackingPallet" Text="Racking Pallet is required" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton Click="Save" ButtonType="ButtonType.Submit" Variant="Variant.Flat" Text="Save" Style="width: 120px" />
+            <RadzenButton Click="@((args) => dialogService.Close(true))" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+@code {
+    [Parameter] public Guid Id { get; set; }
+    [Parameter] public bool IsFinishedGood { get; set; }
+    ProductRequest item = new ProductRequest();
+    IEnumerable<ProductCategoryResponse> categories = [];
+    IEnumerable<LocationResponse> locations = [];
+    IEnumerable<RackingPalletResponse> rackingPallets = [];
+    string englishName = "";
+    string chineseName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        logger.LogInformation($"ProductMod.OnInitializedAsync(Id:\"{Id})\"");
+        await InitCategories();
+        await InitLocations();
+        await InitRackingPallets();
+        if (Id != Guid.Empty)
+        {
+            var response = await service.GetProductAsync(Id);
+
+            if (response != null)
+            {
+                response.Adapt(item);
+                englishName = response.ProductNameAndDescriptionCultures.First(x => x.CultureId.Trim() == "en-US").Name;
+                chineseName = response.ProductNameAndDescriptionCultures.First(x => x.CultureId.Trim() == "zh-CN").Name;
+            }
+            else
+            {
+                logger.LogWarning($"RackingPalletMod.OnInitializedAsync(Id:\"{Id})\" - failed to get Racking Pallet");
+            }
+        } else
+        {
+            item.CategoryId = categories.FirstOrDefault()?.Id ?? Guid.Empty;
+            item.IsFinishedGood = IsFinishedGood;
+        };
+
+        await base.OnInitializedAsync();
+    }
+
+    async Task InitCategories()
+    {
+        categories = await service.GetProductCategoriesAsync() ?? [];
+    }
+
+    async Task InitLocations()
+    {
+        locations = await locationService.GetLocationsAsync() ?? [];
+    }
+
+    async Task InitRackingPallets()
+    {
+        rackingPallets = await locationService.GetRackingPalletsAsync() ?? [];
+    }
+
+    async Task Save()
+    {
+        Guid response = Guid.Empty;
+
+        item.ProductNameAndDescriptionCultures = new List<ProductNameRequest>
+        {
+            new ProductNameRequest { CultureId = "en-US", Name = englishName },
+            new ProductNameRequest { CultureId = "zh-CN", Name = chineseName }
+        };
+        if (Id != Guid.Empty)
+            response = await service.UpdateProductAsync(item);
+        else
+            response = await service.CreateProductAsync(item);
+
+        if (response != Guid.Empty)
+        {
+            dialogService.Close(true);
+        }
+        else
+        {
+            notificationService.Notify(
+                new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Failed to save the item."
+                    });
+        }
+    }
+
+    async Task NewCategory()
+    {
+        var res = await dialogService.OpenAsync<CategoryMod>("New Product Category",
+              new Dictionary<string, object>() { { "Id", Guid.Empty } },
+              new DialogOptions() { Width = "500px", Height = "200px", Resizable = true, Draggable = true });
+
+        await InitCategories();
+    }
+
+    async Task EditCategory(Guid? id)
+    {
+        var item = categories.FirstOrDefault(x => x.Id == id);
+        if (item == null) return;
+        var res = await dialogService.OpenAsync<CategoryMod>("Update Product Category",
+              new Dictionary<string, object>() { { "Id", item.Id } },
+              new DialogOptions() { Width = "500px", Height = "200px", Resizable = true, Draggable = true });
+
+        categories = await service.GetProductCategoriesAsync() ?? [];
+    }
+
+    async Task DeleteCategory(Guid? id)
+    {
+        var item = categories.FirstOrDefault(x => x.Id == id);
+        if(item==null) return;
+        
+        var result = await dialogService.Confirm("Are you sure?", "MyTitle", 
+            new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+    
+        if (result.Value)
+        {
+            var response = await service.DeleteProductCategoryAsync(item.Id);
+            if (response)
+            {
+                await InitCategories();
+            }
+        }
+    }
+
+    async Task NewLocation()
+    {
+        var res = await dialogService.OpenAsync<LocationMod>("New Location",
+              new Dictionary<string, object>() { { "Id", Guid.Empty } },
+              new DialogOptions() { Width = "400px", Height = "200px", Resizable = true, Draggable = true });
+
+        await InitLocations();
+    }
+
+    async Task EditLocation(Guid? id)
+    {
+        var item = locations.FirstOrDefault(x => x.Id == id);
+        if (item == null) return;
+        var res = await dialogService.OpenAsync<LocationMod>("Update Product Category",
+              new Dictionary<string, object>() { { "Id", item.Id } },
+              new DialogOptions() { Width = "400px", Height = "200px", Resizable = true, Draggable = true });
+
+        await InitLocations();
+    }
+
+    async Task DeleteLocation(Guid? id)
+    {
+        var item = locations.FirstOrDefault(x => x.Id == id);
+        if(item==null) return;
+        
+        var result = await dialogService.Confirm("Are you sure?", "MyTitle", 
+            new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+    
+        if (result.Value)
+        {
+            var response = await locationService.DeleteLocationAsync(item.Id);
+            if (response)
+            {
+                await InitLocations();
+            }
+        }
+    }
+
+    async Task NewRackingPallet()
+    {
+        var res = await dialogService.OpenAsync<RackingPalletMod>("New Racking Pallet",
+              new Dictionary<string, object>() { { "Id", Guid.Empty } },
+              new DialogOptions() { Width = "550px", Height = "270px", Resizable = true, Draggable = true });
+
+        if(res!=null && res) await InitRackingPallets();
+    }
+
+    async Task EditRackingPallet(Guid? id)
+    {
+        var item = rackingPallets.FirstOrDefault(x => x.Id == id);
+        if (item == null) return;
+        var res = await dialogService.OpenAsync<RackingPalletMod>("Update Racking Pallet",
+              new Dictionary<string, object>() { { "Id", item.Id } },
+              new DialogOptions() { Width = "550px", Height = "270px", Resizable = true, Draggable = true });
+
+        if(res!=null && res) await InitRackingPallets();
+    }
+
+    async Task DeleteRackingPallet(Guid? id)
+    {
+        var item = rackingPallets.FirstOrDefault(x => x.Id == id);
+        if (item == null) return;
+
+        var result = await dialogService.Confirm("Are you sure?", "Confirmation",
+            new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+        if (result.Value)
+        {
+            var response = await locationService.DeleteRackingPalletAsync(item.Id);
+            if (response)
+            {
+                await InitRackingPallets();
+            }
+        }
+    }
+
+}

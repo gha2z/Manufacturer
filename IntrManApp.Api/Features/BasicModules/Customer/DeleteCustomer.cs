@@ -6,71 +6,70 @@ using IntrManApp.Shared.Contract;
 using Mapster;
 using MediatR;
 
-namespace IntrManApp.Api.Features.BasicModules
+namespace IntrManApp.Api.Features.BasicModules;
+
+public class DeleteCustomer
 {
-    public class DeleteCustomer
+    public class Command : IRequest<Result<bool>>
     {
-        public class Command : IRequest<Result<bool>>
+        public Guid BusinessEntityId { get; set; }
+    }
+
+    internal sealed class Handler : IRequestHandler<Command, Result<bool>>
+    {
+        private readonly IntrManDbContext _context;
+
+        public Handler(IntrManDbContext dbContext)
         {
-            public Guid BusinessEntityId { get; set; }
+            _context = dbContext;
         }
-
-        internal sealed class Handler : IRequestHandler<Command, Result<bool>>
+        public async Task<Result<bool>> Handle(Command request, CancellationToken cancellationToken)
         {
-            private readonly IntrManDbContext _context;
 
-            public Handler(IntrManDbContext dbContext)
+
+            var item = _context.Customers
+                .Where(c => c.BusinessEntityId.Equals(request.BusinessEntityId)).FirstOrDefault();
+            if (item != null)
             {
-                _context = dbContext;
+                _context.Customers.Remove(item);
+                await _context.SaveChangesAsync();
+                return true;
             }
-            public async Task<Result<bool>> Handle(Command request, CancellationToken cancellationToken)
+            else
             {
-
-
-                var item = _context.Customers
-                    .Where(c => c.BusinessEntityId.Equals(request.BusinessEntityId)).FirstOrDefault();
-                if (item != null)
-                {
-                    _context.Customers.Remove(item);
-                    await _context.SaveChangesAsync();
-                    return true;
-                }
-                else
-                {
-                    return Result.Failure<bool>(new Error(
-                      "DeleteCustomer.Validation", "Item not found"));
-                }
+                return Result.Failure<bool>(new Error(
+                  "DeleteCustomer.Validation", "Item not found"));
             }
         }
     }
+}
 
-    public class DeleteCustomerEndPoint : ICarterModule
+public class DeleteCustomerEndPoint : ICarterModule
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
     {
-        public void AddRoutes(IEndpointRouteBuilder app)
-        {
-            app.MapDelete("api/customers/{id}",
-                async (Guid id, ISender sender) =>
-                {
-                    var command = new DeleteCustomer.Command { BusinessEntityId = id };
-                    var result = await sender.Send(command);
+        app.MapDelete("api/customers/{id}",
+            async (Guid id, ISender sender) =>
+            {
+                var command = new DeleteCustomer.Command { BusinessEntityId = id };
+                var result = await sender.Send(command);
 
-                    if (result.IsFailure)
-                    {
-                        return Results.BadRequest(result.Error);
-                    }
-                    return Results.Ok(result.Value);
-                }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+                if (result.IsFailure)
                 {
-                    Description = "Delete the existing customer and returns true on succesful operation",
-                    Summary = "Delete customer",
-                    Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
-                {
-                    new Microsoft.OpenApi.Models.OpenApiTag
-                    {
-                        Name = "Customer"
-                    }
+                    return Results.BadRequest(result.Error);
                 }
-                });
-        }
+                return Results.Ok(result.Value);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Delete the existing customer and returns true on succesful operation",
+                Summary = "Delete customer",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+            {
+                new Microsoft.OpenApi.Models.OpenApiTag
+                {
+                    Name = "Customer"
+                }
+            }
+            });
     }
 }

@@ -15,6 +15,7 @@ namespace IntrManApp.Api.Features.BasicModules
         {
             public Guid BusinessEntityId { get; set; } = Guid.Empty;
             public string Name { get; set; } = string.Empty;
+            public bool IsActive { get; set; } = true;
         }
 
         public class Validator : AbstractValidator<Command>
@@ -44,7 +45,7 @@ namespace IntrManApp.Api.Features.BasicModules
                         "CreateCustomer.Validation", validationResult.ToString()));
                 }
                 Customer item;
-                BusinessEntity entity;
+                BusinessEntity? entity;
                 if (request.BusinessEntityId == Guid.Empty)
                 {
                     entity = new();

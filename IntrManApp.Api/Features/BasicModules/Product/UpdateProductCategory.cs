@@ -66,7 +66,7 @@ namespace IntrManApp.Api.Features.BasicModules
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapPut("api/productCategories", 
-                async (UpdateProductCategoryRequest request, ISender sender) =>
+                async (ProductCategoryRequest request, ISender sender) =>
             {
                 var command = request.Adapt<UpdateProductCategory.Command>();
                 var result = await sender.Send(command);

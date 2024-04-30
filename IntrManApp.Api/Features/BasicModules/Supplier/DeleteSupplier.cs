@@ -25,8 +25,6 @@ namespace IntrManApp.Api.Features.BasicModules
             }
             public async Task<Result<bool>> Handle(Command request, CancellationToken cancellationToken)
             {
-
-
                 var item = _context.Suppliers
                     .Where(c => c.BusinessEntityId.Equals(request.BusinessEntityId)).FirstOrDefault();
                 if (item != null)

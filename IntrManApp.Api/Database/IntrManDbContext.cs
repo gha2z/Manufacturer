@@ -199,6 +199,8 @@ public partial class IntrManDbContext : DbContext
 
             entity.ToTable("Customer", "Sales");
 
+            entity.HasIndex(e => e.Name, "IX_Customer");
+
             entity.Property(e => e.BusinessEntityId).ValueGeneratedNever();
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.ModifiedDate)
@@ -939,6 +941,8 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => e.BusinessEntityId);
 
             entity.ToTable("Supplier", "Purchasing");
+
+            entity.HasIndex(e => e.Name, "IX_Supplier").IsUnique();
 
             entity.Property(e => e.BusinessEntityId).ValueGeneratedNever();
             entity.Property(e => e.IsActive).HasDefaultValue(true);

@@ -1,18 +1,8 @@
 ﻿namespace IntrManApp.Shared.Contract
 {
-    public class CreateProductCategoryRequest
+    public class ProductCategoryRequest
     {
+        public Guid Id { get; set; } = Guid.Empty;
         public string Name { get; set; } = string.Empty;
-    }
-
-    public class UpdateProductCategoryRequest
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-    }
-
-    public class DeleteProductCategoryRequest 
-    {
-        public Guid Id { get; set; }
     }
 }

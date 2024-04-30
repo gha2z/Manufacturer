@@ -26,9 +26,10 @@
             </RadzenColumn>
         </RadzenRow>
     </RadzenHeader>
-    <RadzenBody Expanded="@sidebarExpanded">
-        <RadzenRow class="rz-mx-auto rz-px-4 rz-pt-2 rz-pt-md-4 rz-pt-lg-6 rz-pt-xl-12 rz-pb-2 rz-pb-lg-12" Style="max-width: 1440px;">
-            <RadzenColumn Size="12">
+    <RadzenBody Expanded="@sidebarExpanded" >
+        <RadzenRow class="rz-mx-auto rz-px-4 rz-pt-2 rz-pt-md-4 rz-pt-lg-6 rz-pt-xl-12 rz-pb-2 rz-pb-lg-12" 
+        Style="margin:10px; padding:0px">
+            <RadzenColumn Size="12" >
             @Body
             </RadzenColumn>
         </RadzenRow>
@@ -47,7 +48,7 @@
                 <RadzenPanelMenuItem Text="User" Icon="manage_accounts" Style="margin-left:6px" Click="setActiveWindow" />
             </RadzenPanelMenuItem>
             <RadzenPanelMenuItem Text="Purchasing" Icon="shop_two">
-                <RadzenPanelMenuItem Text="Raw Material Check-in" Icon="add_shopping_cart" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Raw Material Check-in" Icon="add_shopping_cart" Path="/Checkin" Style="margin-left:6px" Click="setActiveWindow" />
                 <RadzenPanelMenuItem Text="Supplier" Icon="add_business" Path="/SupplierList" Style="margin-left:6px" Click="setActiveWindow" />
                 <RadzenPanelMenuItem Text="Reports" Icon="insert_chart" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
             </RadzenPanelMenuItem>

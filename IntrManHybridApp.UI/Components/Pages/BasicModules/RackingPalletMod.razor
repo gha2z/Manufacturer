@@ -1,0 +1,84 @@
+﻿@page "/RackingPalletMod/{id:guid?}"
+
+@using IntrManApp.Shared.Contract
+@using IntrManHybridApp.UI.Services
+@using Mapster
+
+@inject Radzen.DialogService dialogService
+@inject Radzen.NotificationService notificationService
+@inject ILocationService service
+@inject ILogger<RackingPalletMod> logger
+
+<RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
+    <RadzenStack Gap="1rem" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenFormField Text="Racking Pallet Column">
+            <RadzenTextBox @bind-Value="@item.Col" />
+        </RadzenFormField>
+        <RadzenFormField Text="Racking Pallet Row">
+            <RadzenNumeric @bind-Value="@item.Row" />
+        </RadzenFormField>
+    </RadzenStack>
+    <RadzenStack>
+        <RadzenFormField Text="Description">
+            <RadzenTextBox @bind-Value="@item.Description" />
+        </RadzenFormField>
+    </RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Click="Save" Variant="Variant.Flat" Text="Save" Style="width: 120px" />
+        <RadzenButton Click="@((args) => dialogService.Close(true))" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    RackingPalletRequest item = new RackingPalletRequest();
+
+    protected override async Task OnInitializedAsync()
+    {
+        logger.LogInformation($"RackingPalletMod.OnInitializedAsync(Id:\"{Id})\"");
+        if (Id != Guid.Empty)
+        {
+            var response = await service.GetRackingPalletAsync(Id);
+
+            if (response != null) 
+            {
+                item.Id = response.Id;
+                item.Col = response.Col;
+                item.Row = response.Row;
+                item.Description = response.Description;
+              
+            } else 
+            {
+                logger.LogWarning($"RackingPalletMod.OnInitializedAsync(Id:\"{Id})\" - failed to get Racking Pallet");
+            }
+        };
+
+        await base.OnInitializedAsync();
+    }
+
+    async Task Save()
+    {
+        Guid response = Guid.Empty;
+
+        if (Id != Guid.Empty)
+            response = await service.UpdateRackingPalletAsync(item);
+        else
+            response = await service.CreateRackingPalletAsync(item);
+
+        if (response != Guid.Empty)
+        {
+            dialogService.Close(true);
+        }
+        else
+        {
+            notificationService.Notify(
+                new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Failed to save Racking Pallet"
+                    });
+        }
+    }
+
+}

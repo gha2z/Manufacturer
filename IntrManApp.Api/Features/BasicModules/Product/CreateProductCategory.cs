@@ -13,6 +13,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public class Command : IRequest<Result<Guid>>
         {
+            public Guid Id { get; set; } = Guid.Empty;
             public string Name { get; set; } = string.Empty;
         }
 
@@ -58,7 +59,7 @@ namespace IntrManApp.Api.Features.BasicModules
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/productCategories", async (CreateProductCategoryRequest request, ISender sender) =>
+            app.MapPost("api/productCategories", async (ProductCategoryRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateProductCategory.Command>();
                 var result = await sender.Send(command);

@@ -1,16 +1,18 @@
 ﻿@page "/SupplierMod/{id:guid?}"
 
 @using IntrManApp.Shared.Contract
+@using IntrManHybridApp.UI.Services
 @inject Radzen.DialogService dialogService
 @inject Radzen.NotificationService notificationService
-@inject IHttpClientFactory HttpClientFactory
+@inject ISupplierService service
+@inject ILogger<SupplierMod> logger
 
 <RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
     <RadzenStack>
         <RadzenFormField Text="Supplier Name">
-            <RadzenTextBox @bind-Value="@name" />
+            <RadzenTextBox @bind-Value="@item.Name" />
         </RadzenFormField>
-        <RadzenSelectBar @bind-Value=@value TValue="bool" class="mb-5">
+        <RadzenSelectBar @bind-Value=@item.IsActive TValue="bool" class="mb-5">
             <Items>
                 <RadzenSelectBarItem Text="Active" Value="true" />
                 <RadzenSelectBarItem Text="In-active" Value="false" />
@@ -25,64 +27,53 @@
 
 @code {
     [Parameter] public Guid Id { get; set; }
-    string name = "";
-    bool value = true;
+    SupplierRequest item = new SupplierRequest();
 
     protected override async Task OnInitializedAsync()
     {
-        if(Id != null && Id != Guid.Empty)
+        if(Id != Guid.Empty)
         {
-            using var client = HttpClientFactory.CreateClient("BackendAPI");
-            var response = await client.GetFromJsonAsync<SupplierResponse>($"suppliers/{Id}");
+            logger.LogInformation($"SupplierMod.OnInitializedAsync - get supplier id:{Id}");
+            var response = await service.GetSupplierAsync(Id);
             if (response != null)
             {
-                name = response.Name;
-                value = response.IsActive;
+                item.BusinessEntityId = response.BusinessEntityId;
+                item.Name = response.Name;
+                item.IsActive = response.IsActive;
             }
         };
-       
+        logger.LogInformation("SupplierMod.OnInitializedAsync - initializing base");
         await base.OnInitializedAsync();
     }
 
     async Task Save()
     {
-        if (Id != null && Id != Guid.Empty)
+        Guid response = Guid.Empty;
+
+        if (Id != Guid.Empty)
         {
-            var item = new UpdateSupplierRequest() { BusinessEntityId = Id, Name = name, IsActive = value };
-            using var client = HttpClientFactory.CreateClient("BackendAPI");
-            var response = await client.PutAsJsonAsync("suppliers", item);
-            if (response.IsSuccessStatusCode)
-            {
-                dialogService.Close(true);
-            }
-            else
-            {
-                notificationService.Notify(
-                    new NotificationMessage 
-                    { 
-                        Severity = NotificationSeverity.Error, 
-                        Summary = "Error", 
-                        Detail = "Failed to save supplier" });
-            }
+            logger.LogInformation("Update supplier");
+            response = await service.UpdateSupplierAsync(item);
         }
         else
         {
-            var item = new CreateSupplierRequest() { Name = name, IsActive = value };
-            using var client = HttpClientFactory.CreateClient("BackendAPI");
-            var response = await client.PostAsJsonAsync("suppliers", item);
-            if (response.IsSuccessStatusCode)
-            {
-                dialogService.Close(true);
-            }
-            else
-            {
-                notificationService.Notify(
-                    new NotificationMessage 
-                    { 
-                        Severity = NotificationSeverity.Error, 
-                        Summary = "Error", 
-                        Detail = "Failed to save supplier" });
-            }
+            logger.LogInformation("create a new supplier");
+            response = await service.CreateSupplierAsync(item);
+        }
+        if (response!=Guid.Empty)
+        {
+            dialogService.Close(true);
+        }
+        else
+        {
+            logger.LogError("Failed to save supplier");
+            notificationService.Notify(
+                new NotificationMessage 
+                { 
+                    Severity = NotificationSeverity.Error, 
+                    Summary = "Error", 
+                    Detail = "Failed to save supplier" });
         }
     }
+       
 }

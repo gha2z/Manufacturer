@@ -1,0 +1,80 @@
+﻿@page "/CustomerMod/{id:guid?}"
+
+@using IntrManApp.Shared.Contract
+@using IntrManHybridApp.UI.Services
+@inject Radzen.DialogService dialogService
+@inject Radzen.NotificationService notificationService
+@inject ICustomerService service
+@inject ILogger<CustomerMod> logger
+
+<RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
+    <RadzenStack>
+        <RadzenFormField Text="Customer Name">
+            <RadzenTextBox @bind-Value="@item.Name" />
+        </RadzenFormField>
+        <RadzenSelectBar @bind-Value=@item.IsActive TValue="bool" class="mb-5">
+            <Items>
+                <RadzenSelectBarItem Text="Active" Value="true" />
+                <RadzenSelectBarItem Text="In-active" Value="false" />
+            </Items>
+        </RadzenSelectBar>
+    </RadzenStack>
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Click="Save" Variant="Variant.Flat" Text="Save" Style="width: 120px" />
+        <RadzenButton Click="@((args) => dialogService.Close(true))" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    CustomerRequest item = new CustomerRequest();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != Guid.Empty)
+        {
+            logger.LogInformation($"CustomerMod.OnInitializedAsync - get Customer id:{Id}");
+            var response = await service.GetCustomerAsync(Id);
+            if (response != null)
+            {
+                item.BusinessEntityId = response.BusinessEntityId;
+                item.Name = response.Name;
+                item.IsActive = response.IsActive;
+            }
+        };
+        logger.LogInformation("CustomerMod.OnInitializedAsync - initializing base");
+        await base.OnInitializedAsync();
+    }
+
+    async Task Save()
+    {
+        Guid response = Guid.Empty;
+
+        if (Id != Guid.Empty)
+        {
+            logger.LogInformation("Update Customer");
+            response = await service.UpdateCustomerAsync(item);
+        }
+        else
+        {
+            logger.LogInformation("create a new Customer");
+            response = await service.CreateCustomerAsync(item);
+        }
+        if (response != Guid.Empty)
+        {
+            dialogService.Close(true);
+        }
+        else
+        {
+            logger.LogError("Failed to save Customer");
+            notificationService.Notify(
+                new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Failed to save Customer"
+                    });
+        }
+    }
+
+}

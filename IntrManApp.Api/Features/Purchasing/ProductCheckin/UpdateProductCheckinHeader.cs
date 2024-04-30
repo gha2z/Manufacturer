@@ -47,7 +47,7 @@ namespace IntrManApp.Api.Features.Purchasing.MaterialCheckin
 
              
                 var productCheckin = await _context.ProductCheckIns
-                    .FindAsync(request.Id, cancellationToken);
+                    .FindAsync([request.Id, cancellationToken], cancellationToken: cancellationToken);
 
                 if (productCheckin == null)
                 {
@@ -77,7 +77,7 @@ namespace IntrManApp.Api.Features.Purchasing.MaterialCheckin
         public void AddRoutes(IEndpointRouteBuilder app)
         {
             app.MapPut("api/ProductCheckinHeaders", 
-                async (UpdateProductCheckinRequest request, ISender sender) =>
+                async (ProductCheckinRequest request, ISender sender) =>
             {
                 var command = request.Adapt<UpdateProductCheckinHeader.Command>();
                 var result =  await sender.Send(command);
@@ -91,13 +91,12 @@ namespace IntrManApp.Api.Features.Purchasing.MaterialCheckin
             {
                 Description = "Modifies raw materials checkin in header and returns the new created supplier id on successful operation",
                 Summary = "Update Raw Material Checkin Header",
-                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
-                {
-                    new Microsoft.OpenApi.Models.OpenApiTag
-                    {
+                Tags =
+                [
+                    new() {
                         Name = "Raw Materials Checkin"
                     }
-                }
+                ]
             });
         }
     }
