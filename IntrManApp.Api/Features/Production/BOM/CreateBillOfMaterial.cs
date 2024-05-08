@@ -6,6 +6,7 @@ using IntrManApp.Shared.Contract;
 using IntrManApp.Api.Entities;
 using Mapster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace IntrManApp.Api.Features.Production
 {
@@ -31,7 +32,7 @@ namespace IntrManApp.Api.Features.Production
             public BomSpecificationValidator()
             {
                 RuleFor(spec => spec.RawMaterialId).NotEmpty();
-                RuleFor(spec => spec.RowMaterialQuantity).GreaterThan(0);
+                RuleFor(spec => spec.RawMaterialQuantity).GreaterThan(0);
                 RuleFor(spec => spec.RawMaterialMeasurementUnitId).NotEmpty();
             }
         }
@@ -55,35 +56,39 @@ namespace IntrManApp.Api.Features.Production
                         "CreateBom.Validation", validationResult.ToString()));
                 }
 
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
                 try
                 {
-                    foreach(var bom in request.BomSpecifications)
+                    var product = await _context.Products
+                        .FindAsync([request.ProductId], cancellationToken: cancellationToken);
+
+                    if(product==null) return Result.Failure<bool>(new Error(
+                      "CreateBom.Validation", $"Product not found"));
+
+                    _context.BillOfMaterials.Where(b => b.ProductId.Equals(request.ProductId)).ExecuteDelete();
+                    //await _context.SaveChangesAsync(cancellationToken);
+                    
+                    foreach (var bom in request.BomSpecifications)
                     {
-                        BillOfMaterial? billOfMaterial;
-                        if (bom.Id == Guid.Empty)
+                        BillOfMaterial? billOfMaterial = new()
                         {
-                            billOfMaterial = new();
-                            _context.BillOfMaterials.Add(billOfMaterial);
-                        }
-                        else
-                        {
-                            billOfMaterial = await _context.BillOfMaterials.FindAsync(
-                            [bom.Id], cancellationToken: cancellationToken);
-                        }
-                        if (billOfMaterial != null) 
-                        { 
-                            billOfMaterial.ProductId = request.ProductId;
-                            billOfMaterial.RawMaterialId = bom.RawMaterialId;
-                            billOfMaterial.RawMaterialMeasurementUnitId = bom.RawMaterialMeasurementUnitId;
-                            billOfMaterial.RawMaterialQuantity = bom.RowMaterialQuantity;
+                            ProductId = request.ProductId,
+                            RawMaterialId = bom.RawMaterialId,
+                            RawMaterialMeasurementUnitId = bom.RawMaterialMeasurementUnitId,
+                            RawMaterialQuantity = bom.RawMaterialQuantity
                         };
+                        _context.BillOfMaterials.Add(billOfMaterial);
                     }
                     await _context.SaveChangesAsync(cancellationToken);
-
+                    await transaction.CommitAsync(cancellationToken);
                     return true;
                 }
+
+                  
+
                 catch (Exception ex)
                 {
+                    await transaction.RollbackAsync(cancellationToken);
                     return Result.Failure<bool>(new Error(
                        "CreateBom.Validation", $"{ex.Message}\n\n{ex}"));
                 }

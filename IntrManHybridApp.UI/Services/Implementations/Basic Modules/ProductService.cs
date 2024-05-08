@@ -16,7 +16,10 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
         {
             string message = $"Creating Product: Post {httpClient.BaseAddress}/products";
             logger.LogInformation(message: message);
-            var response = await httpClient.PostAsJsonAsync("Products", request);
+
+            var response = await httpClient.PostAsJsonAsync("products", request);
+            
+            logger.LogInformation($"response: {response}");
             return response.Content.ReadFromJsonAsync<Guid>().Result;
         }
         catch (Exception ex)
@@ -32,6 +35,7 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
         {
             logger.LogInformation($"Deleting Product: Delete {httpClient.BaseAddress}/products/{id}");
             var result = await httpClient.DeleteAsync($"Products/{id}");
+            logger.LogInformation($"result: {result}");
             return result.Content.ReadFromJsonAsync<bool>().Result;
         }
         catch (Exception ex)
@@ -57,7 +61,7 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
         }
     }
 
-    public async Task<IEnumerable<ProductResponse>> GetProductsAsync()
+    public async Task<IEnumerable<ProductResponse>> GetAllProductsAsync()
     {
         try
         {
@@ -81,6 +85,7 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
             logger.LogInformation($"Updating Product: Put {httpClient.BaseAddress}/products/" +
                 $"{Environment.NewLine}{json}");
             var response = await httpClient.PutAsJsonAsync("products", request);
+            logger.LogInformation($"response: {response}");
             return response.Content.ReadFromJsonAsync<Guid>().Result;
         }
         catch (Exception ex)
@@ -173,18 +178,20 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
 
     #region BillOfMaterial
 
-    public async Task<Guid> CreateBillOfMaterialAsync(BomRequest request)
+    public async Task<bool> CreateBillOfMaterialAsync(BomRequest request)
     {
         try
         {
-            logger.LogInformation($"Creating BillOfMaterial: Post {httpClient.BaseAddress}/boms");
+            var json = JsonSerializer.Serialize(request);
+            logger.LogInformation($"Creating BillOfMaterial for {request.ProductId}: Post {httpClient.BaseAddress}/boms. Request:{json}");
+           
             var response = await httpClient.PostAsJsonAsync("boms", request);
-            return response.Content.ReadFromJsonAsync<Guid>().Result;
+            return response.Content.ReadFromJsonAsync<bool>().Result;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating BillOfMaterial");
-            return Guid.Empty;
+            return false;
         }
     }
 
@@ -232,6 +239,21 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting BillOfMaterial");
+            return [];
+        }
+    }
+
+    public async Task<IEnumerable<RawMaterialBasicInfo>> GetRawMaterialsBasicInfoAsync()
+    {
+        try
+        {
+            logger.LogInformation($"Getting List of Id and Names of Raw Materials: Get {httpClient.BaseAddress}/rawMaterialsBasicInfo");
+            IEnumerable<RawMaterialBasicInfo> response = await httpClient.GetFromJsonAsync<IEnumerable<RawMaterialBasicInfo>>($"rawMaterialsBasicInfo") ?? [];
+            return response;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting List of Id and Names of Raw Materials");
             return [];
         }
     }

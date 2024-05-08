@@ -1,0 +1,295 @@
+﻿@page "/ProductionOrder"
+
+@using IntrManApp.Shared.Contract
+@using System.Diagnostics
+@using System.Text.Json
+@using IntrManHybridApp.UI.Services
+@using Mapster
+
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject IProductionService service
+@inject ILogger<ProductionOrder> logger
+
+<RadzenTemplateForm TItem="ProductionOrderRequest" Data="@order" Submit="@Save">
+    <RadzenCard Style="margin-bottom:10px">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Shade="Shade.Light"  class="rz-shadow-0">
+                @caption
+                <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="@true" Text="@captionExt" class="rz-ml-2" />
+            </RadzenButton>
+            <RadzenProgressBarCircular Visible="@isSaving" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium">
+                <Template>Saving</Template>
+            </RadzenProgressBarCircular>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
+                <RadzenButton Text="Clear" ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Reset" Click="@Clear" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+    <RadzenCard>
+
+        <RadzenStack>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1.5rem">
+                <RadzenFormField Text="Production Date">
+                    <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="order.OrderDate" Name="orderDate" ShowTime="true" />
+                </RadzenFormField>
+            </RadzenStack>
+
+            <RadzenStack>
+                <RadzenDataGrid @ref="endProductsGrid" Data="@order.ProductionOrderLines" TItem="ProductionOrderLineRequest"
+                                RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single">
+                    <Columns>
+
+                        <RadzenDataGridColumn Property="EndProduct.Name" Title="End Product" Width="230px" Frozen="true">
+                            <EditTemplate Context="endProduct">
+                                <RadzenDropDown @bind-Value="endProduct.ProductId" Data="@products" TextProperty="Name" ValueProperty="Id"
+                                                Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Change="@(args => ItemChanged(endProduct))" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="TotalBatches" Title="Qty" Width="75px">
+                            <Template Context="endProduct">
+                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", endProduct.TotalBatches)
+                            </Template>
+                            <EditTemplate Context="endProduct">
+                                <RadzenNumeric @bind-Value="endProduct.TotalBatches" Min="1" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="QuantityPerBatch" Title="Weight" Width="80px">
+                            <Template Context="endProduct">
+                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", endProduct.QuantityPerBatch)
+                            </Template>
+                            <EditTemplate Context="endProduct">
+                                <RadzenNumeric @bind-Value="endProduct.QuantityPerBatch" Step="0.5" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="ExpirationDate" Title="Expiry Date" Width="90px">
+                            <Template Context="endProduct">
+                                @endProduct.ExpirationDate.ToString("MM/dd/yyyy")
+                            </Template>
+                            <EditTemplate Context="endProduct">
+                                <RadzenDatePicker @bind-Value="endProduct.ExpirationDate" DateFormat="MM/dd/yyyy" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Context="endProduct" Filterable="false" Sortable="false" TextAlign="TextAlign.Right"
+                                              Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Width="100px">
+                            <Template Context="endProduct">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(endProduct))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(endProduct))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                            </Template>
+                            <EditTemplate Context="endProduct">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(endProduct))">
+                                </RadzenButton>
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(endProduct))">
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(endProduct))">
+                                </RadzenButton>
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+
+</RadzenTemplateForm>
+
+@code {
+    RadzenDataGrid<ProductionOrderLineRequest> endProductsGrid = new();
+
+    ProductionOrderRequest order = new() { OrderDate = DateTime.Now, ScheduleDate = DateTime.Now };
+
+    IEnumerable<EndProduct> products = [];
+    IEnumerable<ProductionOrderLineRequest> orderItems = [];
+
+    string caption = "New Production Order";
+    string captionExt = "0";
+    bool isSaving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        products = await service.GetEndProductsAsync();
+
+        await InsertRow();
+    }
+
+    void ItemChanged(ProductionOrderLineRequest item)
+    {
+        logger.LogInformation($"ItemChanged Raised ...");
+        if (item != null && item.ProductId != Guid.Empty)
+        {
+            logger.LogInformation($"ItemChanged - Finding '{item.EndProduct?.Name ?? string.Empty}' infos ...");
+            var endProduct = products.FirstOrDefault(p => p.Id == item.ProductId);
+            if (endProduct == null) return;
+            item.StartDate = order.OrderDate;
+            item.EndDate = item.StartDate.AddDays(endProduct.DaysToManufacture);
+            item.QuantityPerBatch = endProduct.OrderQuantity;
+            item.ExpirationDate = item.EndDate.AddDays(endProduct.DaysToExpire);
+            item.MeasurementUnitId = endProduct.MeasurementUnitOrderId;
+        }
+    }
+
+    void ValidateExpiryDate(ProductionOrderLineRequest item)
+    {
+        if (item.ExpirationDate < item.EndDate)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Expiration date cannot be less than production date");
+            if (item.EndProduct != null && item.EndProduct.Id != Guid.Empty)
+                item.ExpirationDate = item.EndDate.AddDays(item.EndProduct.DaysToExpire);
+        }
+    }
+
+    bool ItemsValidated(ProductionOrderLineRequest item)
+    {
+        var endProduct = products.FirstOrDefault(p => p.Id == item.ProductId);
+        if (endProduct == null) return false;
+
+        item.EndProduct = endProduct;
+
+        return true;
+    }
+
+    async Task InsertRow()
+    {
+        logger.LogInformation("Inserting new row");
+        var newItem = new ProductionOrderLineRequest()
+            {
+               
+                TotalBatches = 1
+            };
+        await endProductsGrid.InsertRow(newItem);
+    }
+
+    void OnRowCreate(ProductionOrderLineRequest item)
+    {
+        logger.LogInformation($"OnRowCreate");
+        if (item.ProductId != Guid.Empty)
+        {
+            logger.LogInformation($"OnRowCreate - finding raw material, location and racking data");
+
+
+            if (ItemsValidated(item))
+            {
+                logger.LogInformation($"Items Validated ... Adding row to collection '{item.EndProduct?.Name ?? string.Empty}'");
+                order.ProductionOrderLines.Add(item);
+                captionExt = $"({order.ProductionOrderLines.Count})";
+            }
+            else
+            {
+                logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.EndProduct?.Name ?? string.Empty}'");
+                endProductsGrid.CancelEditRow(item);
+            }
+        };
+    }
+
+    async Task EditRow(ProductionOrderLineRequest item)
+    {
+        logger.LogInformation($"Editing row - collection count:'{order.ProductionOrderLines.Count}");
+
+        await endProductsGrid.EditRow(item);
+        logger.LogInformation($"Editing row '{item.EndProduct?.Name ?? string.Empty}' EditMode:{endProductsGrid.IsRowInEditMode(item)}");
+        logger.LogInformation($"Editing row - collection count:'{order.ProductionOrderLines.Count}" +
+            $"{Environment.NewLine}===> grid.Count:{endProductsGrid.Count}");
+        await endProductsGrid.Reload();
+        await endProductsGrid.EditRow(item);
+    }
+
+    void OnUpdateRow(ProductionOrderLineRequest item)
+    {
+        logger.LogInformation($"OnRowUpdate - finding raw material, location and racking data");
+
+        if (ItemsValidated(item))
+        {
+            logger.LogInformation($"Items Validated ...  '{item.EndProduct?.Name ?? string.Empty}'");
+        }
+        else
+        {
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit and re-enter edit mode '{item.EndProduct?.Name ?? string.Empty}'");
+            endProductsGrid.CancelEditRow(item);
+            endProductsGrid.EditRow(item);
+        }
+
+        logger.LogInformation($"Adding row to collection '{item.EndProduct?.Name ?? string.Empty}'");
+    }
+
+    async Task DeleteRow(ProductionOrderLineRequest item)
+    {
+        logger.LogInformation($"delete row - orderg if the row exists '{item.EndProduct?.Name ?? string.Empty}'");
+        if (order.ProductionOrderLines.Contains(item))
+        {
+            logger.LogInformation("deleting row");
+            order.ProductionOrderLines.Remove(item);
+            await endProductsGrid.Reload();
+            captionExt = $"({order.ProductionOrderLines.Count})";
+            await InsertRow();
+        }
+    }
+
+    async void CancelEdit(ProductionOrderLineRequest item)
+    {
+        logger.LogInformation($"Cancelling Edit '{item.EndProduct?.Name ?? string.Empty}'");
+        endProductsGrid.CancelEditRow(item);
+        await InsertRow();
+    }
+
+    async void SaveRow(ProductionOrderLineRequest item)
+    {
+        logger.LogInformation($"Save Row '{item.EndProduct?.Name ?? string.Empty}'");
+        if (item.ProductId == Guid.Empty) return;
+        await endProductsGrid.UpdateRow(item);
+        await InsertRow();
+    }
+
+    async void Clear()
+    {
+
+        order.ProductionOrderLines.Clear();
+        await endProductsGrid.Reload();
+        await InsertRow();
+        captionExt = "";
+    }
+
+    async Task Save()
+    {
+        Guid response = Guid.Empty;
+        var json = JsonSerializer.Serialize(order);
+        logger.LogInformation($"Saving Production Order:{Environment.NewLine}{json}");
+        isSaving = true;
+        response = await service.CreateProductionOrderAsync(order);
+
+        if (response != Guid.Empty)
+        {
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Transaction Saved", "Production Order has been saved successfully");
+            Clear();
+            // logger.LogInformation($"Calling CartonIdPrinting Dialog - order Id:'{response}'");
+            // await DialogService.OpenAsync<CartonIdPrinting>
+            // ("Carton ID Printing",
+            //     new Dictionary<string, object>() { { "Id", response } },
+            //     new DialogOptions() { Width = "1180px", Height = "720px", Resizable = true, Draggable = true }
+            // );
+            isSaving = false;
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Oooppss ...", "Failed to save Production Order");
+            isSaving = false;
+        }
+    }
+
+
+
+
+
+}

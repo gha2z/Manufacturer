@@ -1,0 +1,244 @@
+﻿@page "/BomSpecMod/{id:guid}"
+
+@using IntrManApp.Shared.Contract
+@using System.Diagnostics
+@using System.Text.Json
+@using IntrManHybridApp.UI.Services
+@using Mapster
+
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject IProductService service
+@inject ILogger<BomSpecMod> logger
+
+
+    <RadzenCard Style="margin-bottom:10px">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Shade="Shade.Dark" class="rz-shadow-0" Click="@InsertRow" Text="Add Raw Material">
+               
+            </RadzenButton>
+            <RadzenProgressBarCircular Visible="@isSaving" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium">
+                <Template>Wait</Template>
+            </RadzenProgressBarCircular>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+
+    <RadzenCard>
+        
+                <RadzenDataGrid @ref="bomsGrid" Data="@bomSpecs" TItem="BomSpecificationResponse"
+                                RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single">
+                    <Columns>
+
+                        <RadzenDataGridColumn Property="RawMaterialName" Title="Raw Material" Width="250px" Frozen="true">
+                            <EditTemplate Context="rawMaterial">
+                                <RadzenDropDown @bind-Value="rawMaterial.RawMaterialId" Data="@rawMaterials" TextProperty="Names" ValueProperty="Id"
+                                                Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Change="@(args => ItemChanged(rawMaterial))" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="RawMaterialQuantity" Title="Weight" Width="110px">
+                            <Template Context="rawMaterial">
+                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", rawMaterial.RawMaterialQuantity)
+                            </Template>
+                            <EditTemplate Context="rawMaterial">
+                                <RadzenNumeric @bind-Value="rawMaterial.RawMaterialQuantity" Step="0.5" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Context="rawMaterial" Filterable="false" Sortable="false" TextAlign="TextAlign.Right"
+                                              Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Width="100px">
+                            <Template Context="rawMaterial">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(rawMaterial))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(rawMaterial))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                            </Template>
+                            <EditTemplate Context="rawMaterial">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(rawMaterial))">
+                                </RadzenButton>
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(rawMaterial))">
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(rawMaterial))">
+                                </RadzenButton>
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+    </RadzenCard>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    List<BomSpecificationResponse> bomSpecs = [];
+    IEnumerable<RawMaterialBasicInfo> rawMaterials = [];
+
+    string caption = "Bill of Materials";
+    string captionExt = "0";
+    bool isSaving = false;
+
+    RadzenDataGrid<BomSpecificationResponse> bomsGrid = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await base.OnInitializedAsync();
+
+            bomSpecs = await service.GetBomSpecificationAsync(Id);
+            rawMaterials = await service.GetRawMaterialsBasicInfoAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError( ex, "Error loading bom specs");
+            NotificationService.Notify(NotificationSeverity.Error, "Error loading bom specs");
+        }
+    }
+
+    void ItemChanged(BomSpecificationResponse item)
+    {
+        logger.LogInformation($"ItemChanged Raised ...");
+        if (item != null && item.RawMaterialId != Guid.Empty)
+        {
+            logger.LogInformation($"ItemChanged - Finding '{item.RawMaterialName ?? string.Empty}' infos ...");
+            var rawMaterial = rawMaterials.FirstOrDefault(p => p.Id == item.RawMaterialId);
+            if (rawMaterial == null) return;
+            item.RawMaterialName = rawMaterial.Names;
+            item.RawMaterialMeasurementUnitId = rawMaterial.MeasurementUnitId;
+            item.RawMaterialMeasurementUnitName = rawMaterial.MeasurementUnitName;
+
+        }
+    }
+
+    bool ItemsValidated(BomSpecificationResponse item)
+    {
+        var rawMaterial = rawMaterials.FirstOrDefault(p => p.Id == item.RawMaterialId);
+        if (rawMaterial == null) return false;
+
+        item.RawMaterialMeasurementUnitId = rawMaterial.MeasurementUnitId;
+        item.RawMaterialName = rawMaterial.Names;
+        item.RawMaterialMeasurementUnitName = rawMaterial.MeasurementUnitName;
+
+        return true;
+    }
+
+    async Task InsertRow()
+    {
+        logger.LogInformation("Inserting new row");
+        var newItem = new BomSpecificationResponse()
+            {
+                  RawMaterialQuantity = 1,
+            };
+        await bomsGrid.InsertRow(newItem);
+    }
+
+    void OnRowCreate(BomSpecificationResponse item)
+    {
+        logger.LogInformation($"OnRowCreate");
+        if (item.RawMaterialId != Guid.Empty)
+        {
+            logger.LogInformation($"OnRowCreate - finding raw material, location and racking data");
+
+
+            if (ItemsValidated(item))
+            {
+                logger.LogInformation($"Items Validated ... Adding row to collection '{item.RawMaterialName ?? string.Empty}'");
+                bomSpecs.Add(item);
+                captionExt = $"({bomSpecs.Count})";
+            }
+            else
+            {
+                logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.RawMaterialName ?? string.Empty}'");
+                bomsGrid.CancelEditRow(item);
+            }
+        };
+    }
+
+    async Task EditRow(BomSpecificationResponse item)
+    {
+
+        await bomsGrid.EditRow(item);
+        logger.LogInformation($"Editing row '{item?.RawMaterialName ?? string.Empty}' EditMode:{bomsGrid.IsRowInEditMode(item)}");
+
+        await bomsGrid.Reload();
+        await bomsGrid.EditRow(item);
+    }
+
+    void OnUpdateRow(BomSpecificationResponse item)
+    {
+        logger.LogInformation($"OnRowUpdate - finding raw material, location and racking data");
+
+        if (ItemsValidated(item))
+        {
+            logger.LogInformation($"Items Validated ...  '{item?.RawMaterialName ?? string.Empty}'");
+        }
+        else
+        {
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit and re-enter edit mode '{item.RawMaterialName ?? string.Empty}'");
+            bomsGrid.CancelEditRow(item);
+            bomsGrid.EditRow(item);
+        }
+
+        logger.LogInformation($"Adding row to collection '{item?.RawMaterialName ?? string.Empty}'");
+    }
+
+    async Task DeleteRow(BomSpecificationResponse item)
+    {
+        logger.LogInformation($"delete row - checking if the row exists '{item.RawMaterialName ?? string.Empty}'");
+        if (bomSpecs.Contains(item))
+        {
+            logger.LogInformation("deleting row");
+            bomSpecs.Remove(item);
+            await bomsGrid.Reload();
+            captionExt = $"({bomSpecs.Count})";
+            await InsertRow();
+        }
+    }
+
+    async void CancelEdit(BomSpecificationResponse item)
+    {
+        logger.LogInformation($"Cancelling Edit '{item.RawMaterialName ?? string.Empty}'");
+        bomsGrid.CancelEditRow(item);
+        await InsertRow();
+    }
+
+    async void SaveRow(BomSpecificationResponse item)
+    {
+        logger.LogInformation($"Save Row '{item.RawMaterialName ?? string.Empty}'");
+        if (item.RawMaterialId == Guid.Empty) return;
+        await bomsGrid.UpdateRow(item);
+        await InsertRow();
+    }
+
+    async Task Save()
+    {
+        BomRequest bomRequest = new BomRequest()
+        {
+            ProductId = Id
+        };
+        foreach(var item in bomSpecs)
+        {
+            bomRequest.BomSpecifications.Add(new BomSpecification()
+            {
+                    
+                    RawMaterialId = item.RawMaterialId,
+                    RawMaterialQuantity = item.RawMaterialQuantity,
+                    RawMaterialMeasurementUnitId = item.RawMaterialMeasurementUnitId       
+            });
+        }
+        var result = await service.CreateBillOfMaterialAsync(bomRequest);
+        if (result)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "BOM Specification saved successfully");
+            DialogService.Close(true);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error saving BOM Specification");
+        }
+    }
+
+}

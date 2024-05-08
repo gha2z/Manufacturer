@@ -101,7 +101,7 @@ public static class CreateProductionOrder
                         var batchNumber = string.Empty;
                         while (batchExists)
                         {
-                            batchNumber = $"{request.OrderDate:ddMMyy}{productionOfDayCount + 1}";
+                            batchNumber = $"{request.OrderDate:ddMMyyyy}{productionOfDayCount + 1}";
                             batchExists = await _context.ProductionOrderLineDetails
                                 .AnyAsync(x => x.BatchNumber == batchNumber, cancellationToken);
                             productionOfDayCount++;
@@ -118,8 +118,6 @@ public static class CreateProductionOrder
                 //generate product inventory and raw material requirements for each production order line
                 foreach(var line in productionOrderLines)
                 {
-                  
-                 
                         
                         foreach (var lineDetail in line.ProductionOrderLineDetails)
                         {

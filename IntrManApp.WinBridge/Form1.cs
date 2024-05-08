@@ -1,4 +1,4 @@
-﻿using HubClient;
+﻿using IntrManApp.SignalRClient;
 using Seagull.BarTender.Print;
 using System;
 using System.Data;
@@ -20,6 +20,7 @@ namespace IntrManApp.WinBridge
 
         private async void Form1_Load(object sender, EventArgs e)
         {
+            this.SuspendLayout();
             this.Location = new Point(Screen.PrimaryScreen.WorkingArea.Width - this.Width, Screen.PrimaryScreen.WorkingArea.Height - this.Height);
 
             hubConnection = new HubConnector();
@@ -35,6 +36,7 @@ namespace IntrManApp.WinBridge
             {
                 textBox1.AppendText($"{Environment.NewLine}{ex.Message}");
             }
+            this.ResumeLayout();
         }
 
         private void HubConnection_EventMessage(object sender, string e)
@@ -72,42 +74,50 @@ namespace IntrManApp.WinBridge
                         Engine engine = new Engine(true);
                         lock (engine)
                         {
-                            try
+                            this.Invoke(new MethodInvoker(delegate ()
                             {
-                                var labelFormat = engine.Documents.Open(arguments.LabelFilePath);
-                                labelFormat.PrintSetup.PrinterName = arguments.PrinterName;
-                                labelFormat.PrintSetup.IdenticalCopiesOfLabel = 1;
-                                labelFormat.PrintSetup.NumberOfSerializedLabels = 1;
-
-                                Messages btMessages;
-                                Result result = labelFormat.Print(appName, 10000, out btMessages);
-                                string btMessageString = string.Empty;
-
-                                foreach (Seagull.BarTender.Print.Message msg in btMessages)
+                                try
                                 {
-                                    btMessageString += "\n\n" + msg.Text;
+                               
+                                        textBox1.Clear();
+                                        this.Visible = true;
+                                    this.Show();
+                                    this.BringToFront();
+                                        textBox1.Text = $"Processing label printing \"{arguments.LabelFilePath}\"";
+                                
+                                        var labelFormat = engine.Documents.Open(arguments.LabelFilePath);
+                                        labelFormat.PrintSetup.PrinterName = arguments.PrinterName;
+                                        labelFormat.PrintSetup.IdenticalCopiesOfLabel = 1;
+                                        labelFormat.PrintSetup.NumberOfSerializedLabels = 1;
+
+                                        Messages btMessages;
+                                        Result result = labelFormat.Print(appName, 10000, out btMessages);
+                                        string btMessageString = string.Empty;
+
+                                        foreach (Seagull.BarTender.Print.Message msg in btMessages)
+                                        {
+                                            btMessageString += "\n\n" + msg.Text;
+                                        }
+
+                                    
+                                        if (result == Result.Failure)
+                                            resultString = "Print Failed" + btMessageString;
+                                        else
+                                            resultString = "Label was successfully sent to printer." + btMessageString;
+                                        textBox1.AppendText($"\n\nReceiving Bartender result messages:\n{result}\n\n{resultString}\n\nClosing label file ...");
+                                        labelFormat.Close(SaveOptions.DoNotSaveChanges);
+                              
                                 }
-
-
-                                if (result == Result.Failure)
-                                    resultString = "Print Failed" + btMessageString;
-                                else
-                                    resultString = "Label was successfully sent to printer." + btMessageString;
-
-
-                                labelFormat.Close(SaveOptions.DoNotSaveChanges);
-                            }
-                            catch (Exception ex)
-                            {
-                                this.Invoke((Action)(() =>
+                                catch (Exception ex)
                                 {
                                     textBox1.AppendText($"{Environment.NewLine}{ex.Message}");
-                                }));
-                            }
-                            finally
-                            {
-                                engine.Stop();
-                            }
+                                }
+                                finally
+                                {
+                                    engine.Stop();
+                                }
+                                this.Hide();
+                            }));
                         }
                         response = JsonSerializer.Serialize(
                           new AppMessage(AppMessageType.PrintLabelResult, resultString));

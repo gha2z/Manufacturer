@@ -205,9 +205,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SSHubClient\HubClient.csproj">
+    <ProjectReference Include="..\IntrManApp.SignalRClient\IntrManApp.SignalRClient.csproj">
       <Project>{7a248b76-71db-44b3-86e8-c6a5ebf0050a}</Project>
-      <Name>HubClient</Name>
+      <Name>IntrManApp.SignalRClient</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -9,8 +9,8 @@ namespace IntrManApp.Shared.Contract
     public class ProductionOrderRequest
     {
         public Guid Id { get; set; } = Guid.Empty;
-        public DateTime? OrderDate { get; set; } = DateTime.Now;
-        public DateTime? ScheduleDate { get; set; } = DateTime.Now;
+        public DateTime OrderDate { get; set; } = DateTime.Now;
+        public DateTime ScheduleDate { get; set; } = DateTime.Now;
         public List<ProductionOrderLineRequest> ProductionOrderLines { get; set; } = [];
     }
 
@@ -20,10 +20,10 @@ namespace IntrManApp.Shared.Contract
         public int TotalBatches { get; set; }
         public decimal QuantityPerBatch { get; set; }
         public Guid MeasurementUnitId { get; set; }
-        public DateTime? StartDate { get; set; } = DateTime.Now;
-        public DateTime? EndDate { get; set; }
-        public DateTime? ExpirationDate { get; set; }
+        public DateTime StartDate { get; set; } = DateTime.Now;
+        public DateTime EndDate { get; set; }
+        public DateTime ExpirationDate { get; set; }
 
-
+        public EndProduct? EndProduct { get; set; }
     }
 }

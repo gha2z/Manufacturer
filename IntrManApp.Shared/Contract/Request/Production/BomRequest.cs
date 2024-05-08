@@ -11,7 +11,7 @@ namespace IntrManApp.Shared.Contract
         public Guid Id { get; set; } = Guid.Empty;
         public Guid RawMaterialId { get; set; }
         public Guid RawMaterialMeasurementUnitId { get; set; }
-        public decimal RowMaterialQuantity { get; set; }
+        public decimal RawMaterialQuantity { get; set; }
     }
     public  class BomRequest
     {

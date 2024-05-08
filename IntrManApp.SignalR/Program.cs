@@ -1,4 +1,4 @@
-using BlazorSignalRApp.Components;
+using IntrManApp.SignalR.Components;
 using Microsoft.AspNetCore.ResponseCompression;
 using BlazorSignalRApp.Hubs;
 
@@ -21,12 +21,14 @@ app.UseResponseCompression();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
+    app.UseResponseCompression();
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+app.Urls.Add("http://localhost:3108");
 
 app.UseStaticFiles();
 app.UseAntiforgery();

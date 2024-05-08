@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HubClient
+namespace IntrManApp.SignalRClient
 {
     public class HubMessageEventArgs : EventArgs
     {

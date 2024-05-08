@@ -10,7 +10,7 @@
 @inject IProductService service
 @inject ILogger<ProductList> logger
 
-<RadzenTabs >
+<RadzenTabs>
     <Tabs>
         <RadzenTabsItem Text="Raw Materials">
             <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
@@ -26,7 +26,7 @@
                     <RadzenDataGridColumn Property="Names" Title="Product Name" Width="150px" Frozen="true" />
                     <RadzenDataGridColumn Property="ProductNumber" Title="SKU" Width="50px" />
                     <RadzenDataGridColumn Property="CategoryName" Title="Category" Width="80px" />
-                    <RadzenDataGridColumn Property="measurementUnitOrderName" Title="Measurement Unit" Width="70px" TextAlign="TextAlign.Center" />
+                    @* <RadzenDataGridColumn Property="measurementUnitOrderName" Title="Measurement Unit" Width="70px" TextAlign="TextAlign.Center" /> *@
                     <RadzenDataGridColumn Property="DaysToExpire" Title="Days to Expire" Width="70px" TextAlign="TextAlign.Right" />
                     <RadzenDataGridColumn Property="LocationName" Title="Default Location" Width="70px" TextAlign="TextAlign.Center" />
                     <RadzenDataGridColumn Context="item" Width="50px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
@@ -52,12 +52,17 @@
                 Data="@items" @bind-Value="@selectedItems">
                 <HeaderTemplate>
                     <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" 
-                    Text="New Item" Click="@(args => NewItem(true))" />
+                        Text="New Item" Click="@(args => NewItem(true))" />
                 </HeaderTemplate>
                 <Template Context="item">
                     <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowSorting="true" Data="@item.Boms" IsLoading="@isLoadingBom">
                         <HeaderTemplate>
-                            <RadzenText Text="Bill of Materials" />
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium"
+                            Click="@(args => CreateOrUpdateBom(item))" @onclick:stopPropagation="true">
+                                Bill of Material
+                                <RadzenBadge BadgeStyle="BadgeStyle.Primary" IsPill="@true" Text="@item.Boms.Count().ToString()" 
+                                class="rz-ml-2"/>
+                            </RadzenButton>
                         </HeaderTemplate>
                         <Columns>
                             <RadzenDataGridColumn Property="RawMaterialName" Title="Raw Material Name" Width="180px"/>
@@ -66,7 +71,7 @@
                                     @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}",bom.RawMaterialQuantity)
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn Property="RawMaterialMeasurementUnitName" Title="Unit Measurement" Width="90px"/>
+                            @* <RadzenDataGridColumn Property="RawMaterialMeasurementUnitName" Title="Unit Measurement" Width="90px"/> *@
                         </Columns>
                     </RadzenDataGrid>
                 </Template>
@@ -74,10 +79,10 @@
                     <RadzenDataGridColumn Property="Names" Title="Product Name" Width="150px" Frozen="true"/>
                     <RadzenDataGridColumn Property="ProductNumber" Title="SKU" Width="50px" />
                     <RadzenDataGridColumn Property="CategoryName" Title="Category"  Width="80px" />
-                    <RadzenDataGridColumn Property="measurementUnitOrderName" Title="Measurement Unit" Width="70px" TextAlign="TextAlign.Center" />
+                    @* <RadzenDataGridColumn Property="measurementUnitOrderName" Title="Measurement Unit" Width="70px" TextAlign="TextAlign.Center" /> *@
                     <RadzenDataGridColumn Property="DaysToExpire" Title="Days to Expire" Width="70px" TextAlign="TextAlign.Right"/>
                     <RadzenDataGridColumn Property="LocationName" Title="Default Location" Width="70px" TextAlign="TextAlign.Center" />
-                    <RadzenDataGridColumn Property="BomCount" Title="BOM Definition" Width="70px" TextAlign="TextAlign.Center" />
+                    @* <RadzenDataGridColumn Property="BomCount" Title="BOM Definition" Width="70px" TextAlign="TextAlign.Center" /> *@
                     <RadzenDataGridColumn Context="item" Width="50px" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
                         <Template Context="item">
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" 
@@ -148,7 +153,7 @@
         {
             logger.LogInformation("ProductList.InitData - Get Product list");
 
-            allItems = await service.GetProductsAsync();
+            allItems = await service.GetAllProductsAsync();
 
             InitEndProducts();
 
@@ -235,25 +240,36 @@
     async Task UpdateItem(ProductResponse item)
     {
         logger.LogInformation($"ProductionList.UpdateItem {item.Id} - Opening ProductMod dialog service");
-        
+
         var title = item.IsFinishedGood ? "Update End Product" : "Update Raw Material";
-        
+
         var res = await DialogService.OpenAsync<ProductMod>(title,
             new Dictionary<string, object>() { { "Id", item.Id } },
             new DialogOptions() { Width = "640px", Height = "570px", Resizable = true, Draggable = true });
-        
+
         if(res!=null&&res) await InitData();
     }
 
+    async Task CreateOrUpdateBom(ProductResponse item)
+    {
+        logger.LogInformation($"ProductList.CreateOrUpdateBom - open BOM dialog for product {item.Id}");
+        var res = await DialogService.OpenAsync<BomSpecMod>("Bill of Material",
+            new Dictionary<string, object>() { { "Id", item.Id } },
+            new DialogOptions() { Width = "670px", Height = "570px", Resizable = true, Draggable = true });
+
+        if (res != null && res) await InitData();
+    }
+
+
     void RowRender(RowRenderEventArgs<ProductResponse> args)
     {
-        args.Expandable = args.Data.BomCount>0;
+        args.Expandable = true; // args.Data.BomCount>0;
     }
 
     void RowExpand(ProductResponse item)
     {
-        if(item.Boms.Count==0)
-        {
+        // if(item.Boms.Count==0)
+        // {
             isLoadingBom = true;
           
             try
@@ -278,6 +294,6 @@
                 });
             };
             isLoadingBom = false;
-        }
+        //}
     }
 }
