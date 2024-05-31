@@ -1,0 +1,306 @@
+﻿@page "/RawMaterialCheckOut"
+
+@using IntrManApp.Shared.Contract
+@using System.Diagnostics
+@using System.Text.Json
+@using IntrManHybridApp.UI.Services
+@using Mapster
+`
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject IProductionService service
+@inject ILocationService locationService
+@inject ILogger<RawMaterialCheckOut> logger
+
+@* <RadzenTemplateForm TItem="ProductCheckOutRequest" Data="@checkout" Submit="@Save"> *@
+    <RadzenCard Style="margin-bottom:10px">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenButton ButtonStyle="ButtonStyle.Warning" Shade="Shade.Darker" class="rz-shadow-0">
+                @caption
+                <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="@true" Text="@captionExt" class="rz-ml-2" />
+            </RadzenButton>
+            <RadzenProgressBarCircular Visible="@isSaving" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium">
+                <Template>Saving</Template>
+            </RadzenProgressBarCircular>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+                <RadzenButton Text="Clear" ButtonStyle="ButtonStyle.Danger" Click="@Clear" />
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+    <RadzenCard>
+
+        <RadzenStack>
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1.5rem">
+                <RadzenFormField Text="Checkout Date">
+                    <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="@checkout.CheckoutDate" Name="checkoutDate" ShowTime="true" />
+                </RadzenFormField>
+               
+            </RadzenStack>
+
+            <RadzenStack>
+                <RadzenDataGrid @ref="rawMaterialsGrid" Data="@checkout.ProductCheckoutDetail" TItem="ProductCheckOutDetailRequest"
+                                RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single">
+                    <Columns>
+
+                        <RadzenDataGridColumn Property="BatchNumber" Title="Carton ID" Width="100px" Frozen="true" TextAlign="TextAlign.Center">
+                            <EditTemplate Context="item">
+                               @*  <RadzenDropDown @bind-Value="raw.InventoryId" Data="@rawMaterials" TextProperty="BatchNumber" ValueProperty="InventoryId"
+                                                Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Change="@(args => ItemChanged(raw))" /> *@
+                                <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Carton Id" Style="width:100%;font-size:small" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="RawMaterial.Names" Title="Item" Width="230px">
+                           
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="Quantity" Title="Batch Size (gr)" Width="80px">
+                            <Template Context="raw">
+                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", raw.Quantity)
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn Property="Location.Name" Title="Location" Width="130px">
+                            <EditTemplate Context="rawMaterial">
+                                <RadzenDropDown @bind-Value="rawMaterial.LocationId" Data="@locations" TextProperty="Name" ValueProperty="Id"
+                                    @ref=@locationDropDown Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="RackingPallet.ColRow" Title="Rack" Width="100px">
+                            <EditTemplate Context="rawMaterial">
+                                <RadzenDropDown @bind-Value="rawMaterial.RackingPalletId" Data="@rackingPallets" TextProperty="ColRow"
+                                    @ref=@rackingPalletDropDown ValueProperty="Id" Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"/>
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Context="raw" Filterable="false" Sortable="false" TextAlign="TextAlign.Right"
+                                              Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Width="100px">
+                            <Template Context="raw">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(raw))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(raw))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                            </Template>
+                            <EditTemplate Context="raw">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(raw))">
+                                </RadzenButton>
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(raw))">
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(raw))">
+                                </RadzenButton>
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+@* 
+</RadzenTemplateForm> *@
+
+@code {
+    RadzenDataGrid<ProductCheckOutDetailRequest> rawMaterialsGrid = new();
+
+    ProductCheckOutRequest checkout = new();
+
+    ProductCheckOutDetailRequest? tmpItem;
+
+    IEnumerable<InventoryItem> rawMaterials = [];
+    IEnumerable<ProductCheckOutDetailRequest> checkoutItems = [];
+    IEnumerable<LocationResponse> locations = [];
+    IEnumerable<RackingPalletResponse> rackingPallets = [];
+
+    string caption = "New Raw Materials Checkout";
+    string captionExt = "0";
+    bool isSaving = false;
+    bool isAddNew = false;
+
+    RadzenDropDown<Guid>? locationDropDown;
+    RadzenDropDown<Guid>? rackingPalletDropDown;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        locations = await locationService.GetLocationsAsync();
+        rackingPallets = await locationService.GetRackingPalletsAsync();
+        rawMaterials = await service.GetRawMaterialsForProductionAsync();
+
+        await InsertRow();
+    }
+
+    bool ItemValidated(ProductCheckOutDetailRequest item)
+    {
+        logger.LogInformation($"ItemChanged Raised ...");
+        InventoryItem? raw = null;
+        if (!string.IsNullOrEmpty(item.BatchNumber))
+        {
+            if(checkout.ProductCheckoutDetail.Any(p=>p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()) && p!=item))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Carton ID already exists");
+                if (!isAddNew && tmpItem != null) item.BatchNumber = tmpItem.BatchNumber; 
+                return false;
+            };
+            raw = rawMaterials.FirstOrDefault(p => p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()));
+            if (raw != null)
+            {
+                item.UnitMeasurementId = raw.MeasurementUnitId;
+                item.Quantity = raw.Quantity;
+                item.InventoryId = raw.InventoryId;
+                item.RawMaterial = raw;
+                if(item.LocationId==Guid.Empty)
+                    locationDropDown?.Element.FocusAsync();
+                else
+                {
+                    item.Location = locations.FirstOrDefault(p => p.Id == item.LocationId);
+                    if (item.RackingPalletId == Guid.Empty)
+                        rackingPalletDropDown?.Element.FocusAsync();
+                    else
+                        item.RackingPallet = rackingPallets.FirstOrDefault(p => p.Id == item.RackingPalletId);
+                }
+
+            }
+        }
+        return (raw!=null && item.LocationId!=Guid.Empty && item.RackingPalletId!=Guid.Empty);
+    }
+
+    async Task InsertRow()
+    {
+        logger.LogInformation("Inserting new row");
+        var newItem = new ProductCheckOutDetailRequest();
+        isAddNew = true;
+        await rawMaterialsGrid.InsertRow(newItem);
+    }
+
+    void OnRowCreate(ProductCheckOutDetailRequest item)
+    {
+        logger.LogInformation($"OnRowCreate");
+        if (item.InventoryId != Guid.Empty)
+        {
+            logger.LogInformation($"OnRowCreate - finding raw material, location and racking data");
+
+
+            if (ItemValidated(item))
+            {
+                logger.LogInformation($"Items Validated ... Adding row to collection '{item.RawMaterial?.Names ?? string.Empty}'");
+                checkout.ProductCheckoutDetail.Add(item);
+                captionExt = $"({checkout.ProductCheckoutDetail.Count})";
+            }
+            else
+            {
+                logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.RawMaterial?.Names ?? string.Empty}'");
+                rawMaterialsGrid.CancelEditRow(item);
+            }
+        };
+    }
+
+
+
+    async Task EditRow(ProductCheckOutDetailRequest item)
+    {
+        isAddNew = false;
+        logger.LogInformation($"Editing row - collection count:'{checkout.ProductCheckoutDetail.Count}");
+        tmpItem = item.Adapt<ProductCheckOutDetailRequest>();
+        await rawMaterialsGrid.EditRow(item);
+        logger.LogInformation($"Editing row '{item.RawMaterial?.Names ?? string.Empty}' EditMode:{rawMaterialsGrid.IsRowInEditMode(item)}");
+        logger.LogInformation($"Editing row - collection count:'{checkout.ProductCheckoutDetail.Count}" +
+            $"{Environment.NewLine}===> grid.Count:{rawMaterialsGrid.Count}");
+        await rawMaterialsGrid.Reload();
+        await rawMaterialsGrid.EditRow(item);
+    }
+
+    void OnUpdateRow(ProductCheckOutDetailRequest item)
+    {
+        logger.LogInformation($"OnRowUpdate - finding raw material, location and racking data");
+
+        if (ItemValidated(item))
+        {
+            logger.LogInformation($"Items Validated ...  '{item.RawMaterial?.Names ?? string.Empty}'");
+        }
+        else
+        {
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit and re-enter edit mode '{item.RawMaterial?.Names ?? string.Empty}'");
+            rawMaterialsGrid.CancelEditRow(item);
+            if(tmpItem!=null) item = tmpItem.Adapt<ProductCheckOutDetailRequest>();
+            rawMaterialsGrid.EditRow(item);
+        }
+
+        logger.LogInformation($"Adding row to collection '{item.RawMaterial?.Names ?? string.Empty}'");
+    }
+
+    async Task DeleteRow(ProductCheckOutDetailRequest item)
+    {
+        logger.LogInformation($"delete row - orderg if the row exists '{item.RawMaterial?.Names ?? string.Empty}'");
+        if (checkout.ProductCheckoutDetail.Contains(item))
+        {
+            logger.LogInformation("deleting row");
+            checkout.ProductCheckoutDetail.Remove(item);
+            await rawMaterialsGrid.Reload();
+            captionExt = $"({checkout.ProductCheckoutDetail.Count})";
+            await InsertRow();
+        }
+    }
+
+    async void CancelEdit(ProductCheckOutDetailRequest item)
+    {
+        logger.LogInformation($"Cancelling Edit '{item.RawMaterial?.Names ?? string.Empty}'");
+        rawMaterialsGrid.CancelEditRow(item);
+        await InsertRow();
+    }
+
+    async void SaveRow(ProductCheckOutDetailRequest item)
+    {
+        logger.LogInformation($"Save Row '{item.RawMaterial?.Names ?? string.Empty}'");
+        if (item.InventoryId == Guid.Empty || item.LocationId == Guid.Empty || item.RackingPalletId == Guid.Empty) return;
+        await rawMaterialsGrid.UpdateRow(item);
+        await InsertRow();
+    }
+
+    async void Clear ()
+    {
+
+        checkout.ProductCheckoutDetail.Clear();
+        await rawMaterialsGrid.Reload();
+        await InsertRow();
+        captionExt = "";
+    }
+
+    async Task Save()
+    {
+        Guid response = Guid.Empty;
+        if (checkout.ProductCheckoutDetail.Count == 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No items to save");
+            return;
+        };
+        
+        var json = JsonSerializer.Serialize(checkout);
+        logger.LogInformation($"Saving Raw Materials Checkout:{Environment.NewLine}{json}");
+        isSaving = true;
+        response = await service.CreateRawMaterialsCheckout(checkout);
+
+        if (response != Guid.Empty)
+        {
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Transaction Saved", "Raw Material checkout has been saved successfully");
+            Clear();
+           
+            isSaving = false;
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Oooppss ...", "Failed to save checkout");
+            isSaving = false;
+        }
+    }
+
+
+
+
+
+}

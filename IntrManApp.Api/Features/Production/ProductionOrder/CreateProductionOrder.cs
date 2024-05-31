@@ -77,8 +77,6 @@ public static class CreateProductionOrder
                         TotalBatches = line.TotalBatches,
                         QuantityPerBatch = line.QuantityPerBatch,
                         MeasurementUnitId = line.MeasurementUnitId,
-                        StartDate = line.StartDate,
-                        ExpirationDate = line.ExpirationDate
                     };
 
                     productionOrder.ProductionOrderLines.Add(productionOrderLine);
@@ -110,49 +108,82 @@ public static class CreateProductionOrder
                         {
                             BatchNumber = batchNumber
                         };
+                  
                         line.ProductionOrderLineDetails.Add(lineDetail);
+                        await _context.SaveChangesAsync(cancellationToken);
+
+                        //generate product inventory
+                        var productInventory = new ProductInventory
+                        {
+                            InventoryId = lineDetail.InventoryId,
+                            ProductId = line.ProductId,
+                            MeasurementUnitId = line.MeasurementUnitId,
+                            Quantity = line.QuantityPerBatch,
+                            BatchNumber = lineDetail.BatchNumber,
+                            Flag = 5, //Production - Not Started
+                            TransIdReference = productionOrder.Id,
+                            TotalBatches = 1 //line.TotalBatches
+                        };
+                        _context.ProductInventories.Add(productInventory);
+
+                        //generate raw material requirements
+                        var bom = await _context.BillOfMaterials
+                            .Where(x => x.ProductId == line.ProductId)
+                            .ToListAsync(cancellationToken);
+                        foreach (var item in bom)
+                        {
+                            var orderLineDetailResource = new ProductionOrderLineDetailResource
+                            {
+                                RawMaterialId = item.RawMaterialId,
+                                Quantity = item.RawMaterialQuantity * line.QuantityPerBatch,// * line.TotalBatches,
+                                MeasurementUnitId = item.RawMaterialMeasurementUnitId,
+                                InventoryId = lineDetail.InventoryId
+                            };
+                            _context.ProductionOrderLineDetailResources.Add(orderLineDetailResource);
+                        }
                         await _context.SaveChangesAsync(cancellationToken);
                     }
                 }
 
                 //generate product inventory and raw material requirements for each production order line
-                foreach(var line in productionOrderLines)
-                {
+                //foreach(var line in productionOrderLines)
+                //{
                         
-                        foreach (var lineDetail in line.ProductionOrderLineDetails)
-                        {
+                //        foreach (var lineDetail in line.ProductionOrderLineDetails)
+                //        {
                             //generate product inventory
-                            var productInventory = new ProductInventory
-                            {
-                                InventoryId = lineDetail.InventoryId,
-                                ProductId = line.ProductId,
-                                MeasurementUnitId = line.MeasurementUnitId,
-                                Quantity = line.QuantityPerBatch,
-                                BatchNumber = lineDetail.BatchNumber,
-                                ProductionDate = line.StartDate,
-                                ExpirationDate = line.ExpirationDate,
-                                Flag = 5, //In production
-                                TransIdReference = productionOrder.Id
-                            };
-                            _context.ProductInventories.Add(productInventory);
+                            //var productInventory = new ProductInventory
+                            //{
+                            //    InventoryId = lineDetail.InventoryId,
+                            //    ProductId = line.ProductId,
+                            //    MeasurementUnitId = line.MeasurementUnitId,
+                            //    Quantity = line.QuantityPerBatch,
+                            //    BatchNumber = lineDetail.BatchNumber,
+                            //    ProductionDate = line.StartDate,
+                            //    ExpirationDate = line.ExpirationDate,
+                            //    Flag = 5, //Production - Not Started
+                            //    TransIdReference = productionOrder.Id
+                            //};
+                            //_context.ProductInventories.Add(productInventory);
 
-                            //generate raw material requirements
-                            var bom = await _context.BillOfMaterials
-                                .Where(x => x.ProductId == line.ProductId)
-                                .ToListAsync(cancellationToken);
-                            foreach (var item in bom)
-                            {
-                                var orderLineDetailResource = new ProductionOrderLineDetailResource
-                                {
-                                    RawMaterialId = item.RawMaterialId,
-                                    Quantity = item.RawMaterialQuantity * line.QuantityPerBatch,
-                                    MeasurementUnitId = item.RawMaterialMeasurementUnitId
-                                };
-                                _context.ProductionOrderLineDetailResources.Add(orderLineDetailResource);
-                            }
-                        }
+                            ////generate raw material requirements
+                            //var bom = await _context.BillOfMaterials
+                            //    .Where(x => x.ProductId == line.ProductId)
+                            //    .ToListAsync(cancellationToken);
+                            //foreach (var item in bom)
+                            //{
+                            //    var orderLineDetailResource = new ProductionOrderLineDetailResource
+                            //    {
+                            //        RawMaterialId = item.RawMaterialId,
+                            //        Quantity = item.RawMaterialQuantity * line.QuantityPerBatch,
+                            //        MeasurementUnitId = item.RawMaterialMeasurementUnitId,
+                            //        InventoryId = lineDetail.InventoryId
+                            //    };
+                            //    _context.ProductionOrderLineDetailResources.Add(orderLineDetailResource);
+                            //}
+                //        }
                     
-                }
+                //}
 
                 await _context.SaveChangesAsync(cancellationToken);
 
@@ -190,7 +221,7 @@ public class CreateProductionOrderEndPoint : ICarterModule
                 {
                     new Microsoft.OpenApi.Models.OpenApiTag
                     {
-                        Name = "Production Order"
+                        Name = "Production"
                     }
                 }
         });

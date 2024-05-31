@@ -14,4 +14,15 @@ public interface IProductionService
     Task<ProductionOrderRequest> GetProductionOrderAsync(Guid id);
     Task<IEnumerable<ProductionOrderRequest>> GetProductionOrdersAsync();
     Task<IEnumerable<EndProduct>> GetEndProductsAsync();
+    Task<IEnumerable<ProductionItem>> GetProductionOrderItemsAsync(Guid id);
+    Task<IEnumerable<ProductionItem>> GetProductionOrderItemsByDateAsync(DateTime date);
+    Task<bool> StartItemProduction(Guid inventoryId);
+    Task<bool> AbortItemProduction(Guid inventoryId);
+
+    Task<IEnumerable<InventoryItem>> GetRawMaterialsForProductionAsync();
+    Task<Guid> CreateRawMaterialsCheckout(ProductCheckOutRequest request);
+
+    Task<IEnumerable<InventoryItem>> GetRunningProductionItemsAsync();
+    Task<Guid> CreateFinishedProductCheckin(FinishedProductInternalCheckinRequest request);
+
 }

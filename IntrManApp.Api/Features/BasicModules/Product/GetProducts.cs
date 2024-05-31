@@ -15,14 +15,10 @@ public static class GetProducts
         
     }
 
-    internal sealed class Handler : IRequestHandler<Query, Result<List<ProductResponse>>>
+    internal sealed class Handler(IDbConnectionFactory dbConnectionFactory) : IRequestHandler<Query, Result<List<ProductResponse>>>
     {
-        private readonly IDbConnectionFactory _dbConnectionFactory;
+        private readonly IDbConnectionFactory _dbConnectionFactory = dbConnectionFactory;
 
-        public Handler( IDbConnectionFactory dbConnectionFactory)
-        {
-                _dbConnectionFactory = dbConnectionFactory;
-        }
         public async Task<Result<List<ProductResponse>>> Handle(Query request, CancellationToken cancellationToken)
         {
             using IDbConnection connection = _dbConnectionFactory.CreateOpenConnection();

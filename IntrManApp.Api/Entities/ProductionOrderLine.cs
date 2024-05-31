@@ -21,12 +21,6 @@ public partial class ProductionOrderLine
 
     public int? TotalBatchesScrapped { get; set; }
 
-    public DateTime? StartDate { get; set; }
-
-    public DateTime? EndDate { get; set; }
-
-    public DateTime? ExpirationDate { get; set; }
-
     public DateTime? ModifiedDate { get; set; }
 
     public virtual MeasurementUnit? MeasurementUnit { get; set; }

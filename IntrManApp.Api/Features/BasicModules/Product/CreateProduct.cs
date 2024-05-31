@@ -133,7 +133,7 @@ namespace IntrManApp.Api.Features.BasicModules
                                 Name = "Weight - Kgs"
                             };
 
-                            measurementUnitOrder = new()
+                            var childUnit = new MeasurementUnit()
                             {
                                 Name = "gram",
                                 Quantity = 1,
@@ -144,17 +144,29 @@ namespace IntrManApp.Api.Features.BasicModules
                             {
                                 Name = "kilogram",
                                 Quantity = 1000,
-                                Child = measurementUnitOrder,
+                                Child = childUnit,
                                 Group  = measurementUnitGroup
                             };
-                            
+                            _context.Add(measurementUnitGroup);
+                            _context.Add(childUnit);
+                            _context.Add(parentUnit);
+                            if(product.IsFinishedGood)
+                                measurementUnitOrder = parentUnit;
+                            else
+                                measurementUnitOrder = childUnit;
                         }
                         else
                         {
                             measurementUnitGroup = _context.MeasurementUnitGroups.FirstOrDefault();
                             if (measurementUnitGroup != null)
-                                measurementUnitOrder = _context.MeasurementUnits
-                                    .Where(u => u.GroupId.Equals(measurementUnitGroup.Id)).FirstOrDefault();
+                            {
+                                if(product.IsFinishedGood)
+                                    measurementUnitOrder = _context.MeasurementUnits
+                                        .Where(u => u.GroupId.Equals(measurementUnitGroup.Id) && u.Quantity!=1).FirstOrDefault();
+                                else
+                                    measurementUnitOrder = _context.MeasurementUnits
+                                        .Where(u => u.GroupId.Equals(measurementUnitGroup.Id) && u.Quantity==1).FirstOrDefault();
+                            }
                         }
                     }
                     else
@@ -163,8 +175,12 @@ namespace IntrManApp.Api.Features.BasicModules
                             .Where(u => u.Id.Equals(request.MeasurementUnitGroupId)).FirstOrDefault();
                         if (measurementUnitGroup != null)
                         {
-                            measurementUnitOrder = _context.MeasurementUnits
-                            .Where(u => u.GroupId.Equals(request.MeasurementUnitOrderId)).FirstOrDefault();
+                            if (product.IsFinishedGood)
+                                measurementUnitOrder = _context.MeasurementUnits
+                                    .Where(u => u.GroupId.Equals(measurementUnitGroup.Id) && u.Quantity != 1).FirstOrDefault();
+                            else
+                                measurementUnitOrder = _context.MeasurementUnits
+                                    .Where(u => u.GroupId.Equals(measurementUnitGroup.Id) && u.Quantity == 1).FirstOrDefault();
                         }
                     }
                     if (measurementUnitGroup == null)

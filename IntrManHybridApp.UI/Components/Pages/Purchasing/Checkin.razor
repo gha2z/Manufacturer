@@ -63,7 +63,7 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="QuantityPerBatch" Title="Weight" Width="80px">
+                        <RadzenDataGridColumn Property="QuantityPerBatch" Title="Weight (gram)" Width="80px">
                             <Template Context="rawMaterial">
                                 @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", rawMaterial.QuantityPerBatch)
                             </Template>

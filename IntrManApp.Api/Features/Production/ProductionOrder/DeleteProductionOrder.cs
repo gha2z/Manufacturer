@@ -109,7 +109,7 @@ namespace IntrManApp.Api.Features.Production.ProductionOrder
                 {
                     new Microsoft.OpenApi.Models.OpenApiTag
                     {
-                        Name = "Production Order"
+                        Name = "Production"
                     }
                 }
             });

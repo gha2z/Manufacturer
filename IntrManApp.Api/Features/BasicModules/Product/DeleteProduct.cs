@@ -5,6 +5,7 @@ using IntrManApp.Shared.Common;
 using IntrManApp.Shared.Contract;
 using Mapster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
@@ -23,14 +24,10 @@ namespace IntrManApp.Api.Features.BasicModules
             }
         }
 
-        internal sealed class Handler : IRequestHandler<Command, Result<bool>>
+        internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Command, Result<bool>>
         {
-            private readonly IntrManDbContext _context;
+            private readonly IntrManDbContext _context = dbContext;
 
-            public Handler(IntrManDbContext dbContext)
-            {
-                _context = dbContext;
-            }
             public async Task<Result<bool>> Handle(Command request, CancellationToken cancellationToken)
             {
 
@@ -39,6 +36,7 @@ namespace IntrManApp.Api.Features.BasicModules
                     .Where(c => c.Id.Equals(request.Id)).FirstOrDefault();
                 if (item != null)
                 {
+                    _context.BillOfMaterials.Where(c => c.ProductId.Equals(request.Id)).ExecuteDelete();
                     _context.Products.Remove(item);
                     await _context.SaveChangesAsync();
                     return true;

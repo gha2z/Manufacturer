@@ -6,6 +6,7 @@ using IntrManApp.Shared.Contract;
 using IntrManApp.Api.Entities;
 using Mapster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace IntrManApp.Api.Features.Production
 {
@@ -33,7 +34,7 @@ namespace IntrManApp.Api.Features.Production
                 RuleFor(product => product.Quantity).GreaterThan(0);
                 RuleFor(product => product.UnitMeasurementId).NotEmpty();
                 RuleFor(product => product.LocationId).NotEmpty();
-                RuleFor(product => product.RackingPalleteId).NotEmpty();
+                RuleFor(product => product.RackingPalletId).NotEmpty();
             }
         }
 
@@ -56,8 +57,10 @@ namespace IntrManApp.Api.Features.Production
                         "CreateMaterialCheckOut.Validation", validationResult.ToString()));
                 }
 
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
                 try
                 {
+                   
                     var productCheckout = new ProductCheckout() { CheckOutDate = request.CheckoutDate};
                    
                     foreach (var item in request.ProductCheckoutDetail)
@@ -75,20 +78,28 @@ namespace IntrManApp.Api.Features.Production
                                 MeasurementUnitId = item.UnitMeasurementId,
                                 Quantity = item.Quantity,
                                 LocationId = item.LocationId,
-                                RackingPalletId = item.RackingPalleteId,
+                                RackingPalletId = item.RackingPalletId,
                                 SourceLocationId = inventory.LocationId,
                                 SourceRackingPalletId = inventory.RackingPalletId
                             });
                         inventory.LocationId = item.LocationId;
-                        inventory.RackingPalletId = item.RackingPalleteId;
+                        inventory.RackingPalletId = item.RackingPalletId;
+                        inventory.Flag = 2;
+
+                       
                     }
                     _context.ProductCheckouts.Add(productCheckout);
                     await _context.SaveChangesAsync(cancellationToken);
 
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"Production.DistributeRawMaterialsCheckout @CheckOutId={productCheckout.Id}", cancellationToken: cancellationToken);
+
+                    await transaction.CommitAsync(cancellationToken);
                     return productCheckout.Id;
                 }
                 catch (Exception ex)
                 {
+                    await transaction.RollbackAsync(cancellationToken);
                     return Result.Failure<Guid>(new Error(
                        "CreateProductCheckOut.Validation", $"{ex.Message}\n\n{ex}"));
                 }

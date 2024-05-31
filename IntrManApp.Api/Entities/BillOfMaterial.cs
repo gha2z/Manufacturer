@@ -17,9 +17,5 @@ public partial class BillOfMaterial
 
     public DateTime? ModifiedDate { get; set; }
 
-    public virtual Product Product { get; set; } = null!;
-
-    public virtual Product RawMaterial { get; set; } = null!;
-
     public virtual MeasurementUnit RawMaterialMeasurementUnit { get; set; } = null!;
 }

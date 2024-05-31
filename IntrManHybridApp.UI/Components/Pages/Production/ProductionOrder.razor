@@ -35,6 +35,9 @@
                 <RadzenFormField Text="Production Date">
                     <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="order.OrderDate" Name="orderDate" ShowTime="true" />
                 </RadzenFormField>
+                <RadzenFormField Text="Schedule Data">
+                    <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="order.ScheduleDate" Name="scheduleDate" ShowTime="true" />
+                </RadzenFormField>
             </RadzenStack>
 
             <RadzenStack>
@@ -50,7 +53,16 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="TotalBatches" Title="Qty" Width="75px">
+                        <RadzenDataGridColumn Property="QuantityPerBatch" Title="Batch Size (Kgs)" Width="80px">
+                            <Template Context="endProduct">
+                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", endProduct.QuantityPerBatch)
+                            </Template>
+                            <EditTemplate Context="endProduct">
+                                <RadzenNumeric @bind-Value="endProduct.QuantityPerBatch" Step="0.5" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="TotalBatches" Title="No. of Batches" Width="75px">
                             <Template Context="endProduct">
                                 @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", endProduct.TotalBatches)
                             </Template>
@@ -59,12 +71,22 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="QuantityPerBatch" Title="Weight" Width="80px">
+                        <RadzenDataGridColumn Title="Total Weight" Width="75px">
                             <Template Context="endProduct">
-                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", endProduct.QuantityPerBatch)
+                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", endProduct.TotalBatches * endProduct.QuantityPerBatch)
+                            </Template>
+                           @*  <EditTemplate Context="endProduct">
+                                <RadzenNumeric @bind-Value="endProduct.TotalBatches" Min="1" />
+                            </EditTemplate> *@
+                        </RadzenDataGridColumn>
+
+
+                       @*  <RadzenDataGridColumn Property="EndDate" Title="Date of Completion" Width="90px">
+                            <Template Context="endProduct">
+                                @endProduct.EndDate.ToString("MM/dd/yyyy")
                             </Template>
                             <EditTemplate Context="endProduct">
-                                <RadzenNumeric @bind-Value="endProduct.QuantityPerBatch" Step="0.5" />
+                                <RadzenDatePicker @bind-Value="endProduct.ExpirationDate" DateFormat="MM/dd/yyyy" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
@@ -75,7 +97,7 @@
                             <EditTemplate Context="endProduct">
                                 <RadzenDatePicker @bind-Value="endProduct.ExpirationDate" DateFormat="MM/dd/yyyy" />
                             </EditTemplate>
-                        </RadzenDataGridColumn>
+                        </RadzenDataGridColumn> *@
 
                         <RadzenDataGridColumn Context="endProduct" Filterable="false" Sortable="false" TextAlign="TextAlign.Right"
                                               Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Width="100px">
@@ -131,7 +153,7 @@
             logger.LogInformation($"ItemChanged - Finding '{item.EndProduct?.Name ?? string.Empty}' infos ...");
             var endProduct = products.FirstOrDefault(p => p.Id == item.ProductId);
             if (endProduct == null) return;
-            item.StartDate = order.OrderDate;
+            item.StartDate = order.ScheduleDate;
             item.EndDate = item.StartDate.AddDays(endProduct.DaysToManufacture);
             item.QuantityPerBatch = endProduct.OrderQuantity;
             item.ExpirationDate = item.EndDate.AddDays(endProduct.DaysToExpire);
@@ -262,6 +284,17 @@
     async Task Save()
     {
         Guid response = Guid.Empty;
+        if(order.ProductionOrderLines.Count == 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No items to save");
+            return;
+        };
+        //order.ScheduleDate = order.OrderDate;
+        if(order.ScheduleDate<order.OrderDate)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Schedule date cannot be less than production date");
+            return;
+        }
         var json = JsonSerializer.Serialize(order);
         logger.LogInformation($"Saving Production Order:{Environment.NewLine}{json}");
         isSaving = true;
@@ -272,12 +305,12 @@
             NotificationService.Notify(NotificationSeverity.Success,
                 "Transaction Saved", "Production Order has been saved successfully");
             Clear();
-            // logger.LogInformation($"Calling CartonIdPrinting Dialog - order Id:'{response}'");
-            // await DialogService.OpenAsync<CartonIdPrinting>
-            // ("Carton ID Printing",
-            //     new Dictionary<string, object>() { { "Id", response } },
-            //     new DialogOptions() { Width = "1180px", Height = "720px", Resizable = true, Draggable = true }
-            // );
+            logger.LogInformation($"Calling Production Status Dialog - order Id:'{response}'");
+            await DialogService.OpenAsync<ProductionStatus>
+            ("Production Order Label Printing",
+                new Dictionary<string, object>() { { "Id", response } },
+                new DialogOptions() { Width = "1180px", Height = "720px", Resizable = true, Draggable = true }
+            );
             isSaving = false;
         }
         else

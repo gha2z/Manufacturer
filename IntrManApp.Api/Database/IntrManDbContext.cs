@@ -113,16 +113,6 @@ public partial class IntrManDbContext : DbContext
                 .HasDefaultValue(1m)
                 .HasColumnType("decimal(8, 2)");
 
-            entity.HasOne(d => d.Product).WithMany(p => p.BillOfMaterialProducts)
-                .HasForeignKey(d => d.ProductId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_BillOfMaterials_Product");
-
-            entity.HasOne(d => d.RawMaterial).WithMany(p => p.BillOfMaterialRawMaterials)
-                .HasForeignKey(d => d.RawMaterialId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_BillOfMaterials_Product1");
-
             entity.HasOne(d => d.RawMaterialMeasurementUnit).WithMany(p => p.BillOfMaterials)
                 .HasForeignKey(d => d.RawMaterialMeasurementUnitId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -228,7 +218,7 @@ public partial class IntrManDbContext : DbContext
         {
             entity.ToTable("InventoryFlag", "Production");
 
-            entity.Property(e => e.Name).HasMaxLength(25);
+            entity.Property(e => e.Name).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Location>(entity =>
@@ -658,6 +648,7 @@ public partial class IntrManDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TotalBatches).HasDefaultValue(1);
 
             entity.HasOne(d => d.FlagNavigation).WithMany(p => p.ProductInventories)
                 .HasForeignKey(d => d.Flag)
@@ -753,13 +744,10 @@ public partial class IntrManDbContext : DbContext
             entity.ToTable("ProductionOrderLine", "Production");
 
             entity.Property(e => e.LineId).HasDefaultValueSql("(newsequentialid())");
-            entity.Property(e => e.EndDate).HasColumnType("datetime");
-            entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
             entity.Property(e => e.ModifiedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.QuantityPerBatch).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.StartDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductionOrderLines)
                 .HasForeignKey(d => d.MeasurementUnitId)
@@ -783,6 +771,10 @@ public partial class IntrManDbContext : DbContext
 
             entity.Property(e => e.InventoryId).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.BatchNumber).HasMaxLength(15);
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Line).WithMany(p => p.ProductionOrderLineDetails)
                 .HasForeignKey(d => d.LineId)
@@ -801,6 +793,11 @@ public partial class IntrManDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.Inventory).WithMany(p => p.ProductionOrderLineDetailResources)
+                .HasForeignKey(d => d.InventoryId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_ProductionOrderLineDetailResource_ProductionOrderLineDetail");
 
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductionOrderLineDetailResources)
                 .HasForeignKey(d => d.MeasurementUnitId)

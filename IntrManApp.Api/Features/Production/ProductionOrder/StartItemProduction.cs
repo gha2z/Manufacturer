@@ -1,0 +1,126 @@
+﻿using Carter;
+using FluentValidation;
+using IntrManApp.Api.Database;
+using IntrManApp.Shared.Common;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
+
+namespace IntrManApp.Api.Features.Production.ProductionOrder
+{
+
+    public static class StartItemProduction
+    {
+        public class Command : IRequest<Result<bool>>
+        {
+            public Guid Id { get; set; }
+        }
+
+        public class Validator : AbstractValidator<Command>
+        {
+            public Validator()
+            {
+                RuleFor(c => c.Id).NotEmpty();
+            }
+        }
+
+        internal sealed class Handler : IRequestHandler<Command, Result<bool>>
+        {
+            private readonly IntrManDbContext _context;
+            private readonly IValidator<Command> _validator;
+
+            public Handler(IntrManDbContext dbContext, IValidator<Command> validator)
+            {
+                _context = dbContext;
+                _validator = validator;
+            }
+
+            public async Task<Result<bool>> Handle(Command request, CancellationToken cancellationToken)
+            {
+                var validationResult = _validator.Validate(request);
+                if (!validationResult.IsValid)
+                {
+                    return Result.Failure<bool>(new Error(
+                                               "StartItemProduction.Validation", validationResult.ToString()));
+                }
+
+                try
+                {
+                    var productionOrder = await _context.ProductionOrderLineDetails
+                        .FindAsync(request.Id, cancellationToken);
+
+                    if (productionOrder == null)
+                    {
+                        return Result.Failure<bool>(new Error("StartItemProduction.NotFound", $"Production order with Inventory Id {request.Id} not found"));
+                    }
+
+                    using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+                    try
+                    {
+                        productionOrder.StartDate = DateTime.Now;
+                        productionOrder.ModifiedDate = DateTime.Now;
+
+                        var inventoryItem = await _context.ProductInventories
+                            .FindAsync(request.Id, cancellationToken);
+
+                        if (inventoryItem != null)
+                        {
+                            inventoryItem.Flag = 6;
+                            inventoryItem.ModifiedDate = DateTime.Now;
+                        }
+                        await _context.SaveChangesAsync(cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync(cancellationToken);
+                        return Result.Failure<bool>(new Error("StartItemProduction.Validation", $"{ex.Message}\n\n{ex}"));
+                    }
+
+
+
+                    return Result.Success(true);
+                }
+                catch (Exception ex)
+                {
+                    return Result.Failure<bool>(new Error(
+                                               "StartItemProduction.Validation", $"{ex.Message}\n\n{ex}"));
+                }
+            }
+        }
+    }
+
+    public class StartItemProductionEndPoint : ICarterModule
+    {
+        public void AddRoutes(IEndpointRouteBuilder app)
+        {
+            app.MapGet("api/startItemProduction/{id}", async (Guid id, ISender sender) =>
+            {
+                var command = new StartItemProduction.Command() { Id = id };
+
+                var result = await sender.Send(command);
+
+                if (result.IsSuccess)
+                {
+                    return Results.Ok(result.Value);
+                }
+
+                return Results.BadRequest(result.Error);
+            }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
+            {
+                Description = "Start the production of en end product and " +
+                    "returns TRUE on successful operation." +
+                    "This will automatically update the product inventory status of the end product from " +
+                    "5 (Production - Not Started) to 6 (Production - In Progress).",
+                Summary = "Delete an existing Production Order",
+                Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiTag
+                    {
+                        Name = "Production"
+                    }
+                }
+            });
+        }
+    }
+}

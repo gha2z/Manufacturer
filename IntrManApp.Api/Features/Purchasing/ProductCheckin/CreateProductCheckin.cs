@@ -149,7 +149,8 @@ namespace IntrManApp.Api.Features.Purchasing
                                     LocationId = productCheckInLine.LocationId,
                                     RackingPalletId = productCheckInLine.RackingPalletId,
                                     ModifiedDate = DateTime.Now,
-                                    TransIdReference = productCheckIn.Id
+                                    TransIdReference = productCheckIn.Id,
+                                    Flag = 1
                                 };
                                 _context.ProductInventories.Add(productInventory);
                             }

@@ -1,0 +1,158 @@
+﻿@using System.Diagnostics
+@using System.Text.Json
+@using Microsoft.AspNetCore.SignalR.Client
+@using Radzen.Blazor
+@using System.Text
+@using Newtonsoft.Json
+@using IntrManApp.Shared.Contract
+@using IntrManApp.Shared.Contract.Tools
+
+@inject ILogger<LabelPrintDialog> logger
+@implements IAsyncDisposable
+@inject NotificationService NotificationService
+
+<RadzenStack Orientation="Orientation.Vertical">
+    
+    <RadzenLabel>Printer</RadzenLabel>
+    <RadzenDropDown Data=@printers Placeholder="Select Printer"
+                    Style="width: 320px" @bind-Value=@selectedPrinter />
+    <RadzenLabel>Number of copies</RadzenLabel>
+    <RadzenNumeric Min="1" @bind-Value="@numCopies" Step="1" Max="99" Style="width:80px" />
+    <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="print"
+                  Text="Print" Click="@(args => PrintLabels())" />
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public IList<ProductionItem> selectedItems { get; set; } = [];
+
+    HubConnection? hubConnection;
+    string signalrMessage = string.Empty;
+
+    List<string>? printers;
+    string? selectedPrinter;
+    int numCopies = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        await base.OnInitializedAsync();
+
+        await CreateHubConnection();
+
+    }
+
+    async Task PrintLabels()
+    {
+        // IEnumerable<string> messages = await labelPrintingService.PrintCartonIds(selectedItems, selectedPrinter);
+        // StringBuilder allMessages = new StringBuilder();
+        // foreach (var message in messages)
+        // {
+        //     allMessages.AppendLine($"{message}\n");
+        // }
+        // NotificationService.Notify(NotificationSeverity.Info, "Carton ID Label Printing", allMessages.ToString());
+
+        string filename = "BatchLabel.btw";
+        var path = Path.Combine(Environment.GetFolderPath(
+            Environment.SpecialFolder.CommonApplicationData), $"{AppInfo.Name}");
+        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+        path = Path.Combine(path, "labels");
+        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+        var sourcePath = Path.Combine(path, "productionOrder.json");
+        var labelPath = Path.Combine(path, filename);
+
+        if (!File.Exists(labelPath))
+        {
+            logger.LogError($"LabelPrintingService - Label file not found, create one ...");
+            using Stream inputStream = await FileSystem.Current.OpenAppPackageFileAsync(filename);
+
+            // Create an output filename
+            string targetFile = labelPath;
+
+            // Copy the file to the AppDataDirectory
+            using FileStream outputStream = File.Create(targetFile);
+            await inputStream.CopyToAsync(outputStream);
+        }
+
+        logger.LogInformation($"LabelPrintingService - generating json file:{sourcePath}");
+        var json = System.Text.Json.JsonSerializer.Serialize(selectedItems);
+        await File.WriteAllTextAsync(sourcePath, json);
+
+        if (hubConnection is not null)
+        {
+
+
+            var arguments = new PrintArguments(labelPath, selectedPrinter);
+            var request = System.Text.Json.JsonSerializer.Serialize(
+                new AppMessage(AppMessageType.PrintLabel, arguments));
+
+            await hubConnection.SendAsync("SendMessage", "ProductionLabelPrinting", request);
+        }
+    }
+
+    async Task CreateHubConnection()
+    {
+        try
+        {
+            logger.LogInformation($"ProductionLabelPrinting.CreateHubConnection - create connection to SignalR hub");
+            hubConnection = new HubConnectionBuilder()
+               .WithUrl("http://localhost:3108/chathub")
+               .WithAutomaticReconnect()
+               .Build();
+
+            hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+            {
+                signalrMessage = message;
+                try
+                {
+                    AppMessage? msg = Newtonsoft.Json.JsonConvert.DeserializeObject<AppMessage>(message);
+
+                    switch (msg?.MessageType)
+                    {
+                        case AppMessageType.InstalledPrinterList:
+                            var list = (Newtonsoft.Json.Linq.JArray)msg?.Data;
+
+                            printers = list.ToObject<List<string>>();
+                            InvokeAsync(StateHasChanged);
+                            logger.LogInformation($"ProductionLabelPrinting.CreateHubConnection - receiving printer list {printers?.Count} items");
+                            break;
+                        case AppMessageType.PrintLabelResult:
+                            NotificationService.Notify(NotificationSeverity.Success,
+                                "Print Result", msg.Data?.ToString() ?? string.Empty, 5000);
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, $"ProductionLabelPrinting.ReceiveMessage - error: {ex.Message}{Environment.NewLine}{ex}");
+                }
+            });
+
+            if (hubConnection is not null)
+            {
+                await hubConnection.StartAsync();
+
+                var request = System.Text.Json.JsonSerializer.Serialize(
+                    new AppMessage(AppMessageType.GetInstalledPrinterList, null));
+                await hubConnection.SendAsync("SendMessage", "ProductionLabelPrinting", request);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, $"ProductionLabelPrinting.OnInitializedAsync - error: {ex.Message}{Environment.NewLine}{ex}");
+        }
+    }
+
+    public bool IsConnected =>
+        hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+
+}

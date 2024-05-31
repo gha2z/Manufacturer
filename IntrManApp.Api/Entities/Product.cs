@@ -43,10 +43,6 @@ public partial class Product
 
     public DateTime? ModifiedDate { get; set; }
 
-    public virtual ICollection<BillOfMaterial> BillOfMaterialProducts { get; set; } = new List<BillOfMaterial>();
-
-    public virtual ICollection<BillOfMaterial> BillOfMaterialRawMaterials { get; set; } = new List<BillOfMaterial>();
-
     public virtual ProductCategory? Category { get; set; }
 
     public virtual Location Location { get; set; } = null!;

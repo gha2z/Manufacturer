@@ -180,7 +180,7 @@
                             var list = (Newtonsoft.Json.Linq.JArray)msg?.Data;
 
                             printers = list.ToObject<List<string>>();
-                            StateHasChanged();
+                            InvokeAsync(StateHasChanged);
                             logger.LogInformation($"CartonIdPrinting.CreateHubConnection - receiving printer list {printers?.Count} items");
                             break;
                         case AppMessageType.PrintLabelResult:

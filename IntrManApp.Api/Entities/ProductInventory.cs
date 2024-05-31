@@ -32,6 +32,8 @@ public partial class ProductInventory
 
     public Guid? TransIdReference { get; set; }
 
+    public int? TotalBatches { get; set; }
+
     public virtual InventoryFlag? FlagNavigation { get; set; }
 
     public virtual Location? Location { get; set; }
