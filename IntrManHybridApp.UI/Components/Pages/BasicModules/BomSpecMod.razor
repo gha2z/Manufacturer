@@ -1,4 +1,4 @@
-﻿@page "/BomSpecMod/{id:guid}"
+﻿@page "/BomSpecMod/{id:guid}/{name}"
 
 @using IntrManApp.Shared.Contract
 @using System.Diagnostics
@@ -40,7 +40,7 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="RawMaterialQuantity" Title="Weight" Width="110px">
+                        <RadzenDataGridColumn Property="RawMaterialQuantity" Title="Weight (gram)" Width="110px">
                             <Template Context="rawMaterial">
                                 @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", rawMaterial.RawMaterialQuantity)
                             </Template>
@@ -72,12 +72,10 @@
 
 @code {
     [Parameter] public Guid Id { get; set; }
+    [Parameter] public string? Name { get; set; } = "";
 
     List<BomSpecificationResponse> bomSpecs = [];
     IEnumerable<RawMaterialBasicInfo> rawMaterials = [];
-
-    string caption = "Bill of Materials";
-    string captionExt = "0";
     bool isSaving = false;
 
     RadzenDataGrid<BomSpecificationResponse> bomsGrid = new();
@@ -147,7 +145,6 @@
             {
                 logger.LogInformation($"Items Validated ... Adding row to collection '{item.RawMaterialName ?? string.Empty}'");
                 bomSpecs.Add(item);
-                captionExt = $"({bomSpecs.Count})";
             }
             else
             {
@@ -193,7 +190,6 @@
             logger.LogInformation("deleting row");
             bomSpecs.Remove(item);
             await bomsGrid.Reload();
-            captionExt = $"({bomSpecs.Count})";
             await InsertRow();
         }
     }

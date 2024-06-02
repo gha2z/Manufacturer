@@ -92,7 +92,8 @@ namespace IntrManApp.Api.Features.Production
                                LocationId = item.LocationId,
                                RackingPalletId = item.RackingPalletId,
                                SourceLocationId = inventory.LocationId,
-                               SourceRackingPalletId = inventory.RackingPalletId
+                               SourceRackingPalletId = inventory.RackingPalletId,
+                               ModifiedDate = DateTime.Now
                            });
 
                      

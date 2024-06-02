@@ -70,6 +70,7 @@ namespace IntrManApp.Api.Features.Production.ProductionOrder
                             inventoryItem.ModifiedDate = DateTime.Now;
                         }
                         await _context.SaveChangesAsync(cancellationToken);
+                        await transaction.CommitAsync(cancellationToken);
                     }
                     catch (Exception ex)
                     {

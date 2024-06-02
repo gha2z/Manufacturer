@@ -48,7 +48,7 @@
                             @*  <RadzenDropDown @bind-Value="product.InventoryId" Data="@endProducts" TextProperty="BatchNumber" ValueProperty="InventoryId"
                             Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Change="@(args => ItemChanged(product))" /> *@
-                            <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Carton Id" Style="width:100%;font-size:small" />
+                            <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Batch Number" Style="width:100%;font-size:small" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
 
@@ -60,6 +60,15 @@
                         <Template Context="product">
                             @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", product.Quantity)
                         </Template>
+                    </RadzenDataGridColumn>
+
+                    <RadzenDataGridColumn Property="ExpiryDate" Title="Expiry Date" Width="100px">
+                        <Template Context="product">
+                            @product.ExpiryDate?.ToString("MM/dd/yyyy")
+                        </Template>
+                        <EditTemplate Context="product">
+                            <RadzenDatePicker @bind-Value="product.ExpiryDate" DateFormat="MMM/dd/yyyy" Style="width:100%" />
+                        </EditTemplate>
                     </RadzenDataGridColumn>
 
                     <RadzenDataGridColumn Property="Location.Name" Title="Location" Width="130px">
@@ -153,6 +162,7 @@
                 item.FinishedProduct = product;
                 //generate expiry date based on checkin.checkIndate + product.DaysToExpire
                 if(checkin.CheckInDate==null) checkin.CheckInDate = DateTime.Now;
+           
                 item.ExpiryDate = checkin.CheckInDate.Value.AddDays(product.DaysToExpire);
                 if (item.LocationId == Guid.Empty)
                     locationDropDown?.Element.FocusAsync();
@@ -281,14 +291,14 @@
         };
 
         var json = JsonSerializer.Serialize(checkin);
-        logger.LogInformation($"Saving Raw Materials Checkout:{Environment.NewLine}{json}");
+        logger.LogInformation($"Saving Finished Product Checkin:{Environment.NewLine}{json}");
         isSaving = true;
         response = await service.CreateFinishedProductCheckin(checkin);
 
         if (response != Guid.Empty)
         {
             NotificationService.Notify(NotificationSeverity.Success,
-                "Transaction Saved", "Raw Material checkin has been saved successfully");
+                "Transaction Saved", "Finished Product checkin has been saved successfully");
             Clear();
 
             isSaving = false;

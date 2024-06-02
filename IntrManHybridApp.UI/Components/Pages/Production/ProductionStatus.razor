@@ -104,14 +104,24 @@
         { 4, "Aborted"},
         { 5, "Not Started" },
         { 6, "In Progress" },
-        { 7, "Completed" }
+        { 7, "Completed" },
+        { 8, "Checkin From Production"},
+        { 9, "Dispatch Order"},
+        { 10, "Packing"},
+        { 11, "Packed"},
+        { 12, "Dispatched"}
     };
     Dictionary<byte, string> statusColorMap = new Dictionary<byte, string>
     {
         { 4, "color:darkred"},
         { 5, "color:dimgrey" },
         { 6, "color:goldenrod" },
-        { 7, "color:limegreen" }
+        { 7, "color:limegreen" },
+        { 8, "color:darkorange" },
+        { 9, "color:darkorange" },
+        { 10, "color:darkorange" },
+        { 11, "color:darkorange" },
+        { 12, "color:darkorange" }
     };
 
     async Task OpenPrintDialog()

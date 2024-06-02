@@ -73,7 +73,7 @@
 
                         <RadzenDataGridColumn Title="Total Weight" Width="75px">
                             <Template Context="endProduct">
-                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", endProduct.TotalBatches * endProduct.QuantityPerBatch)
+                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", endProduct.TotalBatches * endProduct.QuantityPerBatch)
                             </Template>
                            @*  <EditTemplate Context="endProduct">
                                 <RadzenNumeric @bind-Value="endProduct.TotalBatches" Min="1" />

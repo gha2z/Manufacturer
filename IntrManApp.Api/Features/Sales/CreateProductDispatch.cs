@@ -24,13 +24,13 @@ namespace IntrManApp.Api.Features.Production
         {
             public Validator()
             {
-                RuleForEach(i => i.DispatchLines).SetValidator(new EndProductCheckinDetailValidator());
+                RuleForEach(i => i.DispatchLines).SetValidator(new DispatchLineValidator());
             }
         }
 
-        private class EndProductCheckinDetailValidator : AbstractValidator<DispatchLineRequest>
+        private class DispatchLineValidator : AbstractValidator<DispatchLineRequest>
         {
-            public EndProductCheckinDetailValidator()
+            public DispatchLineValidator()
             {
                 RuleFor(product => product.InventoryId).NotEmpty();
                 RuleFor(product => product.Quantity).GreaterThan(0);
@@ -110,7 +110,7 @@ namespace IntrManApp.Api.Features.Production
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/dispatch", async (FinishedProductInternalCheckinRequest request, ISender sender) =>
+            app.MapPost("api/dispatch", async (DispatchRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateProductDispatch.Command>();
 

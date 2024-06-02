@@ -253,7 +253,7 @@
     async Task CreateOrUpdateBom(ProductResponse item)
     {
         logger.LogInformation($"ProductList.CreateOrUpdateBom - open BOM dialog for product {item.Id}");
-        var res = await DialogService.OpenAsync<BomSpecMod>("Bill of Material",
+        var res = await DialogService.OpenAsync<BomSpecMod>($"Bill of Material for 1kg of {item.Names}",
             new Dictionary<string, object>() { { "Id", item.Id } },
             new DialogOptions() { Width = "670px", Height = "570px", Resizable = true, Draggable = true });
 

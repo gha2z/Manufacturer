@@ -14,6 +14,7 @@ namespace IntrManApp.Shared.Contract
         public Guid RawMaterialMeasurementUnitId { get; set; }
         public string RawMaterialMeasurementUnitName { get; set; } = string.Empty;
         public decimal RawMaterialQuantity { get; set; }
+        public string ProductName { get; set; } = string.Empty;
     }
     public  class BomResponse
     {
