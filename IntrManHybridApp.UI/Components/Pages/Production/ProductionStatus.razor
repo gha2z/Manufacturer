@@ -54,7 +54,6 @@
                                 InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select item" }})" />
             </Template>
         </RadzenDataGridColumn>
-        @* <RadzenDataGridColumn Property="InventoryId" Title="Inventory ID" /> *@
         <RadzenDataGridColumn Property="ProductName" Title="Product" />
         <RadzenDataGridColumn Property="BatchNumber" Title="Batch Number" />
         <RadzenDataGridColumn Property="QuantityPerBatch" Title="Weight (kgs)">
@@ -79,12 +78,11 @@
                 <RadzenButton Visible="@(data.Flag==5)"
                               ButtonStyle="ButtonStyle.Success" Shade="Shade.Lighter" Icon="not_started"
                               Click="@(async => StartProduction(data))" />
-                <RadzenButton Visible="@(data.Flag!=7)"
+                <RadzenButton Visible="@(data.Flag==5)"
                               ButtonStyle="ButtonStyle.Warning" Shade="Shade.Lighter" Icon="delete_forever"
                               Click="@(async => AbortProduction(data))" />
             </Template>
         </RadzenDataGridColumn>
-      
      
     </Columns>
 
@@ -168,10 +166,10 @@
                 "This production can't be aborted. Only unstarted production can be aborted.");
             return;
         };
-        var ok = await service.StartItemProduction(item.InventoryId);
+        var ok = await service.AbortItemProduction(item.InventoryId);
         if (ok)
         {
-            NotificationService.Notify(NotificationSeverity.Success, "Production Started", "Production started successfully");
+            NotificationService.Notify(NotificationSeverity.Success, "Production aborted", "Production aborted successfully");
             await LoadData();
             selectedItems = [];
         }

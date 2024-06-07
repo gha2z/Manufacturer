@@ -11,5 +11,7 @@ namespace IntrManHybridApp.UI.Services
     {
         Task<Guid> CreateDispatchEntry(DispatchRequest request);
         Task<IEnumerable<InventoryItem>> GetDispatchableProducts();
+        Task<IEnumerable<DispatchOrderDetail>> GetDispatchOrderDetailByDate(DateTime date);
+        Task<bool> SetNextInventoryDispatchStatus(Guid inventoryId);
     }
 }

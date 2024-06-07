@@ -1,5 +1,6 @@
 ﻿using IntrManApp.Shared.Contract;
 using Microsoft.Extensions.Logging;
+using Radzen;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,8 @@ namespace IntrManHybridApp.UI.Services
             try
             {
                 logger.LogInformation($"Getting End Products: Get {httpClient.BaseAddress}/DispatchableProducts");
-                IEnumerable<InventoryItem> response = await httpClient.GetFromJsonAsync<IEnumerable<InventoryItem>>("DispatchableProducts") ?? [];
+                IEnumerable<InventoryItem> response = 
+                    await httpClient.GetFromJsonAsync<IEnumerable<InventoryItem>>("DispatchableProducts") ?? [];
                 return response;
             }
             catch (Exception ex)
@@ -41,6 +43,36 @@ namespace IntrManHybridApp.UI.Services
                 logger.LogError(ex, "Error getting End Products");
                 return [];
             }
+        }
+
+        public async Task<IEnumerable<DispatchOrderDetail>> GetDispatchOrderDetailByDate(DateTime date)
+        {
+            try
+            {
+                logger.LogInformation($"Getting Dispatch Order Detail: Get {httpClient.BaseAddress}/dispatchOrderDetailByDate/{date}");
+                IEnumerable<DispatchOrderDetail> response =
+                    await httpClient.GetFromJsonAsync<IEnumerable<DispatchOrderDetail>>($"dispatchOrderDetailByDate/{date:yyyy-MM-dd}") ?? [];
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error getting Dispatch Order Detail");
+                return [];
+            }
+        }
+
+        public async Task<bool> SetNextInventoryDispatchStatus(Guid inventoryId)
+        {
+            bool result = false;
+            try
+            {
+                logger.LogInformation($"Setting Next Inventory Dispatch Status: Put {httpClient.BaseAddress}/inventory/{inventoryId}");
+                result = await httpClient.GetFromJsonAsync<bool>($"nextDispatchStatus/{inventoryId}");
+            } catch (Exception ex)
+            {
+                logger.LogError(ex, "Error setting next inventory dispatch status");
+            }
+            return result;
         }
     }
 }

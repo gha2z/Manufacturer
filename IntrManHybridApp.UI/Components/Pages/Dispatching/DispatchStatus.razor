@@ -1,0 +1,143 @@
+﻿@page "/DispatchStatus"
+
+@using IntrManApp.Shared.Contract
+@using IntrManApp.Shared.Contract.Tools
+@using IntrManHybridApp.UI.Services
+@using System.Diagnostics
+@using System.Text.Json
+@using Radzen.Blazor
+@using System.Text
+@using Newtonsoft.Json
+
+
+@inject ISaleService service
+@inject ICustomerService customerService
+@inject ILogger<DispatchStatus> logger
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="20" AllowPaging="true"
+                PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
+                SelectionMode="DataGridSelectionMode.Multiple" AllowRowSelectOnRowClick="true" HideGroupedColumn="true"
+                TItem="DispatchOrderDetail" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite">
+
+    <GroupHeaderTemplate>
+        @(context.Data.Items.Cast<DispatchOrderDetail>().First().CustomerName) - 
+        Dispatch Id: @(context.Data.Items.Cast<DispatchOrderDetail>().First().Id)
+    </GroupHeaderTemplate>
+    <HeaderTemplate>
+        <RadzenStack Orientation="Orientation.Horizontal" Style="padding:5px;border:thin" AlignItems="AlignItems.Stretch">
+            <RadzenCard Variant="Variant.Filled">
+                Dispatch Order Date
+                <RadzenDatePicker @bind-Value=@selectedDate Style="width: 200px" ShowTime=false DateFormat="MMM/dd/yyyy"
+                                  CurrentDateChanged="@OnScheduleDateChanged" />
+            </RadzenCard>
+        </RadzenStack>
+    </HeaderTemplate>
+
+    <Columns>
+        <RadzenDataGridColumn Property="BatchNumber" Title="Batch Number" />
+        <RadzenDataGridColumn Property="ProductName" Title="Product" />
+        <RadzenDataGridColumn Property="Quantity" Title="Weight (kgs)">
+            <Template Context="data">
+                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", data.Quantity)
+            </Template>
+        </RadzenDataGridColumn>
+      
+        <RadzenDataGridColumn Property="Flag" Title="Status">
+            <Template Context="data">
+                <RadzenLabel style=@statusColorMap[data.Flag]>@statusMap[data.Flag]</RadzenLabel>
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Filterable="false" Sortable="false" Width="80px">
+            <Template Context="data">
+                <RadzenButton Visible="@(data.Flag<12)"
+                              ButtonStyle="ButtonStyle.Success" Shade="Shade.Lighter" Icon="departure_board"
+                              Click="@(async => SetDispatchStatus(data))" />
+            </Template>
+        </RadzenDataGridColumn>
+
+
+    </Columns>
+
+</RadzenDataGrid>
+
+@code { 
+    public DateTime selectedDate { get; set; } = DateTime.Now;
+
+    IEnumerable<DispatchOrderDetail> items = [];
+    IList<DispatchOrderDetail> selectedItems = [];
+
+    Dictionary<byte, string> statusMap = new Dictionary<byte, string>
+    {
+        { 4, "Aborted"},
+        { 5, "Not Started" },
+        { 6, "In Progress" },
+        { 7, "Completed" },
+        { 8, "Checkin From Production"},
+        { 9, "New Dispatch Order"},
+        { 10, "Packing"},
+        { 11, "Packed"},
+        { 12, "Dispatched"}
+    };
+    Dictionary<byte, string> statusColorMap = new Dictionary<byte, string>
+    {
+        { 4, "color:darkred"},
+        { 5, "color:dimgrey" },
+        { 6, "color:goldenrod" },
+        { 7, "color:limegreen" },
+        { 8, "color:darkorange" },
+        { 9, "color:darkorange" },
+        { 10, "color:goldenrod" },
+        { 11, "color:darkorange" },
+        { 12, "color:limegreen" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        await LoadData();
+        await base.OnInitializedAsync();
+    }
+
+    async Task LoadData()
+    {
+        logger.LogInformation($"DispatchStatus.LoadData - date:{selectedDate}");
+        items = await service.GetDispatchOrderDetailByDate(selectedDate);
+        
+    }
+
+    void OnRender(DataGridRenderEventArgs<DispatchOrderDetail> args)
+    {
+        if (args.FirstRender)
+        {
+            logger.LogInformation($"DispatchStatus.OnRender - grouping based on dispatch order ID");
+            args.Grid.Groups.Add(new GroupDescriptor() { Property = "Id", SortOrder = SortOrder.Ascending });
+            StateHasChanged();
+        }
+    }
+
+    async Task OnScheduleDateChanged(DateTime args)
+    {
+        selectedDate = args;
+        items = await service.GetDispatchOrderDetailByDate(selectedDate);
+        selectedItems = [];
+    }
+
+    async Task SetDispatchStatus(DispatchOrderDetail item)
+    {
+        var ok = await service.SetNextInventoryDispatchStatus(item.InventoryId);
+        if (ok)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Production Started", "Production started successfully");
+            await LoadData();
+            selectedItems = [];
+        }
+    }
+
+
+
+}

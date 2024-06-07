@@ -79,7 +79,7 @@ namespace IntrManHybridApp.UI.Services
 
                 var groupedItems = response
                     .GroupBy(x => new { x.ProductId, x.ProductName, x.ProductMeasurementUnitId, x.ProductMeasurementUnitName, 
-                        x.QuantityPerBatch, x.TotalBatches, x.InventoryId, x.BatchNumber, x.Flag, x.LineId })
+                        x.QuantityPerBatch, x.TotalBatches, x.InventoryId, x.BatchNumber, x.Flag, x.LineId})
                     .Select(x => new ProductionItem
                     {
                         LineId = x.Key.LineId,
@@ -112,9 +112,10 @@ namespace IntrManHybridApp.UI.Services
                     //{
                         newItem = item.Adapt<ProductionItem>();
                         newItem.BatchIndex = 1;
-                       
+                        newItem.ProductionDate = response.Where(x => x.InventoryId == item.InventoryId).Select(x => x.ScheduleDate).FirstOrDefault();
+                        newItem.ExpirationDate = response.Where(x => x.InventoryId == item.InventoryId).Select(x => x.ExpirationDate).FirstOrDefault();
 
-                        for (int j = 0; j < item.BomItems.Count; j++)
+                    for (int j = 0; j < item.BomItems.Count; j++)
                         {
 
                             var propValue = newItem.GetType().GetProperty($"IngredientName_{j + 1}");
@@ -163,7 +164,7 @@ namespace IntrManHybridApp.UI.Services
                         x.TotalBatches,
                         x.InventoryId,
                         x.BatchNumber,
-                        x.Flag  
+                        x.Flag,
                     })
                     .Select(x => new ProductionItem
                     {
@@ -195,6 +196,8 @@ namespace IntrManHybridApp.UI.Services
                     //for (int i = 0; i < item.TotalBatches; i++)
                     //{
                         newItem = item.Adapt<ProductionItem>();
+                        newItem.ProductionDate = response.Where(x=>x.InventoryId == item.InventoryId).Select(x=>x.ScheduleDate).FirstOrDefault();
+                        newItem.ExpirationDate = response.Where(x => x.InventoryId == item.InventoryId).Select(x => x.ExpirationDate).FirstOrDefault();
                         newItem.BatchIndex = 1;
 
 

@@ -27,6 +27,7 @@ namespace IntrManApp.Shared.Contract
         public decimal RawMaterialQuantity { get; set; }
         public byte Flag { get; set; }
         public float ResourceAllocated { get; set; }
+        public DateTime ExpirationDate { get; set; }
     }
 
     public class ProductionItem
@@ -64,8 +65,8 @@ namespace IntrManApp.Shared.Contract
         public string IngredientQty_7 { get; set; } = string.Empty;
         public string IngredientQty_8 { get; set; } = string.Empty;
         public string IngredientQty_9 { get; set; } = string.Empty;
-
-            
+        public DateTime ProductionDate { get; set; }
+        public DateTime ExpirationDate { get; set; }
     }
 
 

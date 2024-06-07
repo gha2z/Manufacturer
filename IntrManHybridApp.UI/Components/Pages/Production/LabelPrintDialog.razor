@@ -6,18 +6,37 @@
 @using Newtonsoft.Json
 @using IntrManApp.Shared.Contract
 @using IntrManApp.Shared.Contract.Tools
+@using Mapster
 
 @inject ILogger<LabelPrintDialog> logger
 @implements IAsyncDisposable
 @inject NotificationService NotificationService
 
 <RadzenStack Orientation="Orientation.Vertical">
-    
-    <RadzenLabel>Printer</RadzenLabel>
-    <RadzenDropDown Data=@printers Placeholder="Select Printer"
-                    Style="width: 320px" @bind-Value=@selectedPrinter />
-    <RadzenLabel>Number of copies</RadzenLabel>
-    <RadzenNumeric Min="1" @bind-Value="@numCopies" Step="1" Max="99" Style="width:80px" />
+        <RadzenLabel>Label Type</RadzenLabel>
+
+        <RadzenStack Orientation="Orientation.Horizontal">
+            <RadzenCheckBox @bind-Value="@productionSticker" Name="ckProductionSticker"/>
+            <RadzenLabel Text="Production Sticker" Component="ckProductionSticker"/>
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal">
+            <RadzenLabel Visible="@productionSticker">Number of copies</RadzenLabel>
+            <RadzenNumeric Visible="@productionSticker" Min="1" @bind-Value="@numCopies" Step="1" Max="99" Style="width:80px" />
+        </RadzenStack>
+        
+        <RadzenStack Orientation="Orientation.Horizontal">
+            <RadzenCheckBox @bind-Value="@productLabel" Name="ckProductLabel"/>
+            <RadzenLabel Text="Product Label" Component="ckProductLabel"/>
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal">
+            <RadzenLabel Visible="@productLabel">Number of copies</RadzenLabel>
+            <RadzenNumeric Visible="@productLabel" Min="1" @bind-Value="@numCopiesLbl" Step="1" Max="99" Style="width:80px" />
+        </RadzenStack>
+
+        <RadzenLabel>Printer</RadzenLabel>
+        <RadzenDropDown Data=@printers Placeholder="Select Printer"
+                        Style="width: 320px" @bind-Value=@selectedPrinter />
+   
     <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="print"
                   Text="Print" Click="@(args => PrintLabels())" />
 </RadzenStack>
@@ -29,13 +48,17 @@
     HubConnection? hubConnection;
     string signalrMessage = string.Empty;
 
+    bool productionSticker = true;
+    bool productLabel = true;
+
     List<string>? printers;
     string? selectedPrinter;
     int numCopies = 1;
+    int numCopiesLbl = 1;
 
     protected override async Task OnInitializedAsync()
     {
-        
+
         await base.OnInitializedAsync();
 
         await CreateHubConnection();
@@ -44,21 +67,55 @@
 
     async Task PrintLabels()
     {
-        // IEnumerable<string> messages = await labelPrintingService.PrintCartonIds(selectedItems, selectedPrinter);
-        // StringBuilder allMessages = new StringBuilder();
-        // foreach (var message in messages)
-        // {
-        //     allMessages.AppendLine($"{message}\n");
-        // }
-        // NotificationService.Notify(NotificationSeverity.Info, "Carton ID Label Printing", allMessages.ToString());
+        string json = string.Empty;
+        if (productionSticker)
+        {
+            List<ProductionItem> items = []; 
+            foreach(var item in selectedItems)
+            {
+                for (int i = 0; i < numCopies; i++)
+                {
+                    var newItem = item.Adapt<ProductionItem>();
+                    newItem.BatchIndex = i+1;
+                    newItem.TotalBatches = numCopies;
+                    items.Add(newItem);
+                }
+            };
+            json = System.Text.Json.JsonSerializer.Serialize(items);
+            await Print("BatchLabel.btw", json, "productionOrder.json", "ProductionLabelPrinting");
+        }
+        if (productLabel)
+        {
+            List<ProductCheckInLineDetailResponse> items= [];
+            foreach(var item in selectedItems)
+            {
+                for (int i = 0; i < numCopiesLbl; i++)
+                {
+                    items.Add(new()
+                        {
+                            LineId = item.LineId,
+                            BatchNumber = item.BatchNumber,
+                            ProductName = item.ProductName,
+                            Quantity = item.QuantityPerBatch,
+                            MeasurementUnitName = item.ProductMeasurementUnitName,
+                            ProductionDate = item.ProductionDate,
+                            ExpirationDate = item.ExpirationDate
+                        });
+                }
+                json = System.Text.Json.JsonSerializer.Serialize(items);
+            };
+            await Print("rCartonLabel.btw", json, "cartonIds.json", "CartonIdPrinting");
+        }
+    }
 
-        string filename = "BatchLabel.btw";
+    async Task Print(string filename, string jsonSource, string jsonSourceFilename, string PrintMessage)
+    {
         var path = Path.Combine(Environment.GetFolderPath(
             Environment.SpecialFolder.CommonApplicationData), $"{AppInfo.Name}");
         if (!Directory.Exists(path)) Directory.CreateDirectory(path);
         path = Path.Combine(path, "labels");
         if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-        var sourcePath = Path.Combine(path, "productionOrder.json");
+        var sourcePath = Path.Combine(path, jsonSourceFilename);
         var labelPath = Path.Combine(path, filename);
 
         if (!File.Exists(labelPath))
@@ -75,18 +132,15 @@
         }
 
         logger.LogInformation($"LabelPrintingService - generating json file:{sourcePath}");
-        var json = System.Text.Json.JsonSerializer.Serialize(selectedItems);
-        await File.WriteAllTextAsync(sourcePath, json);
+        await File.WriteAllTextAsync(sourcePath, jsonSource);
 
         if (hubConnection is not null)
         {
-
-
             var arguments = new PrintArguments(labelPath, selectedPrinter);
             var request = System.Text.Json.JsonSerializer.Serialize(
                 new AppMessage(AppMessageType.PrintLabel, arguments));
 
-            await hubConnection.SendAsync("SendMessage", "ProductionLabelPrinting", request);
+            await hubConnection.SendAsync("SendMessage", PrintMessage, request);
         }
     }
 
