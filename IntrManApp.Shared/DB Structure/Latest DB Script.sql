@@ -2076,3 +2076,17 @@ USE [master]
 GO
 ALTER DATABASE [IntrManDB] SET  READ_WRITE 
 GO
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (1, N'Checkin (Purchased)')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (2, N'Checkout for Production')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (3, N'Return from Production')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (4, N'Production - Aborted')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (5, N'Production - Not Started')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (6, N'Production - In Progress')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (7, N'Production - Completed')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (8, N'Checkin from Production')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (9, N'New Delivery Order')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (10, N'Packing for delivery')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (11, N'Packed for delivery')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (12, N'Dispatched')
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (13, N'Move location')
+go
