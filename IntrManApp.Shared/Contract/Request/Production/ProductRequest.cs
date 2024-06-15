@@ -45,6 +45,8 @@ public class ProductRequest
     public Guid LocationId { get; set; } = Guid.Empty;
 
     public Guid RackingPalletId { get; set; } = Guid.Empty;
+    public Guid OutLocationId { get; set; } = Guid.Empty;
+    public Guid OutRackingPalletId { get; set; } = Guid.Empty;
 
     public string? AdditionalInfo { get; set; }
 }

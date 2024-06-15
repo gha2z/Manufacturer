@@ -21,6 +21,6 @@ namespace IntrManApp.Shared.Contract
         public Guid InventoryId { get; set; }
         public Guid MeasurementUnitId { get; set; }
         public decimal Quantity { get; set; }
-        public InventoryItem? FinishedProduct { get; set; }
+        public InventoryItemDetail? FinishedProduct { get; set; }
     }
 }

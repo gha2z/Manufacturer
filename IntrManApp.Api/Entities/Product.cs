@@ -43,6 +43,10 @@ public partial class Product
 
     public DateTime? ModifiedDate { get; set; }
 
+    public Guid? OutLocationId { get; set; }
+
+    public Guid? OutRackingPalletId { get; set; }
+
     public virtual ProductCategory? Category { get; set; }
 
     public virtual Location Location { get; set; } = null!;

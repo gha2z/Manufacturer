@@ -10,27 +10,27 @@ namespace IntrManApp.Api.Features.BasicModules;
 
 public static class GetRunningProductionItems
 {
-    public class Query : IRequest<Result<IEnumerable<InventoryItem>>>
+    public class Query : IRequest<Result<IEnumerable<InventoryItemDetail>>>
     {
 
     }
 
     internal sealed class Handler(IDbConnectionFactory dbConnectionFactory) :
-    IRequestHandler<Query, Result<IEnumerable<InventoryItem>>>
+    IRequestHandler<Query, Result<IEnumerable<InventoryItemDetail>>>
     {
         private readonly IDbConnectionFactory _dbConnectionFactory = dbConnectionFactory;
 
-        public async Task<Result<IEnumerable<InventoryItem>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<IEnumerable<InventoryItemDetail>>> Handle(Query request, CancellationToken cancellationToken)
         {
             using IDbConnection connection = _dbConnectionFactory.CreateOpenConnection();
 
-            IEnumerable<InventoryItem>? queryResults =
-                (IEnumerable<InventoryItem>?)await connection.QueryAsync<InventoryItem>(
+            IEnumerable<InventoryItemDetail>? queryResults =
+                (IEnumerable<InventoryItemDetail>?)await connection.QueryAsync<InventoryItemDetail>(
                     "Production.GetRunningProductionItems", commandType: CommandType.StoredProcedure);
 
             if (queryResults == null)
             {
-                return Result.Failure<IEnumerable<InventoryItem>>(new Error("GetRunningProductionItems.NotFound", "No products found"));
+                return Result.Failure<IEnumerable<InventoryItemDetail>>(new Error("GetRunningProductionItems.NotFound", "No products found"));
             }
             else
             {

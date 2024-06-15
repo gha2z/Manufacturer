@@ -11,9 +11,6 @@ public partial class ProductInternalCheckIn
 
     public byte? CheckInType { get; set; }
 
-    /// <summary>
-    /// 3. Return from Production 6. Check-In from production 7. New Delivery Order 8. Packing 9. Packed 10. Dispatched
-    /// </summary>
     public byte? RevisionNumber { get; set; }
 
     public DateTime? ModifierDate { get; set; }

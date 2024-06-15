@@ -518,7 +518,7 @@ public partial class IntrManDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.RevisionNumber)
                 .HasDefaultValue((byte)0)
-                .HasComment("3. Return from Production 6. Check-In from production 7. New Delivery Order 8. Packing 9. Packed 10. Dispatched");
+                .HasComment("");
 
             entity.HasOne(d => d.CheckInTypeNavigation).WithMany(p => p.ProductInternalCheckIns)
                 .HasForeignKey(d => d.CheckInType)

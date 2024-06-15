@@ -60,18 +60,24 @@
 
                 <RadzenStack>
                     <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
-                        <RadzenFormField Text="Default Location" >
+                        <RadzenFormField Text="Default Check-in Location" >
                             <RadzenDropDown Data="@locations" @bind-Value="item.LocationId" ValueProperty="Id" TextProperty="Name" 
                              Name="Location" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />            
                         </RadzenFormField>
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.End">
+                        <RadzenFormField Text="Default Check-out Location">
+                            <RadzenDropDown Data="@outLocations" @bind-Value="item.OutLocationId" ValueProperty="Id" TextProperty="Name"
+                                            Name="outLocation" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />
+                        </RadzenFormField>
+                        <RadzenButton Icon="add" Click="@NewLocation"
+                                      ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
+                        @* <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.End">
                             <RadzenButton Icon="add" Click="@NewLocation"
                                 ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
                             <RadzenButton Icon="edit" Click="@(args => EditLocation(item.LocationId))" 
                                 ButtonStyle="ButtonStyle.Warning" Style="width:20px; height:20px; margin-top:10px" />
                             <RadzenButton Icon="delete" Click="@(args => DeleteLocation(item.LocationId))"
                                 ButtonStyle="ButtonStyle.Danger" Style="width:20px; height:20px; margin-top:10px" />
-                        </RadzenStack>
+                        </RadzenStack> *@
                     </RadzenStack>
                     <RadzenRequiredValidator Component="Location" Text="Location is required" />
                 </RadzenStack>
@@ -79,18 +85,23 @@
            
                 <RadzenStack>
                     <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
-                        <RadzenFormField Text="Default Racking Pallet" >
+                        <RadzenFormField Text="Default Check-in Racking Pallet" >
                             <RadzenDropDown Data="@rackingPallets" @bind-Value="item.RackingPalletId" ValueProperty="Id" TextProperty="ColRow" 
                              Name="RackingPallet" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />            
                         </RadzenFormField>
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.End">
-                            <RadzenButton Icon="add" Click="@NewRackingPallet" 
-                                ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
+                        <RadzenFormField Text="Default Check-out Racking Pallet">
+                            <RadzenDropDown Data="@outRackingPallets" @bind-Value="item.OutRackingPalletId" ValueProperty="Id" TextProperty="ColRow"
+                                            Name="outRackingPallet" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />
+                        </RadzenFormField>
+                        <RadzenButton Icon="add" Click="@NewRackingPallet"
+                                      ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
+                       @*  <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.End">
+                          
                             <RadzenButton Icon="edit" Click="@(args => EditRackingPallet(item.RackingPalletId))" 
                                 ButtonStyle="ButtonStyle.Warning" Style="width:20px; height:20px; margin-top:10px" />
                             <RadzenButton Icon="delete" Click="@((args) => DeleteRackingPallet(item.RackingPalletId))" 
                                 ButtonStyle="ButtonStyle.Danger" Style="width:20px; height:20px; margin-top:10px" />
-                        </RadzenStack>
+                        </RadzenStack> *@
                     </RadzenStack>
                     <RadzenRequiredValidator Component="RackingPallet" Text="Racking Pallet is required" />
                 </RadzenStack>
@@ -110,6 +121,8 @@
     IEnumerable<ProductCategoryResponse> categories = [];
     IEnumerable<LocationResponse> locations = [];
     IEnumerable<RackingPalletResponse> rackingPallets = [];
+    IEnumerable<LocationResponse> outLocations = [];
+    IEnumerable<RackingPalletResponse> outRackingPallets = [];
     string englishName = "";
     string chineseName = "";
 
@@ -150,11 +163,13 @@
     async Task InitLocations()
     {
         locations = await locationService.GetLocationsAsync() ?? [];
+        outLocations = locations.Adapt<IEnumerable<LocationResponse>>();
     }
 
     async Task InitRackingPallets()
     {
         rackingPallets = await locationService.GetRackingPalletsAsync() ?? [];
+        outRackingPallets = rackingPallets.Adapt<IEnumerable<RackingPalletResponse>>();
     }
 
     async Task Save()

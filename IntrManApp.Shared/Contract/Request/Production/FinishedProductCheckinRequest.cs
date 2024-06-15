@@ -19,7 +19,7 @@ public class FinishedProductInternalCheckinLineRequest
     public DateTime? ExpiryDate { get; set; }
     public Guid LocationId { get; set; }
     public Guid RackingPalletId { get; set; }
-    public InventoryItem? FinishedProduct { get; set; }
+    public InventoryItemDetail? FinishedProduct { get; set; }
     public LocationResponse? Location { get; set; }
     public RackingPalletResponse? RackingPallet { get; set; }
 }

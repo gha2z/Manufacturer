@@ -41,15 +41,16 @@
 
             <RadzenStack>
                 <RadzenDataGrid @ref="rawMaterialsGrid" Data="@checkout.ProductCheckoutDetail" TItem="ProductCheckOutDetailRequest"
-                                RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single">
+                                RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single" RowEdit="@OnRowEdit">
                     <Columns>
 
                         <RadzenDataGridColumn Property="BatchNumber" Title="Carton ID" Width="100px" Frozen="true" TextAlign="TextAlign.Center">
-                            <EditTemplate Context="item">
+                            <EditTemplate Context="item" >
                                @*  <RadzenDropDown @bind-Value="raw.InventoryId" Data="@rawMaterials" TextProperty="BatchNumber" ValueProperty="InventoryId"
                                                 Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
                                                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Change="@(args => ItemChanged(raw))" /> *@
-                                <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Carton Id" Style="width:100%;font-size:small" />
+                                <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Carton Id" 
+                                    Style="width:100%;font-size:small" @ref=@BatchTextBox TabIndex="0" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
@@ -105,11 +106,11 @@
 @code {
     RadzenDataGrid<ProductCheckOutDetailRequest> rawMaterialsGrid = new();
 
-    ProductCheckOutRequest checkout = new();
+    ProductCheckOutRequest checkout = new() { CheckoutDate = DateTime.Now };
 
     ProductCheckOutDetailRequest? tmpItem;
 
-    IEnumerable<InventoryItem> rawMaterials = [];
+    IEnumerable<InventoryItemDetail> rawMaterials = [];
     IEnumerable<ProductCheckOutDetailRequest> checkoutItems = [];
     IEnumerable<LocationResponse> locations = [];
     IEnumerable<RackingPalletResponse> rackingPallets = [];
@@ -121,6 +122,7 @@
 
     RadzenDropDown<Guid>? locationDropDown;
     RadzenDropDown<Guid>? rackingPalletDropDown;
+    RadzenTextBox? BatchTextBox;
 
     protected override async Task OnInitializedAsync()
     {
@@ -129,14 +131,14 @@
         locations = await locationService.GetLocationsAsync();
         rackingPallets = await locationService.GetRackingPalletsAsync();
         rawMaterials = await service.GetRawMaterialsForProductionAsync();
-
         await InsertRow();
     }
 
     bool ItemValidated(ProductCheckOutDetailRequest item)
     {
-        logger.LogInformation($"ItemChanged Raised ...");
-        InventoryItem? raw = null;
+        bool validated = false;
+        logger.LogInformation($"ItemChanged/Validated Raised ...");
+        InventoryItemDetail? raw = null;
         if (!string.IsNullOrEmpty(item.BatchNumber))
         {
             if(checkout.ProductCheckoutDetail.Any(p=>p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()) && p!=item))
@@ -152,20 +154,24 @@
                 item.Quantity = raw.Quantity;
                 item.InventoryId = raw.InventoryId;
                 item.RawMaterial = raw;
-                if(item.LocationId==Guid.Empty)
+                if(item.LocationId==Guid.Empty) item.LocationId = raw.LocationId;
+                if(item.RackingPalletId==Guid.Empty) item.RackingPalletId = raw.RackingPalletId;
+                
+                if(item.LocationId==Guid.Empty) 
                     locationDropDown?.Element.FocusAsync();
-                else
-                {
+                else 
                     item.Location = locations.FirstOrDefault(p => p.Id == item.LocationId);
-                    if (item.RackingPalletId == Guid.Empty)
-                        rackingPalletDropDown?.Element.FocusAsync();
-                    else
-                        item.RackingPallet = rackingPallets.FirstOrDefault(p => p.Id == item.RackingPalletId);
-                }
 
+                if(item.RackingPalletId == Guid.Empty) 
+                    rackingPalletDropDown?.Element.FocusAsync();
+                else 
+                    item.RackingPallet = rackingPallets.FirstOrDefault(p => p.Id == item.RackingPalletId);
             }
         }
-        return (raw!=null && item.LocationId!=Guid.Empty && item.RackingPalletId!=Guid.Empty);
+        validated = raw != null && item.LocationId != Guid.Empty && item.RackingPalletId != Guid.Empty;
+        logger.LogInformation($"Validation result => {validated}");
+        if (validated && isAddNew) SaveRow(item);
+        return (validated);
     }
 
     async Task InsertRow()
@@ -174,28 +180,30 @@
         var newItem = new ProductCheckOutDetailRequest();
         isAddNew = true;
         await rawMaterialsGrid.InsertRow(newItem);
+        
     }
+
+    void OnRowEdit(ProductCheckOutDetailRequest item)
+    {
+        logger.LogInformation($"OnRowEdit '{item.RawMaterial?.Names ?? string.Empty}'");
+        BatchTextBox?.Element.FocusAsync();
+    }
+
 
     void OnRowCreate(ProductCheckOutDetailRequest item)
     {
         logger.LogInformation($"OnRowCreate");
         if (item.InventoryId != Guid.Empty)
         {
-            logger.LogInformation($"OnRowCreate - finding raw material, location and racking data");
-
-
-            if (ItemValidated(item))
-            {
-                logger.LogInformation($"Items Validated ... Adding row to collection '{item.RawMaterial?.Names ?? string.Empty}'");
-                checkout.ProductCheckoutDetail.Add(item);
-                captionExt = $"({checkout.ProductCheckoutDetail.Count})";
-            }
-            else
-            {
-                logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.RawMaterial?.Names ?? string.Empty}'");
-                rawMaterialsGrid.CancelEditRow(item);
-            }
-        };
+            logger.LogInformation($"OnRowCreate ... Adding row to collection '{item.RawMaterial?.Names ?? string.Empty}'");
+            checkout.ProductCheckoutDetail.Add(item);
+            captionExt = $"({checkout.ProductCheckoutDetail.Count})";
+        }
+        else
+        {
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.RawMaterial?.Names ?? string.Empty}'");
+            rawMaterialsGrid.CancelEditRow(item);
+        }
     }
 
 
@@ -215,7 +223,7 @@
 
     void OnUpdateRow(ProductCheckOutDetailRequest item)
     {
-        logger.LogInformation($"OnRowUpdate - finding raw material, location and racking data");
+       
 
         if (ItemValidated(item))
         {
@@ -229,7 +237,7 @@
             rawMaterialsGrid.EditRow(item);
         }
 
-        logger.LogInformation($"Adding row to collection '{item.RawMaterial?.Names ?? string.Empty}'");
+        // logger.LogInformation($"Adding row to collection '{item.RawMaterial?.Names ?? string.Empty}'");
     }
 
     async Task DeleteRow(ProductCheckOutDetailRequest item)

@@ -19,10 +19,21 @@ public interface IProductionService
     Task<bool> StartItemProduction(Guid inventoryId);
     Task<bool> AbortItemProduction(Guid inventoryId);
 
-    Task<IEnumerable<InventoryItem>> GetRawMaterialsForProductionAsync();
+    Task<IEnumerable<InventoryItemDetail>> GetRawMaterialsForProductionAsync();
     Task<Guid> CreateRawMaterialsCheckout(ProductCheckOutRequest request);
 
-    Task<IEnumerable<InventoryItem>> GetRunningProductionItemsAsync();
+    Task<IEnumerable<InventoryItemDetail>> GetRunningProductionItemsAsync();
     Task<Guid> CreateFinishedProductCheckin(FinishedProductInternalCheckinRequest request);
+    Task<IEnumerable<InventoryItemExtendedFlag>> GetFinishedProductInventoriesAsync();
+
+    IEnumerable<InventoryLedger> GetInventoryLedger(InventoryLedgerRequest request);
+
+    Task<IEnumerable<InventoryItem>> GetRawMaterialInventoriesAsync();
+
+    IEnumerable<InventoryLedger> GetRawMaterialInventoryLedger(InventoryLedgerRequest request);
+
+    Task<IEnumerable<RawMaterialTrackingResponse>> RawMaterialTracking(RawMaterialTrackingRequest request);
+
+    IEnumerable<InventoryLedger> GetRawMaterialInventoryLedgerById(Guid id);
 
 }

@@ -1,0 +1,177 @@
+﻿@page "/finished-product-inventories"
+
+@using IntrManApp.Shared.Contract
+@using IntrManApp.Shared.Contract.Tools
+@using IntrManHybridApp.UI.Services
+@using System.Diagnostics
+@using System.Text.Json
+@using Radzen.Blazor
+@using System.Text
+@using Newtonsoft.Json
+
+
+@inject IProductionService service
+@inject ILogger<ProductionStatus> logger
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
+    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="20" AllowPaging="true"
+    PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
+    AllowRowSelectOnRowClick="true" HideGroupedColumn="true"
+    RowExpand="RowExpand" RowRender="@RowRender" ExpandMode="DataGridExpandMode.Single"
+    TItem="InventoryItemExtendedFlag" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite">
+   
+    <Template Context="item">
+        <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowSorting="false" Data="@item.InventoryLedgers" IsLoading="@isExpandingRow">
+            <HeaderTemplate>
+                <RadzenStack>
+                    <RadzenLabel>
+                        Viewing Inventory Ledger for <strong>@item.ProductName</strong> at <h6>@item.Location</h6>
+                    </RadzenLabel>
+
+                </RadzenStack>
+            </HeaderTemplate>
+            <Columns>
+                <RadzenDataGridColumn Property="TransDate" Title="Date" TextAlign="TextAlign.Center" Width="120px">
+                    <Template Context="ledger">
+                        @ledger.TransDate.ToString("MM/dd/yyyy")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="BatchNumber" Title="#Batch" TextAlign="TextAlign.Center" Width="140px" />
+                <RadzenDataGridColumn Property="Description" Title="Description"/>
+                <RadzenDataGridColumn Property="StockIn" Title="In" Width="90px" TextAlign="TextAlign.Right">
+                    <Template Context="ledger">
+                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.StockIn)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="StockOut" Title="Out" Width="90px" TextAlign="TextAlign.Right">
+                    <Template Context="ledger">
+                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.StockOut)
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="Balance" Title="Balance" Width="140px" TextAlign="TextAlign.Right">
+                    <Template Context="ledger">
+                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.Balance)
+                    </Template>
+                </RadzenDataGridColumn>
+                @* <RadzenDataGridColumn Property="RawMaterialMeasurementUnitName" Title="Unit Measurement" Width="90px"/> *@
+            </Columns>
+        </RadzenDataGrid>
+    </Template>
+    <Columns>
+       @*  <RadzenDataGridColumn Width="60px" Sortable="false" Filterable="false">
+            <HeaderTemplate>
+                <RadzenCheckBox TabIndex="-1" TriState="false" TValue="bool?"
+                                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select all items" }})"
+                                Value="@(selectedItems == null || selectedItems?.Any() != true ? false :
+                        !items.All(i => selectedItems.Contains(i)) ? null : items.Any(i => selectedItems.Contains(i)))"
+                                Change="@(args => selectedItems = args == true ? items.ToList() : null)" />
+            </HeaderTemplate>
+            <Template Context="data">
+                <RadzenCheckBox TabIndex="-1" TriState="false" TValue="bool"
+                                Value="@(selectedItems != null && selectedItems.Contains(data))"
+                                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select item" }})" />
+            </Template>
+        </RadzenDataGridColumn> *@
+
+        <RadzenDataGridColumn Property="ProductName" Title="Product"  Width="240px" Frozen="true"/>
+        <RadzenDataGridColumn Property="CategoryName" Title="Category" />
+        <RadzenDataGridColumn Property="Weight" Title="Weight">
+            <Template Context="data">
+                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2} {1}", data.Weight, data.MeasurementUnitName)
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="Location" Title="Location" />
+        @* <RadzenDataGridColumn Property="ColRow" Title="Racking" /> *@
+        <RadzenDataGridColumn Title="Quantity" TextAlign="TextAlign.Center">
+            <Columns>
+                <RadzenDataGridColumn Property="QtyAvailable" Title="Available" Width="70px" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn Property="QtyReserved" Title="Reserved" Width="70px" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn Property="QtyInProduction" Title="Production in Progress" Width="70px" TextAlign="TextAlign.Right"/>
+                <RadzenDataGridColumn Property="QtyToBeProduced" Title="Scheduled for Production" Width="70px" TextAlign="TextAlign.Right" />
+            </Columns>
+        </RadzenDataGridColumn>
+       
+      @*   <RadzenDataGridColumn Filterable="false" Sortable="false" Width="80px">
+            <Template Context="data">
+                <RadzenButton Visible="@(data.Flag==5)"
+                              ButtonStyle="ButtonStyle.Success" Shade="Shade.Lighter" Icon="not_started"
+                              Click="@(async => StartProduction(data))" />
+                <RadzenButton Visible="@(data.Flag==5)"
+                              ButtonStyle="ButtonStyle.Warning" Shade="Shade.Lighter" Icon="delete_forever"
+                              Click="@(async => AbortProduction(data))" />
+            </Template>
+        </RadzenDataGridColumn> *@
+
+    </Columns>
+
+</RadzenDataGrid>
+
+@code {
+
+    IEnumerable<InventoryItemExtendedFlag> items = [];
+    IList<InventoryItemExtendedFlag> selectedItems = [];
+
+    bool isExpandingRow = false;
+
+    async Task OpenPrintDialog()
+    {
+        await DialogService.OpenSideAsync<LabelPrintDialog>("Print Label",
+            new Dictionary<string, object> { { "selectedItems", selectedItems } },
+            options: new SideDialogOptions { CloseDialogOnOverlayClick = false, Position = DialogPosition.Right, ShowMask = true });
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await base.OnInitializedAsync();
+    }
+
+    async Task LoadData()
+    {
+        logger.LogInformation($"Finished-Product-Inventories.OnInitializedAsync ");
+        items = await service.GetFinishedProductInventoriesAsync();
+
+    }
+
+    void RowRender(RowRenderEventArgs<InventoryItemExtendedFlag> args)
+    {
+        args.Expandable = true; // args.Data.BomCount>0;
+    }
+
+    void RowExpand(InventoryItemExtendedFlag item)
+    {
+        isExpandingRow = true;
+
+        try
+        {
+            logger.LogInformation($"FinishedProductInventories.RowExpand - Get Ledgers for product {item.ProductId} at {item.LocationId}");
+            item.InventoryLedgers = service.GetInventoryLedger(
+                new InventoryLedgerRequest() 
+                {
+                    ProductId = item.ProductId, 
+                    LocationId = item.LocationId
+                });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"FinishedProductInventory.RowExpand - Error getting Inventory Ledger for product {item.ProductId}");
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Duration = 10000,
+                    SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
+                    DetailContent = ns =>
+                        @<RadzenText>
+                            <br />Please make sure the connection to the server is available.
+                            <br /><br />Technical detail:
+                            <br />@ex.Message
+                        </RadzenText>
+                });
+        };
+        isExpandingRow = false;
+        //}
+    }
+}

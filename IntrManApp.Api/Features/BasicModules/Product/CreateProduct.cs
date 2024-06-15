@@ -48,6 +48,8 @@ namespace IntrManApp.Api.Features.BasicModules
             public Guid LocationId { get; set; } = Guid.Empty;
 
             public Guid RackingPalletId { get; set; } = Guid.Empty;
+            public Guid OutLocationId { get; set; } = Guid.Empty;
+            public Guid OutRackingPalletId { get; set; } = Guid.Empty;
 
             public string? AdditionalInfo { get; set; }
 
@@ -92,7 +94,9 @@ namespace IntrManApp.Api.Features.BasicModules
                         OrderQuantity = request.OrderQuantity,
                         DaysToManufacture = request.DaysToManufacture,
                         DaysToExpire = request.DaysToExpire,
-                        AdditionalInfo = request.AdditionalInfo
+                        AdditionalInfo = request.AdditionalInfo,
+                        OutLocationId = request.OutLocationId,
+                        OutRackingPalletId = request.OutRackingPalletId
                     };
                     ProductCategory? category;
                     if (request.CategoryId == Guid.Empty)

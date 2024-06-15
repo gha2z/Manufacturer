@@ -29,13 +29,13 @@ namespace IntrManHybridApp.UI.Services
             }
         }
 
-        public async Task<IEnumerable<InventoryItem>> GetDispatchableProducts()
+        public async Task<IEnumerable<InventoryItemDetail>> GetDispatchableProducts()
         {
             try
             {
                 logger.LogInformation($"Getting End Products: Get {httpClient.BaseAddress}/DispatchableProducts");
-                IEnumerable<InventoryItem> response = 
-                    await httpClient.GetFromJsonAsync<IEnumerable<InventoryItem>>("DispatchableProducts") ?? [];
+                IEnumerable<InventoryItemDetail> response = 
+                    await httpClient.GetFromJsonAsync<IEnumerable<InventoryItemDetail>>("DispatchableProducts") ?? [];
                 return response;
             }
             catch (Exception ex)

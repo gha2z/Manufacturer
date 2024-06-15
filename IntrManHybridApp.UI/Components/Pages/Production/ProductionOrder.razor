@@ -32,10 +32,10 @@
         <RadzenStack>
 
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1.5rem">
-                <RadzenFormField Text="Production Date">
+                <RadzenFormField Text="Production Order Date">
                     <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="order.OrderDate" Name="orderDate" ShowTime="true" />
                 </RadzenFormField>
-                <RadzenFormField Text="Schedule Data">
+                <RadzenFormField Text="Schedule Date">
                     <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="order.ScheduleDate" Name="scheduleDate" ShowTime="true" />
                 </RadzenFormField>
             </RadzenStack>

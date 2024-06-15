@@ -20,7 +20,7 @@ public partial class ProductInternalCheckInLine
     /// <summary>
     /// Finished Product CheckIn-Type: 0: New finished product 1: Move between locations (e.g from production to warehouse facilitiy)
     /// </summary>
-    public DateTime ModifiedDate { get; set; }
+    public DateTime? ModifiedDate { get; set; }
 
     public Guid? SourceLocationId { get; set; }
 

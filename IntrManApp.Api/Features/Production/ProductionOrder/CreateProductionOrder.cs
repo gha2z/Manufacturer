@@ -76,10 +76,14 @@ public static class CreateProductionOrder
                         ProductId = line.ProductId,
                         TotalBatches = line.TotalBatches,
                         QuantityPerBatch = line.QuantityPerBatch,
-                        MeasurementUnitId = line.MeasurementUnitId,
+                        MeasurementUnitId = line.MeasurementUnitId
                     };
 
                     productionOrder.ProductionOrderLines.Add(productionOrderLine);
+                    var product = await _context.Products
+                        .FindAsync([line.ProductId], cancellationToken: cancellationToken);
+                    if(product!=null) product.OrderQuantity = line.QuantityPerBatch;
+
                 }
                 _context.ProductionOrders.Add(productionOrder);
                 await _context.SaveChangesAsync(cancellationToken);
@@ -92,6 +96,9 @@ public static class CreateProductionOrder
 
                 foreach (var line in productionOrderLines)
                 {
+                    var product = await _context.Products
+                      .FindAsync([line.ProductId], cancellationToken: cancellationToken);
+
                     for (int i = 0; i < line.TotalBatches; i++)
                     {
 
@@ -124,6 +131,11 @@ public static class CreateProductionOrder
                             TransIdReference = productionOrder.Id,
                             TotalBatches = 1 //line.TotalBatches
                         };
+                        if(product!=null)
+                        {
+                            productInventory.LocationId = product.LocationId;
+                            productInventory.RackingPalletId = product.RackingPalletId;
+                        }
                         _context.ProductInventories.Add(productInventory);
 
                         //generate raw material requirements

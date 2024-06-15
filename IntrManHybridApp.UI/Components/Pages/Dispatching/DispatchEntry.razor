@@ -97,7 +97,7 @@
 
     DispatchLineRequest? tmpItem;
 
-    IEnumerable<InventoryItem> endProducts = [];
+    IEnumerable<InventoryItemDetail> endProducts = [];
     IEnumerable<DispatchLineRequest> checkinItems = [];
     IEnumerable<CustomerResponse> customers = [];
 
@@ -119,7 +119,7 @@
     bool ItemValidated(DispatchLineRequest item)
     {
         logger.LogInformation($"ItemChanged Raised ...");
-        InventoryItem? product = null;
+        InventoryItemDetail? product = null;
         if (!string.IsNullOrEmpty(item.BatchNumber))
         {
             if (checkin.DispatchLines.Any(p => p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()) && p != item))

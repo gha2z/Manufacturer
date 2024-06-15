@@ -15,4 +15,5 @@ public interface ICheckinService
     Task<IEnumerable<ProductCheckinRequest>> GetCheckinsAsync();
     Task<IEnumerable<RawMaterialsForCheckin>> GetRawMaterialsForCheckinAsync();
     Task<IEnumerable<ProductCheckInLineDetailResponse>> GetCheckinRawMaterials(Guid id);
+  
 }

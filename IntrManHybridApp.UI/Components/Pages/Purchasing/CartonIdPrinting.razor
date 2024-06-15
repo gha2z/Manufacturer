@@ -128,9 +128,9 @@
         var sourcePath = Path.Combine(path, "cartonIds.json");
         var labelPath = Path.Combine(path, filename);
 
-        if (!File.Exists(labelPath))
-        {
-            logger.LogError($"LabelPrintingService - Label file not found, create one ...");
+        // if (!File.Exists(labelPath))
+        // {
+        //     logger.LogError($"LabelPrintingService - Label file not found, create one ...");
             using Stream inputStream = await FileSystem.Current.OpenAppPackageFileAsync(filename);
 
             // Create an output filename
@@ -139,7 +139,7 @@
             // Copy the file to the AppDataDirectory
             using FileStream outputStream = File.Create(targetFile);
             await inputStream.CopyToAsync(outputStream);
-        }
+        //}
 
         logger.LogInformation($"LabelPrintingService - generating json file:{sourcePath}");
         var json = System.Text.Json.JsonSerializer.Serialize(items);

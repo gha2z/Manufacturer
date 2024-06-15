@@ -1,0 +1,170 @@
+﻿@page "/ProductionLabelPrinting/{id:guid?}"
+
+@using IntrManApp.Shared.Contract
+@using IntrManApp.Shared.Contract.Tools
+@using IntrManHybridApp.UI.Services
+@using System.Diagnostics
+@using System.Text.Json
+@using Radzen.Blazor
+@using System.Text
+@using Newtonsoft.Json
+
+
+@inject IProductionService service
+@inject ILogger<ProductionLabelPrinting> logger
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="20" AllowPaging="true"
+                PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
+                SelectionMode="DataGridSelectionMode.Multiple" AllowRowSelectOnRowClick="true" HideGroupedColumn="true"
+                TItem="ProductionItem" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite" >
+
+    <HeaderTemplate>
+        <RadzenStack Orientation="Orientation.Horizontal" Style="padding:5px;border:thin" AlignItems="AlignItems.Stretch">
+            <RadzenCard Visible="@( Id==Guid.Empty ? true : false )" Variant="Variant.Filled">
+                Production Date
+                <RadzenDatePicker @bind-Value=@selectedDate Style="width: 200px" ShowTime=false DateFormat="MMM/dd/yyyy" 
+                     CurrentDateChanged="@OnScheduleDateChanged"/>
+            </RadzenCard>
+            <RadzenCard Variant="Variant.Filled">
+                <RadzenStack JustifyContent="JustifyContent.End">
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Shade="Shade.Light" Icon="print" Text="Print Labels" 
+                        Click="@(args => OpenPrintDialog())" />
+                </RadzenStack>
+
+            </RadzenCard>
+        </RadzenStack>
+    </HeaderTemplate>
+
+    <Columns>
+        <RadzenDataGridColumn Width="60px" Sortable="false" Filterable="false">
+            <HeaderTemplate>
+                <RadzenCheckBox TabIndex="-1" TriState="false" TValue="bool?"
+                                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select all items" }})"
+                                Value="@(selectedItems == null || selectedItems?.Any() != true ? false :
+                        !items.All(i => selectedItems.Contains(i)) ? null : items.Any(i => selectedItems.Contains(i)))"
+                                Change="@(args => selectedItems = args == true ? items.ToList() : null)" />
+            </HeaderTemplate>
+            <Template Context="data">
+                <RadzenCheckBox TabIndex="-1" TriState="false" TValue="bool"
+                                Value="@(selectedItems != null && selectedItems.Contains(data))"
+                                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select item" }})" />
+            </Template>
+        </RadzenDataGridColumn>
+        @* <RadzenDataGridColumn Property="InventoryId" Title="Inventory ID" /> *@
+        <RadzenDataGridColumn Property="ProductName" Title="Product" />
+        <RadzenDataGridColumn Property="BatchNumber" Title="Batch Number" />
+        <RadzenDataGridColumn Property="QuantityPerBatch" Title="Weight (kgs)">
+            <Template Context="data">
+                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", data.QuantityPerBatch)
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="ResourceAllocated" Title="Resource Allocated">
+            <Template Context="data">
+                <RadzenLink  Style="font-weight:600">
+                    @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}%", data.ResourceAllocated)
+                </RadzenLink> 
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="Flag" Title="Status">
+            <Template Context="data">
+                <RadzenLabel style=@statusColorMap[data.Flag]>@statusMap[data.Flag]</RadzenLabel>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Filterable="false" Sortable="false" Width="80px">
+            <Template Context="data">
+                <RadzenButton Visible="@(data.Flag==5)"
+                              ButtonStyle="ButtonStyle.Success" Shade="Shade.Lighter" Icon="not_started"
+                              Click="@(async => StartProduction(data.InventoryId))" />
+                <RadzenButton Visible="@(data.Flag!=7)"
+                              ButtonStyle="ButtonStyle.Warning" Shade="Shade.Lighter" Icon="delete_forever"
+                              Click="@(async => StartProduction(data.InventoryId))" />
+            </Template>
+        </RadzenDataGridColumn>
+      
+     
+    </Columns>
+
+</RadzenDataGrid>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    IEnumerable<ProductionItem> items = [];
+    IList<ProductionItem> selectedItems = [];
+
+    DateTime selectedDate;
+
+    Dictionary<byte, string> statusMap = new Dictionary<byte, string>
+    {
+        { 5, "Not Started" },
+        { 6, "In Progress" },
+        { 7, "Completed" }
+    };
+    Dictionary<byte, string> statusColorMap = new Dictionary<byte, string>
+    {
+        { 5, "color:dimgrey" },
+        { 6, "color:goldenrod" },
+        { 7, "color:limegreen" }
+    };
+
+    async Task OpenPrintDialog()
+    {
+        await DialogService.OpenSideAsync<LabelPrintDialog>("Print Label", 
+            new Dictionary<string, object> { { "selectedItems", selectedItems } },
+            options: new SideDialogOptions { CloseDialogOnOverlayClick = false, Position = DialogPosition.Right, ShowMask = true});
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await base.OnInitializedAsync();
+
+    }
+
+    async Task LoadData()
+    {
+        logger.LogInformation($"ProductionLabelPrinting.OnInitializedAsync - production order - id:{Id}");
+        if (Id != Guid.Empty)
+        {
+            items = await service.GetProductionOrderItemsAsync(Id);
+        }
+        else
+        {
+            selectedDate = DateTime.Now;
+            items = await service.GetProductionOrderItemsByDateAsync(selectedDate);
+        }
+    }
+
+    async Task OnScheduleDateChanged(DateTime args)
+    {
+        selectedDate = args;
+        items = await service.GetProductionOrderItemsByDateAsync(selectedDate);
+        selectedItems = [];
+    }
+
+    async Task StartProduction(Guid lineId)
+    {
+        if(items.Where(i=>i.ResourceAllocated<100).Any())
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Resource Allocation", 
+                "This production can't be started due to the lack of supplied raw materials. Please check out more raw materials from the warehouse.");
+            return;
+        };
+        var ok = await service.StartItemProduction(lineId);
+        if (ok)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Production Started", "Production started successfully");
+            await LoadData();
+            selectedItems = [];
+        }
+    }
+
+   
+
+}

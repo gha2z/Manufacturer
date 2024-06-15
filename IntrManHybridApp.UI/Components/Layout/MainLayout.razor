@@ -50,6 +50,7 @@
             <RadzenPanelMenuItem Text="Purchasing" Icon="shop_two">
                 <RadzenPanelMenuItem Text="Raw Material Check-in" Icon="add_shopping_cart" Path="/Checkin" Style="margin-left:6px" Click="setActiveWindow" />
                 <RadzenPanelMenuItem Text="Supplier" Icon="add_business" Path="/SupplierList" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Raw Material Inventory" Icon="inventory" Path="/rawmaterial-inventories" Style="margin-left:6px" Click="setActiveWindow" />
                 <RadzenPanelMenuItem Text="Reports" Icon="insert_chart" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
             </RadzenPanelMenuItem>
             <RadzenPanelMenuItem Text="Production" Icon="factory">
@@ -57,7 +58,7 @@
                 <RadzenPanelMenuItem Text="Daily Production" Icon="event" Path="/ProductionStatus" Style="margin-left:6px" Click="setActiveWindow" />
                 <RadzenPanelMenuItem Text="Raw Material Check-out" Icon="send_and_archive" Path="/RawMaterialCheckOut" Style="margin-left:6px" Click="setActiveWindow" />
                 <RadzenPanelMenuItem Text="End Product Check-in" Icon="add_task" Path="/CompleteProductionEntry" Style="margin-left:6px" Click="setActiveWindow" />
-                <RadzenPanelMenuItem Text="Product Inventory" Icon="inventory" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
+                <RadzenPanelMenuItem Text="Product Inventory" Icon="inventory" Path="/finished-product-inventories" Style="margin-left:6px" Click="setActiveWindow" />
                 <RadzenPanelMenuItem Text="Reports" Icon="insert_chart" Path="/UnderConstruction" Style="margin-left:6px" Click="setActiveWindow" />
             </RadzenPanelMenuItem>
             <RadzenPanelMenuItem Text="Dispatching" Icon="local_shipping">
@@ -86,6 +87,7 @@
         {"Customer", "storefront"},
         {"User", "manage_accounts"},
         {"Raw Material Check-in", "add_shopping_cart"},
+        {"Raw Material Inventory","inventory"},
         {"Reports", "insert_chart"},
         {"Production Order", "add_shopping_cart"},
         {"Daily Production", "event"},

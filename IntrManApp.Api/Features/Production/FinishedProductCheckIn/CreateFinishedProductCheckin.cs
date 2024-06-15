@@ -103,6 +103,13 @@ namespace IntrManApp.Api.Features.Production
                         inventory.ExpirationDate = item.ExpiryDate;
                         inventory.ProductionDate = request.CheckInDate;
 
+                        var product = await _context.Products.FindAsync([inventory.ProductId], cancellationToken: cancellationToken);
+                        var order = await _context.ProductionOrderLineDetails.FindAsync([inventory.InventoryId], cancellationToken: cancellationToken);
+                        if(product!=null && order!=null)
+                        {
+                            TimeSpan? daysToManufacture = (request.CheckInDate - order.StartDate);
+                            product.DaysToManufacture = daysToManufacture.HasValue? daysToManufacture.Value.Days : 0;
+                        }
                     }
                     _context.ProductInternalCheckIns.Add(productCheckin);
                     await _context.SaveChangesAsync(cancellationToken);

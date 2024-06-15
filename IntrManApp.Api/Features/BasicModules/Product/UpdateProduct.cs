@@ -48,6 +48,8 @@ namespace IntrManApp.Api.Features.BasicModules
             public Guid LocationId { get; set; } = Guid.Empty;
 
             public Guid RackingPalletId { get; set; } = Guid.Empty;
+            public Guid OutLocationId {  get; set; } = Guid.Empty;
+            public Guid OutRackingPalletId { get; set; } = Guid.Empty;
 
             public string? AdditionalInfo { get; set; }
 
@@ -161,7 +163,8 @@ namespace IntrManApp.Api.Features.BasicModules
                 product.LocationId = location.Id;
                 product.RackingPalletId = request.RackingPalletId;
                 product.AdditionalInfo = request.AdditionalInfo;
-
+                product.OutLocationId = request.OutLocationId;
+                product.OutRackingPalletId = request.OutRackingPalletId;
                
             
                 foreach (var culture in request.ProductNameAndDescriptionCultures)

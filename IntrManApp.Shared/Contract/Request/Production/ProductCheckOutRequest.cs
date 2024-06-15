@@ -21,7 +21,7 @@ namespace IntrManApp.Shared.Contract
         public decimal Quantity { get; set; }
         public Guid LocationId { get; set; }
         public Guid RackingPalletId { get; set; }
-        public InventoryItem? RawMaterial { get; set; }
+        public InventoryItemDetail? RawMaterial { get; set; }
         public LocationResponse? Location { get; set; }
         public RackingPalletResponse? RackingPallet { get; set; }
 

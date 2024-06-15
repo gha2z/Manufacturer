@@ -12,32 +12,40 @@
 @inject ILocationService locationService
 @inject ISupplierService supplierService
 @inject ILogger<Checkin> logger
+
 <RadzenTemplateForm TItem="ProductCheckinRequest" Data="@checkin" Submit="@Save">
-<RadzenCard Style="margin-bottom:10px">
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-        <RadzenButton ButtonStyle="ButtonStyle.Primary" Shade="Shade.Dark" class="rz-shadow-0">
-            @caption
-            <RadzenBadge BadgeStyle="BadgeStyle.Primary" IsPill="@true" Text="@captionExt" class="rz-ml-2" />
-        </RadzenButton>
-            <RadzenProgressBarCircular  Visible="@isSaving" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium">
-                <Template>Saving</Template>
-            </RadzenProgressBarCircular>
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-            <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
-            <RadzenButton Text="Clear" ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Reset" Click="@Clear" />
+    <RadzenCard Style="margin-bottom:10px">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenButton ButtonStyle="ButtonStyle.Primary" Shade="Shade.Dark" class="rz-shadow-0">
+                @caption
+                <RadzenBadge BadgeStyle="BadgeStyle.Primary" IsPill="@true" Text="@captionExt" class="rz-ml-2" />
+            </RadzenButton>
+                <RadzenProgressBarCircular  Visible="@isSaving" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium">
+                    <Template>Saving</Template>
+                </RadzenProgressBarCircular>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
+                <RadzenButton Text="Clear" ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Reset" Click="@Clear" />
+            </RadzenStack>
         </RadzenStack>
-    </RadzenStack>
-</RadzenCard>
-<RadzenCard>
+    </RadzenCard>
+    <RadzenCard>
   
         <RadzenStack>
             
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1.5rem">
                 <RadzenFormField Text="Check-in Date" >
                     <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="checkin.CheckInDate" Name="checkinDate" ShowTime="true"/>
-                </RadzenFormField> 
-                <RadzenFormField Text="Supplier">
-                    <RadzenDropDown Data="@suppliers" TextProperty="Name" ValueProperty="BusinessEntityId" @bind-Value="checkin.SupplierId" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Supplier" >
+                    <ChildContent>
+                        <RadzenDropDown Name="SupplierDropDown" Data="@suppliers" TextProperty="Name" ValueProperty="BusinessEntityId" 
+                            @bind-Value="checkin.SupplierId" @ref=@supplierDropDown />
+                    </ChildContent>
+                    <Helper>
+                        <RadzenRequiredValidator Component="SupplierDropDown" Text="Supplier is required."  />
+                    </Helper>
                 </RadzenFormField>
             </RadzenStack>
 
@@ -63,7 +71,7 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="QuantityPerBatch" Title="Weight (gram)" Width="80px">
+                        <RadzenDataGridColumn Property="QuantityPerBatch" Title="Weight (kgs)" Width="80px">
                             <Template Context="rawMaterial">
                                 @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", rawMaterial.QuantityPerBatch)
                             </Template>
@@ -145,6 +153,8 @@
     string captionExt = "0";
     bool isSaving = false;
 
+    RadzenDropDown<Guid>? supplierDropDown;
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -167,7 +177,7 @@
             if (rawMaterial == null) return;
             item.LocationId = rawMaterial.LocationId;
             item.RackingPalletId = rawMaterial.RackingPalletId;
-            item.QuantityPerBatch = rawMaterial.OrderQuantity;
+            item.QuantityPerBatch = rawMaterial.OrderQuantity/1000;
             item.ExpirationDate = item.ProductionDate.AddDays(rawMaterial.DaysToExpire);
         }
     }
@@ -304,10 +314,23 @@
 
     async Task Save()
     {
+        if(checkin.SupplierId==Guid.Empty)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+              "Supplier Required");
+
+            supplierDropDown?.Element.FocusAsync();
+            return;
+        }
         Guid response = Guid.Empty;
         var json = JsonSerializer.Serialize(checkin);
         logger.LogInformation($"Saving Raw Materials Check-in:{Environment.NewLine}{json}");
         isSaving = true;
+
+        foreach(var item in checkin.ProductCheckInDetail)
+        {
+            item.QuantityPerBatch *= 1000;
+        };
         response = await service.CreateCheckinAsync(checkin);
        
         if (response != Guid.Empty)

@@ -99,6 +99,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Content Remove="Components\Pages\Production\RawMaterialCheckOut.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Remove="Resources\Raw\rCartonLabel.btw" />
     </ItemGroup>
 

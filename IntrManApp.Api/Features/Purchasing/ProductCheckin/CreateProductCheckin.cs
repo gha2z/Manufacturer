@@ -74,7 +74,7 @@ namespace IntrManApp.Api.Features.Purchasing
                         for(short i = 0; i < request.ProductCheckInDetail.Count; i++)
                         {
                             var item = request.ProductCheckInDetail[i];
-                        var product = await _context.Products.FindAsync([item.ProductId, cancellationToken], cancellationToken: cancellationToken);
+                            var product = await _context.Products.FindAsync([item.ProductId, cancellationToken], cancellationToken: cancellationToken);
                             if (product == null)
                             {
                                 return Result.Failure<Guid>(new Error(
@@ -94,6 +94,7 @@ namespace IntrManApp.Api.Features.Purchasing
                                 RackingPalletId = item.RackingPalletId,
                             };
                             productCheckIn.ProductCheckInLines.Add(productCheckInLine);
+                            product.OrderQuantity = item.QuantityPerBatch;
                         }
                       
                         _context.ProductCheckIns.Add(productCheckIn);

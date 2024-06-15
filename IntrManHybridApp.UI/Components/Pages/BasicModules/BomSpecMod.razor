@@ -215,11 +215,17 @@
         {
             ProductId = Id
         };
+        decimal totalWeight = 0;
         foreach(var item in bomSpecs)
         {
+            totalWeight += item.RawMaterialQuantity;
+            if(totalWeight > 1000)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Total weight of raw materials should not exceed 1000 grams");
+                return;
+            };
             bomRequest.BomSpecifications.Add(new BomSpecification()
             {
-                    
                     RawMaterialId = item.RawMaterialId,
                     RawMaterialQuantity = item.RawMaterialQuantity,
                     RawMaterialMeasurementUnitId = item.RawMaterialMeasurementUnitId       

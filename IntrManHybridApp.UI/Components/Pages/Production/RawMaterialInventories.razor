@@ -1,0 +1,414 @@
+﻿@page "/rawmaterial-inventories"
+
+@using IntrManApp.Shared.Contract
+@using IntrManApp.Shared.Contract.Tools
+@using IntrManHybridApp.UI.Services
+@using System.Diagnostics
+@using System.Text.Json
+@using Radzen.Blazor
+@using System.Text
+@using Newtonsoft.Json
+@using Mapster
+
+
+@inject IProductionService service
+@inject ISupplierService supplierService
+@inject IProductService productService
+@inject ILogger<ProductionStatus> logger
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenTabs>
+    <Tabs>
+        <RadzenTabsItem Text="Inventory">
+            <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="20" AllowPaging="true"
+                PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
+                AllowRowSelectOnRowClick="true" HideGroupedColumn="true"
+                RowExpand="RowExpand" RowRender="@RowRender" ExpandMode="DataGridExpandMode.Single"
+                TItem="InventoryItem" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite">
+   
+                <Template Context="item">
+                    <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowSorting="false" Data="@item.InventoryLedgers" IsLoading="@isExpandingRow">
+                        <HeaderTemplate>
+                            <RadzenStack>
+                                <RadzenLabel>
+                                    Viewing Inventory Ledger for <strong>@item.ProductName</strong> at <h6>@item.Location</h6>
+                                </RadzenLabel>
+
+                            </RadzenStack>
+                        </HeaderTemplate>
+                        <Columns>
+                            <RadzenDataGridColumn Property="TransDate" Title="Date" TextAlign="TextAlign.Center" Width="120px">
+                                <Template Context="ledger">
+                                    @ledger.TransDate.ToString("MM/dd/yyyy")
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="BatchNumber" Title="Carton ID" TextAlign="TextAlign.Center" Width="140px" />
+                            <RadzenDataGridColumn Property="Description" Title="Description"/>
+                            <RadzenDataGridColumn Property="StockIn" Title="In" Width="90px" TextAlign="TextAlign.Right">
+                                <Template Context="ledger">
+                                    @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.StockIn)
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="StockOut" Title="Out" Width="90px" TextAlign="TextAlign.Right">
+                                <Template Context="ledger">
+                                    @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.StockOut)
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="Balance" Title="Balance" Width="140px" TextAlign="TextAlign.Right">
+                                <Template Context="ledger">
+                                    @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.Balance)
+                                </Template>
+                            </RadzenDataGridColumn>
+                            @* <RadzenDataGridColumn Property="RawMaterialMeasurementUnitName" Title="Unit Measurement" Width="90px"/> *@
+                        </Columns>
+                    </RadzenDataGrid>
+                </Template>
+                <Columns>
+
+                    <RadzenDataGridColumn Property="ProductName" Title="Product"  Width="340px"/>
+                    <RadzenDataGridColumn Property="CategoryName" Title="Category" />
+                    <RadzenDataGridColumn Property="Weight" Title="Weight">
+                        <Template Context="data">
+                            @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2} {1}", data.Weight, data.MeasurementUnitName)
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Location" Title="Location" />
+     
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenTabsItem>
+
+        <RadzenTabsItem Text="Inquiry">
+            <RadzenStack Orientation="Orientation.Vertical">
+                <RadzenCard>
+                  
+                    <RadzenTemplateForm TItem="RawMaterialTrackingRequest" Data="@request" Submit="@Inquiry">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Visible="@(!isShowingResult)">
+                                <RadzenStack Orientation="Orientation.Horizontal">
+                                    <RadzenCheckBox @bind-Value="@byRawMaterialId" Style="margin-top:18px" />
+                                    <RadzenFormField Text="Raw Material">
+                                        <RadzenDropDown @bind-Value="request.RawMaterialId" Data="@rawMaterials" TextProperty="Names" ValueProperty="Id"
+                                            Disabled="@(!byRawMaterialId)" Style="width:300px" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Select Raw Material" /> 
+                                    </RadzenFormField>
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal">
+                                    <RadzenCheckBox @bind-Value="@bySupplierId" Style="margin-top:18px" />
+                                    <RadzenFormField Text="Supplier">
+                                        <RadzenDropDown @bind-Value="request.SupplierId" Data="@suppliers" TextProperty="Name" ValueProperty="BusinessEntityId"
+                                                        Disabled="@(!bySupplierId)" Style="width:200px" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Select Supplier" />
+                                    </RadzenFormField>
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal">
+                                    <RadzenCheckBox @bind-Value="@byCartonId" Style="margin-top:18px;" />
+                                    <RadzenFormField Text="Carton Id">
+                                        <RadzenTextBox Disabled="@(!byCartonId)" @bind-Value="request.CartonId"
+                                            Style="width:150px" Placeholder="Type/scan Carton Id" />
+                                    </RadzenFormField>
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal">
+                                    <RadzenCheckBox @bind-Value="@byCheckinDate" Style="margin-top:18px" />
+                                    <RadzenFormField Text="Checkin Date">
+                                        <RadzenDatePicker Disabled="@(!byCheckinDate)" @bind-Value="request.CheckInDate" 
+                                        DateFormat="MMM/dd/yyyy" Style="width:150px" />
+                                    </RadzenFormField>
+                                </RadzenStack>
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Visible="@(!isShowingResult)" >
+                                <RadzenStack Orientation="Orientation.Horizontal">
+                                    <RadzenCheckBox @bind-Value="@byEndProductId" Style="margin-top:18px" />
+                                    <RadzenFormField Text="End Product">
+                                        <RadzenDropDown @bind-Value="request.EndProductId" Data="@endProducts" TextProperty="Name" ValueProperty="Id"
+                                            Disabled="@(!byEndProductId)" Style="width:300px" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Select End Product" />
+                                    </RadzenFormField>
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal">
+                                    <RadzenCheckBox @bind-Value="@byEndProductBatchNumber" Style="margin-top:18px" />
+
+                                    <RadzenFormField Text="End Product Batch Number" Style="width:200px">
+                                        <RadzenTextBox Disabled="@(!byEndProductBatchNumber)" @bind-Value="request.EndProductBatchNumber" Placeholder="Type/scan Batch Number" />
+                                    </RadzenFormField>
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal">
+                                    <RadzenCheckBox @bind-Value="@byCheckOutDate" Style="margin-top:18px" />
+                                    <RadzenFormField Text="CheckOut Date">
+                                        <RadzenDatePicker Disabled="@(!byCheckOutDate)"  @bind-Value="request.CheckOutDate" 
+                                            DateFormat="MMM/dd/yyyy" Style="width:150px" />
+                                    </RadzenFormField>
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal">
+                                    <RadzenCheckBox @bind-Value="@byReturnDate" Style="margin-top:18px" />
+                                    <RadzenFormField Text="Return Date">
+                                        <RadzenDatePicker Disabled="@(!byReturnDate)" @bind-Value="request.CheckOutDate" 
+                                        DateFormat="MMM/dd/yyyy" Style="width:150px" />
+                                    </RadzenFormField>
+                                </RadzenStack>
+                            </RadzenStack>
+
+                          
+                            <RadzenCard Visible="@isShowingResult">
+                                @inQueryCaption
+                            </RadzenCard>
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="@inQueryButtonCaption" Style="margin-top:0px" />
+                       
+                        </RadzenStack>
+                    </RadzenTemplateForm>
+                </RadzenCard>
+                <RadzenCard Variant="Variant.Outlined">
+                    <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="20" AllowPaging="true"
+                                    PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
+                                    AllowRowSelectOnRowClick="true" HideGroupedColumn="true" 
+                                    RowExpand="InquiryRowExpand" RowRender="@InquiryRowRender" ExpandMode="DataGridExpandMode.Single"
+                                    TItem="RawMaterialTrackingResponse" Data="@inqueryResults" style="background-color:ghostwhite">
+
+                        <Template Context="item">
+                            <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowSorting="false" Data="@item.InventoryLedgers" IsLoading="@isExpandingInquiryRow">
+                                <HeaderTemplate>
+                                    <RadzenStack>
+                                        <RadzenLabel>
+                                            Viewing Inventory Ledger for <strong>@item.CartonId</strong>
+                                        </RadzenLabel>
+
+                                    </RadzenStack>
+                                </HeaderTemplate>
+                                <Columns>
+                                    <RadzenDataGridColumn Property="TransDate" Title="Date" TextAlign="TextAlign.Center" Width="120px">
+                                        <Template Context="ledger">
+                                            @ledger.TransDate.ToString("MM/dd/yyyy")
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn Property="BatchNumber" Title="Carton ID" TextAlign="TextAlign.Center" Width="140px" />
+                                    <RadzenDataGridColumn Property="Description" Title="Description" />
+                                    <RadzenDataGridColumn Property="StockIn" Title="In" Width="90px" TextAlign="TextAlign.Right">
+                                        <Template Context="ledger">
+                                            @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.StockIn)
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn Property="StockOut" Title="Out" Width="90px" TextAlign="TextAlign.Right">
+                                        <Template Context="ledger">
+                                            @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.StockOut)
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn Property="Balance" Title="Balance" Width="140px" TextAlign="TextAlign.Right">
+                                        <Template Context="ledger">
+                                            @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.Balance)
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    @* <RadzenDataGridColumn Property="RawMaterialMeasurementUnitName" Title="Unit Measurement" Width="90px"/> *@
+                                </Columns>
+                            </RadzenDataGrid>
+                        </Template>
+                        <Columns>
+                            <RadzenDataGridColumn Property="CartonId" Title="Carton ID" />
+                            <RadzenDataGridColumn Property="ProductName" Title="Product" Width="340px" />
+                            <RadzenDataGridColumn Property="Weight" Title="Weight">
+                                <Template Context="data">
+                                    @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2} {1}", data.Weight, data.MeasurementUnitName)
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="LocationName" Title="Location" />
+                            <RadzenDataGridColumn Property="ColRow" Title="Rack" />
+                           
+                            <RadzenDataGridColumn Property="InitialWeight" Title="Checkin Weight" TextAlign="TextAlign.Right">
+                                <Template Context="data">
+                                    @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2} {1}", data.InitialWeight, data.MeasurementUnitName)
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Property="SupplierName" Title="Supplier" />
+                        </Columns>
+                    </RadzenDataGrid>
+                </RadzenCard>
+            </RadzenStack>
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
+
+@code {
+
+    IEnumerable<InventoryItem> items = [];
+    IList<InventoryItem> selectedItems = [];
+
+    IEnumerable<RawMaterialBasicInfo> rawMaterials = [];
+    IEnumerable<SupplierResponse> suppliers = [];
+    IEnumerable<EndProduct> endProducts = [];
+    RawMaterialTrackingRequest request = new RawMaterialTrackingRequest();
+
+    IEnumerable<RawMaterialTrackingResponse> inqueryResults = [];
+
+    bool byRawMaterialId = false;
+    bool byCartonId = false;
+    bool bySupplierId = false;
+    bool byCheckinDate = false;
+    bool byCheckOutDate = false;
+    bool byReturnDate = false;
+    bool byEndProductId = false;
+    bool byEndProductBatchNumber = false;
+    bool byEndProductionStartDate = false;
+
+    bool isExpandingRow = false;
+    bool isExpandingInquiryRow = false;
+    bool isShowingResult = false;
+
+    string inQueryCaption = "Inquiry";
+    string inQueryButtonCaption => isShowingResult ? "Reset" : "Inquiry";
+
+    async Task OpenPrintDialog()
+    {
+        await DialogService.OpenSideAsync<LabelPrintDialog>("Print Label",
+            new Dictionary<string, object> { { "selectedItems", selectedItems } },
+            options: new SideDialogOptions { CloseDialogOnOverlayClick = false, Position = DialogPosition.Right, ShowMask = true });
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await base.OnInitializedAsync();
+    }
+
+    async Task LoadData()
+    {
+        logger.LogInformation($"Finished-Product-Inventories.OnInitializedAsync ");
+        items = await service.GetRawMaterialInventoriesAsync();
+        rawMaterials = await productService.GetRawMaterialsBasicInfoAsync();
+        suppliers = await supplierService.GetSuppliersAsync();
+        endProducts = await service.GetEndProductsAsync();
+    }
+
+    void RowRender(RowRenderEventArgs<InventoryItem> args)
+    {
+        args.Expandable = true; // args.Data.BomCount>0;
+    }
+
+    void RowExpand(InventoryItem item)
+    {
+        isExpandingRow = true;
+
+        try
+        {
+            logger.LogInformation($"FinishedProductInventories.RowExpand - Get Ledgers for product {item.ProductId} at {item.LocationId}");
+            item.InventoryLedgers = service.GetRawMaterialInventoryLedger(
+                new InventoryLedgerRequest() 
+                {
+                    ProductId = item.ProductId, 
+                    LocationId = item.LocationId
+                });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"FinishedProductInventory.RowExpand - Error getting Inventory Ledger for product {item.ProductId}");
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Duration = 10000,
+                    SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
+                    DetailContent = ns =>
+                        @<RadzenText>
+                            <br />Please make sure the connection to the server is available.
+                            <br /><br />Technical detail:
+                            <br />@ex.Message
+                        </RadzenText>
+    });
+        };
+        isExpandingRow = false;
+    }
+
+    async Task Inquiry()
+    {
+        if (!isShowingResult)
+        {
+            if(!byRawMaterialId && !byCartonId && !bySupplierId && !byCheckinDate && !byCheckOutDate && !byReturnDate && !byEndProductId && !byEndProductBatchNumber && !byEndProductionStartDate)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Duration = 10000,
+                    SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">No Inquiry Criteria Selected</RadzenText>,
+                    DetailContent = ns =>
+                        @<RadzenText>
+                            <br />Please select at least one criteria to perform the inquiry.
+                        </RadzenText>
+    });
+                return;
+            };
+
+            isShowingResult = true;
+            inQueryCaption = "<strong>RESULT</strong>: (";
+            var inqueryRequst = request.Adapt<RawMaterialTrackingRequest>();
+
+            if (!byRawMaterialId) inqueryRequst.RawMaterialId = Guid.Empty;
+            else inQueryCaption += 
+                $"Raw Material: {rawMaterials.Where(r => r.Id == inqueryRequst.RawMaterialId).FirstOrDefault()?.Names}  ";
+            if (!byCartonId) inqueryRequst.CartonId = "";
+            else inQueryCaption += $"Carton ID: {inqueryRequst.CartonId}  ";
+            if (!byCheckinDate) inqueryRequst.CheckInDate = new DateTime(2023, 12, 31);
+            else inQueryCaption += $"Checkin Date: {inqueryRequst.CheckInDate.ToString("MM/dd/yyyy")}  ";
+            if (!byCheckOutDate) inqueryRequst.CheckOutDate = new DateTime(2023, 12, 31);
+            else inQueryCaption += $"CheckOut Date: {inqueryRequst.CheckOutDate.ToString("MM/dd/yyyy")}  ";
+            if (!byReturnDate) inqueryRequst.ReturnDate = new DateTime(2023, 12, 31);
+            else inQueryCaption += $"Return Date: {inqueryRequst.ReturnDate.ToString("MM/dd/yyyy")}  ";
+            if (!byEndProductionStartDate) inqueryRequst.EndProductionStartDate = new DateTime(2023, 12, 31);
+            else inQueryCaption += $"End Production Start Date: {inqueryRequst.EndProductionStartDate.ToString("MM/dd/yyyy")}  ";
+            if (!bySupplierId) inqueryRequst.SupplierId = Guid.Empty;
+            else inQueryCaption += $"Supplier: {suppliers.Where(s => s.BusinessEntityId == inqueryRequst.SupplierId).FirstOrDefault()?.Name}  ";
+            if (!byEndProductId) inqueryRequst.EndProductId = Guid.Empty;
+            else inQueryCaption += $"End Product: {endProducts.Where(e => e.Id == inqueryRequst.EndProductId).FirstOrDefault()?.Name}  ";
+            if (!byEndProductBatchNumber) inqueryRequst.EndProductBatchNumber = "";
+            else inQueryCaption += $"End Product Batch Number: {inqueryRequst.EndProductBatchNumber}  ";
+            inQueryCaption+=")";
+
+            inqueryResults = await service.RawMaterialTracking(inqueryRequst);
+        }
+        else
+        {
+            inQueryCaption = "Inquiry";
+            isShowingResult = false;
+        }
+    }
+
+    void InquiryRowRender(RowRenderEventArgs<RawMaterialTrackingResponse> args)
+    {
+        args.Expandable = true; // args.Data.BomCount>0;
+    }
+
+    void InquiryRowExpand(RawMaterialTrackingResponse item)
+    {
+        isExpandingInquiryRow = true;
+
+        try
+        {
+            logger.LogInformation($"InquiryLedger.RowExpand - Get Ledgers for CartonId {item.CartonId} - {item.InventoryId}");
+            item.InventoryLedgers = service.GetRawMaterialInventoryLedgerById(item.InventoryId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"FinishedProductInventory.RowExpand - Error getting Inventory Ledger for Carton ID {item.CartonId}");
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Duration = 10000,
+                    SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
+            DetailContent = ns =>
+    @<RadzenText>
+        <br />Please make sure the connection to the server is available.
+        <br /><br />Technical detail:
+        <br />@ex.Message
+    </RadzenText>
+            });
+        };
+        isExpandingInquiryRow = false;
+    }
+}

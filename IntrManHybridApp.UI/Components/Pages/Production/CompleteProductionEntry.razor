@@ -48,7 +48,8 @@
                             @*  <RadzenDropDown @bind-Value="product.InventoryId" Data="@endProducts" TextProperty="BatchNumber" ValueProperty="InventoryId"
                             Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Change="@(args => ItemChanged(product))" /> *@
-                            <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Batch Number" Style="width:100%;font-size:small" />
+                            <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Batch Number" 
+                                Style="width:100%;font-size:small" @ref=@BatchNumTextBox TabIndex="0"/>
                         </EditTemplate>
                     </RadzenDataGridColumn>
 
@@ -117,7 +118,7 @@
 
     FinishedProductInternalCheckinLineRequest? tmpItem;
 
-    IEnumerable<InventoryItem> endProducts = [];
+    IEnumerable<InventoryItemDetail> endProducts = [];
     IEnumerable<FinishedProductInternalCheckinLineRequest> checkinItems = [];
     IEnumerable<LocationResponse> locations = [];
     IEnumerable<RackingPalletResponse> rackingPallets = [];
@@ -129,6 +130,8 @@
 
     RadzenDropDown<Guid>? locationDropDown;
     RadzenDropDown<Guid>? rackingPalletDropDown;
+
+    RadzenTextBox? BatchNumTextBox;
 
     protected override async Task OnInitializedAsync()
     {
@@ -144,7 +147,7 @@
     bool ItemValidated(FinishedProductInternalCheckinLineRequest item)
     {
         logger.LogInformation($"ItemChanged Raised ...");
-        InventoryItem? product = null;
+        InventoryItemDetail? product = null;
         if (!string.IsNullOrEmpty(item.BatchNumber))
         {
             if (checkin.ProductInternalCheckinLines.Any(p => p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()) && p != item))
@@ -160,24 +163,31 @@
                 item.Quantity = product.Quantity;
                 item.InventoryId = product.InventoryId;
                 item.FinishedProduct = product;
-                //generate expiry date based on checkin.checkIndate + product.DaysToExpire
                 if(checkin.CheckInDate==null) checkin.CheckInDate = DateTime.Now;
-           
+                if (item.LocationId == Guid.Empty) item.LocationId = product.LocationId;
+                if (item.RackingPalletId == Guid.Empty) item.RackingPalletId = product.RackingPalletId;
                 item.ExpiryDate = checkin.CheckInDate.Value.AddDays(product.DaysToExpire);
                 if (item.LocationId == Guid.Empty)
+                {
                     locationDropDown?.Element.FocusAsync();
+                }
                 else
                 {
-                    item.Location = locations.FirstOrDefault(p => p.Id == item.LocationId);
-                    if (item.RackingPalletId == Guid.Empty)
-                        rackingPalletDropDown?.Element.FocusAsync();
-                    else
-                        item.RackingPallet = rackingPallets.FirstOrDefault(p => p.Id == item.RackingPalletId);
+                    item.Location = locations.FirstOrDefault(l => l.Id == item.LocationId);
                 }
-
+                if (item.RackingPalletId == Guid.Empty)
+                {
+                    rackingPalletDropDown?.Element.FocusAsync();
+                }
+                else
+                {
+                    item.RackingPallet = rackingPallets.FirstOrDefault(r => r.Id == item.RackingPalletId);
+                }
             }
         }
-        return (product != null && item.LocationId != Guid.Empty && item.RackingPalletId != Guid.Empty);
+        bool validated = product != null && item.LocationId != Guid.Empty && item.RackingPalletId != Guid.Empty;
+        if (validated && isAddNew) SaveRow(item);
+        return (validated);
     }
 
     async Task InsertRow()
@@ -193,24 +203,16 @@
         logger.LogInformation($"OnRowCreate");
         if (item.InventoryId != Guid.Empty)
         {
-            logger.LogInformation($"OnRowCreate - finding end product, location and racking data");
-
-
-            if (ItemValidated(item))
-            {
-                logger.LogInformation($"Items Validated ... Adding row to collection '{item.FinishedProduct?.Names ?? string.Empty}'");
-                checkin.ProductInternalCheckinLines.Add(item);
-                captionExt = $"({checkin.ProductInternalCheckinLines.Count})";
-            }
-            else
-            {
-                logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.FinishedProduct?.Names ?? string.Empty}'");
-                inventoryGrid.CancelEditRow(item);
-            }
-        };
+            logger.LogInformation($"Items Validated ... Adding row to collection '{item.FinishedProduct?.Names ?? string.Empty}'");
+            checkin.ProductInternalCheckinLines.Add(item);
+            captionExt = $"({checkin.ProductInternalCheckinLines.Count})";
+        }
+        else
+        {
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.FinishedProduct?.Names ?? string.Empty}'");
+            inventoryGrid.CancelEditRow(item);
+        }
     }
-
-
 
     async Task EditRow(FinishedProductInternalCheckinLineRequest item)
     {
@@ -240,7 +242,6 @@
             if (tmpItem != null) item = tmpItem.Adapt<FinishedProductInternalCheckinLineRequest>();
             inventoryGrid.EditRow(item);
         }
-
         logger.LogInformation($"Adding row to collection '{item.FinishedProduct?.Names ?? string.Empty}'");
     }
 
@@ -274,7 +275,6 @@
 
     async void Clear()
     {
-
         checkin.ProductInternalCheckinLines.Clear();
         await inventoryGrid.Reload();
         await InsertRow();
@@ -310,9 +310,4 @@
             isSaving = false;
         }
     }
-
-
-
-
-
 }

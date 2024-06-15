@@ -1,6 +1,6 @@
 USE [master]
 GO
-/****** Object:  Database [IntrManDB]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Database [IntrManDB]    Script Date: 6/1/2024 2:16:11 AM ******/
 CREATE DATABASE [IntrManDB]
  CONTAINMENT = NONE
  ON  PRIMARY 
@@ -77,19 +77,19 @@ EXEC sys.sp_db_vardecimal_storage_format N'IntrManDB', N'ON'
 GO
 USE [IntrManDB]
 GO
-/****** Object:  Schema [Person]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Schema [Person]    Script Date: 6/1/2024 2:16:11 AM ******/
 CREATE SCHEMA [Person]
 GO
-/****** Object:  Schema [Production]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Schema [Production]    Script Date: 6/1/2024 2:16:11 AM ******/
 CREATE SCHEMA [Production]
 GO
-/****** Object:  Schema [Purchasing]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Schema [Purchasing]    Script Date: 6/1/2024 2:16:11 AM ******/
 CREATE SCHEMA [Purchasing]
 GO
-/****** Object:  Schema [Sales]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Schema [Sales]    Script Date: 6/1/2024 2:16:11 AM ******/
 CREATE SCHEMA [Sales]
 GO
-/****** Object:  UserDefinedFunction [Production].[GetProductNames]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  UserDefinedFunction [Production].[GetProductNames]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -118,7 +118,7 @@ begin
 	return @ret
 end
 GO
-/****** Object:  Table [Person].[BusinessEntity]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Person].[BusinessEntity]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -132,7 +132,7 @@ CREATE TABLE [Person].[BusinessEntity](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Person].[BusinessEntityContact]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Person].[BusinessEntityContact]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -150,7 +150,7 @@ CREATE TABLE [Person].[BusinessEntityContact](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Person].[ContactType]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Person].[ContactType]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -169,7 +169,7 @@ CREATE TABLE [Person].[ContactType](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Person].[Person]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Person].[Person]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -190,7 +190,7 @@ CREATE TABLE [Person].[Person](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [Person].[PersonType]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Person].[PersonType]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -209,7 +209,7 @@ CREATE TABLE [Person].[PersonType](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[BillOfMaterials]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[BillOfMaterials]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -227,7 +227,7 @@ CREATE TABLE [Production].[BillOfMaterials](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[Culture]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[Culture]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -242,7 +242,7 @@ CREATE TABLE [Production].[Culture](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[DiscrepantReason]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[DiscrepantReason]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -260,7 +260,7 @@ CREATE TABLE [Production].[DiscrepantReason](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[InventoryFlag]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[InventoryFlag]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -274,7 +274,7 @@ CREATE TABLE [Production].[InventoryFlag](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[Location]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[Location]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -293,7 +293,7 @@ CREATE TABLE [Production].[Location](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[MeasurementUnit]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[MeasurementUnit]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -316,7 +316,7 @@ CREATE TABLE [Production].[MeasurementUnit](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[MeasurementUnitGroup]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[MeasurementUnitGroup]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -335,7 +335,7 @@ CREATE TABLE [Production].[MeasurementUnitGroup](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[Product]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[Product]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -370,7 +370,7 @@ CREATE TABLE [Production].[Product](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductCategory]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductCategory]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -389,7 +389,7 @@ CREATE TABLE [Production].[ProductCategory](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductCheckout]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductCheckout]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -405,7 +405,7 @@ CREATE TABLE [Production].[ProductCheckout](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductCheckOutLine]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductCheckOutLine]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -427,7 +427,7 @@ CREATE TABLE [Production].[ProductCheckOutLine](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductInternalCheckIn]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductInternalCheckIn]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -444,7 +444,7 @@ CREATE TABLE [Production].[ProductInternalCheckIn](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductInternalCheckInLine]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductInternalCheckInLine]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -456,7 +456,7 @@ CREATE TABLE [Production].[ProductInternalCheckInLine](
 	[Quantity] [decimal](18, 2) NULL,
 	[LocationId] [uniqueidentifier] NULL,
 	[RackingPalletId] [uniqueidentifier] NULL,
-	[ModifiedDate] [datetime] NULL,
+	[ModifiedDate] [datetime] NOT NULL,
 	[SourceLocationId] [uniqueidentifier] NULL,
 	[SourceRackingPalletId] [uniqueidentifier] NULL,
  CONSTRAINT [PK_ProductReadyCheckInLine] PRIMARY KEY CLUSTERED 
@@ -466,7 +466,7 @@ CREATE TABLE [Production].[ProductInternalCheckInLine](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductInternalCheckout]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductInternalCheckout]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -483,7 +483,7 @@ CREATE TABLE [Production].[ProductInternalCheckout](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductInternalCheckOutLine]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductInternalCheckOutLine]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -505,7 +505,7 @@ CREATE TABLE [Production].[ProductInternalCheckOutLine](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductInventory]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductInventory]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -530,7 +530,7 @@ CREATE TABLE [Production].[ProductInventory](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductionOrder]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductionOrder]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -546,7 +546,7 @@ CREATE TABLE [Production].[ProductionOrder](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductionOrderLine]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductionOrderLine]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -567,7 +567,7 @@ CREATE TABLE [Production].[ProductionOrderLine](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductionOrderLineDetail]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductionOrderLineDetail]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -586,7 +586,7 @@ CREATE TABLE [Production].[ProductionOrderLineDetail](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductionOrderLineDetailResource]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductionOrderLineDetailResource]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -604,7 +604,7 @@ CREATE TABLE [Production].[ProductionOrderLineDetailResource](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductionOrderLineDetailResourceAllocation]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductionOrderLineDetailResourceAllocation]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -618,7 +618,7 @@ CREATE TABLE [Production].[ProductionOrderLineDetailResourceAllocation](
 	[ModifierDate] [datetime] NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductNameAndDescriptionCulture]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductNameAndDescriptionCulture]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -635,7 +635,7 @@ CREATE TABLE [Production].[ProductNameAndDescriptionCulture](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductPhoto]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductPhoto]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -653,7 +653,7 @@ CREATE TABLE [Production].[ProductPhoto](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[ProductProductPhoto]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[ProductProductPhoto]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -665,7 +665,7 @@ CREATE TABLE [Production].[ProductProductPhoto](
 	[ModifiedDate] [datetime] NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[RackingPallet]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[RackingPallet]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -681,7 +681,7 @@ CREATE TABLE [Production].[RackingPallet](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[StockAdjustMent]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[StockAdjustMent]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -697,7 +697,7 @@ CREATE TABLE [Production].[StockAdjustMent](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Production].[StockAdjustmentLine]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Production].[StockAdjustmentLine]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -717,7 +717,7 @@ CREATE TABLE [Production].[StockAdjustmentLine](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Purchasing].[ProductCheckIn]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Purchasing].[ProductCheckIn]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -734,7 +734,7 @@ CREATE TABLE [Purchasing].[ProductCheckIn](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Purchasing].[ProductCheckInLine]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Purchasing].[ProductCheckInLine]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -757,7 +757,7 @@ CREATE TABLE [Purchasing].[ProductCheckInLine](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Purchasing].[ProductCheckInLineDetail]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Purchasing].[ProductCheckInLineDetail]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -776,7 +776,7 @@ CREATE TABLE [Purchasing].[ProductCheckInLineDetail](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Purchasing].[Supplier]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Purchasing].[Supplier]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -796,7 +796,7 @@ CREATE TABLE [Purchasing].[Supplier](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Sales].[Customer]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Sales].[Customer]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -812,7 +812,7 @@ CREATE TABLE [Sales].[Customer](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Sales].[SalesOrder]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Sales].[SalesOrder]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -830,7 +830,7 @@ CREATE TABLE [Sales].[SalesOrder](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [Sales].[SalesOrderLine]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Table [Sales].[SalesOrderLine]    Script Date: 6/1/2024 2:16:11 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -847,7 +847,7 @@ CREATE TABLE [Sales].[SalesOrderLine](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_ProductInventory]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Index [IX_ProductInventory]    Script Date: 6/1/2024 2:16:11 AM ******/
 CREATE NONCLUSTERED INDEX [IX_ProductInventory] ON [Production].[ProductInventory]
 (
 	[InventoryId] ASC
@@ -855,7 +855,7 @@ CREATE NONCLUSTERED INDEX [IX_ProductInventory] ON [Production].[ProductInventor
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [IX_ProductInventory_2]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Index [IX_ProductInventory_2]    Script Date: 6/1/2024 2:16:11 AM ******/
 CREATE NONCLUSTERED INDEX [IX_ProductInventory_2] ON [Production].[ProductInventory]
 (
 	[BatchNumber] ASC
@@ -863,7 +863,7 @@ CREATE NONCLUSTERED INDEX [IX_ProductInventory_2] ON [Production].[ProductInvent
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [IX_RackingPallet]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Index [IX_RackingPallet]    Script Date: 6/1/2024 2:16:11 AM ******/
 CREATE UNIQUE NONCLUSTERED INDEX [IX_RackingPallet] ON [Production].[RackingPallet]
 (
 	[Col] ASC,
@@ -872,7 +872,7 @@ CREATE UNIQUE NONCLUSTERED INDEX [IX_RackingPallet] ON [Production].[RackingPall
 GO
 SET ANSI_PADDING ON
 GO
-/****** Object:  Index [IX_Customer]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  Index [IX_Customer]    Script Date: 6/1/2024 2:16:11 AM ******/
 CREATE NONCLUSTERED INDEX [IX_Customer] ON [Sales].[Customer]
 (
 	[Name] ASC
@@ -1414,12 +1414,12 @@ REFERENCES [Sales].[SalesOrder] ([Id])
 GO
 ALTER TABLE [Sales].[SalesOrderLine] CHECK CONSTRAINT [FK_SalesOrderLine_SalesOrder]
 GO
-/****** Object:  StoredProcedure [Production].[BomSpecification]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[BomSpecification]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE proc [Production].[BomSpecification] 
+create proc [Production].[BomSpecification] 
 (
 	@ProductId uniqueidentifier
 )
@@ -1431,7 +1431,7 @@ INNER JOIN Production.Product p ON bom.RawMaterialId=p.id
 INNER JOIN Production.MeasurementUnit mu ON BOM.RawMaterialMeasurementUnitId = mu.Id 
 WHERE bom.ProductId = @ProductId
 GO
-/****** Object:  StoredProcedure [Production].[DistributeRawMaterialsCheckout]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[DistributeRawMaterialsCheckout]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1502,28 +1502,26 @@ begin
 
 	open c1
 	fetch next from c1 into @resourceId, @QtyRequired 
-	while @@FETCH_STATUS=0 and @chkQuantity>0
+	while @@FETCH_STATUS=0 and @QtyRequired>0 and @chkQuantity>0
 	begin
-		if @QtyRequired>0
+		if @chkQuantity>@QtyRequired
 		begin
-			if @chkQuantity>@QtyRequired
-			begin
-				set @QtyAllocated=@QtyRequired
-				set @chkQuantity=@chkQuantity - @QtyAllocated
-			end else
-			begin
-				set @QtyAllocated=@chkQuantity
-				set @chkQuantity=0
-			end
-			insert into Production.ProductionOrderLineDetailResourceAllocation 
-			select 
-				@resourceId, 
-				@CheckOutId,
-				@chkInventoryId,
-				@QtyAllocated,
-				@chkMeasurementUnitId,
-				getdate() 
+			set @QtyAllocated=@QtyRequired
+			set @chkQuantity=@chkQuantity - @QtyAllocated
+		end else
+		begin
+			set @QtyAllocated=@chkQuantity
+			set @chkQuantity=0
 		end
+		insert into Production.ProductionOrderLineDetailResourceAllocation 
+		select 
+			@resourceId, 
+			@CheckOutId,
+			@chkInventoryId,
+			@QtyAllocated,
+			@chkMeasurementUnitId,
+			getdate() 
+
 		fetch next from c1 into @resourceId, @QtyRequired 
 	end
 	update Production.ProductInventory set Quantity=@chkQuantity where InventoryId=@chkInventoryId
@@ -1540,7 +1538,7 @@ close c
 deallocate c
 
 GO
-/****** Object:  StoredProcedure [Production].[GetDispatchableProducts]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[GetDispatchableProducts]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1582,7 +1580,7 @@ INNER JOIN
 WHERE 
 	inv.Flag=7 AND p.IsFinishedGood = 1
 GO
-/****** Object:  StoredProcedure [Production].[GetLocationById]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[GetLocationById]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1594,7 +1592,7 @@ Create Proc [Production].[GetLocationById]
 as
 select Id, Name from Production.Location where Id = @Id
 GO
-/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailByDate]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailByDate]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1607,7 +1605,7 @@ as
 SELECT
 	po.Id,	
 	po.OrderDate,
-	isnull(i.ProductionDate,po.ScheduledDate) as ScheduledDate,
+	po.ScheduledDate,
 	pl.LineId,
 	pl.ProductId,
 	production.GetProductNames(pl.ProductId) as ProductName,
@@ -1624,9 +1622,7 @@ SELECT
 	pr.Quantity as RawMaterialQuantity,
 	i.Flag,
 	isnull((select sum(Quantity) from Production.ProductionOrderLineDetailResourceAllocation 
-		where ResourceId=pr.resourceId),0)/pr.Quantity * 100 as ResourceAllocated,
-	isnull(i.ExpirationDate,dateadd(day, (select DaysToExpire from production.Product prod
-		where Id = pl.ProductId), isnull(i.ProductionDate,po.OrderDate))) as ExpirationDate 
+		where ResourceId=pr.resourceId),0)/pr.Quantity * 100 as ResourceAllocated
 FROM
 	Production.ProductionOrder po
 	INNER JOIN 
@@ -1645,7 +1641,7 @@ WHERE
 	DATEDIFF(day,po.scheduledDate,@date)=0
 
 GO
-/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailById]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailById]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1658,7 +1654,7 @@ as
 SELECT
 	po.Id,	
 	po.OrderDate,
-	isnull(i.ProductionDate,po.ScheduledDate) as ScheduledDate,
+	po.ScheduledDate,
 	pl.LineId,
 	pl.ProductId,
 	production.GetProductNames(pl.ProductId) as ProductName,
@@ -1675,9 +1671,7 @@ SELECT
 	pr.Quantity as RawMaterialQuantity, 
 	i.Flag,
 	isnull((select sum(Quantity) from Production.ProductionOrderLineDetailResourceAllocation 
-		where ResourceId=pr.resourceId),0)/pr.Quantity * 100 as ResourceAllocated,
-	isnull(i.ExpirationDate,dateadd(day, (select DaysToExpire from production.Product prod
-		where Id = pl.ProductId), isnull(i.ProductionDate,po.OrderDate))) as ExpirationDate  
+		where ResourceId=pr.resourceId),0)/pr.Quantity * 100 as ResourceAllocated
 FROM
 	Production.ProductionOrder po 
 INNER JOIN 
@@ -1700,7 +1694,7 @@ WHERE
 	PO.Id = @Id
 
 GO
-/****** Object:  StoredProcedure [Production].[GetRackingPalletById]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[GetRackingPalletById]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1714,7 +1708,7 @@ SELECT Id, Col, Row, Description, Col + '-' + cast(Row as nvarchar(50)) as ColRo
 FROM Production.RackingPallet 
 WHERE Id=@Id
 GO
-/****** Object:  StoredProcedure [Production].[GetRawMaterialsBasicInfo]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[GetRawMaterialsBasicInfo]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1732,7 +1726,7 @@ FROM
 		ON p.MeasurementUnitOrderId = mu.Id 
 WHERE IsFinishedGood=0
 GO
-/****** Object:  StoredProcedure [Production].[GetRawMaterialsForProduction]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[GetRawMaterialsForProduction]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1774,7 +1768,7 @@ INNER JOIN
 WHERE 
 	inv.Flag in (1,3) AND p.IsFinishedGood = 0
 GO
-/****** Object:  StoredProcedure [Production].[GetRunningProductionItems]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[GetRunningProductionItems]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1805,18 +1799,18 @@ INNER JOIN
 	Production.MeasurementUnit mu 
 	ON
 		inv.MeasurementUnitId = mu.Id 
-left outer JOIN 
+INNER JOIN 
 	Production.Location loc 
 	ON
 		inv.LocationId = loc.Id 
-left outer JOIN 
+INNER JOIN 
 	Production.RackingPallet rack 
 	ON
 		inv.RackingPalletId = rack.Id 
 WHERE 
 	inv.Flag=6 AND p.IsFinishedGood = 1
 GO
-/****** Object:  StoredProcedure [Production].[LocationList]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[LocationList]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1825,7 +1819,7 @@ create proc [Production].[LocationList]
 as
 Select Id, [Name] from production.[Location]
 GO
-/****** Object:  StoredProcedure [Production].[ProductCategoryList]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[ProductCategoryList]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1834,7 +1828,7 @@ Create Proc [Production].[ProductCategoryList]
 as
 select Id, Name from Production.ProductCategory
 GO
-/****** Object:  StoredProcedure [Production].[ProductList]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[ProductList]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1864,7 +1858,7 @@ INNER JOIN Production.MeasurementUnitGroup mg
 INNER JOIN Production.MeasurementUnit mu 
 	ON p.MeasurementUnitOrderId = mu.Id
 GO
-/****** Object:  StoredProcedure [Production].[RackingPalletList]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Production].[RackingPalletList]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1873,7 +1867,7 @@ create proc [Production].[RackingPalletList]
 as
 Select Id, Col, Row, [Description], Col+'-'+cast(Row as nvarchar(5)) as ColRow from production.RackingPallet
 GO
-/****** Object:  StoredProcedure [Purchasing].[GetCheckinRawMaterials]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Purchasing].[GetCheckinRawMaterials]    Script Date: 6/1/2024 2:16:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1918,7 +1912,7 @@ FROM
 WHERE
 	c.Id=@Id
 GO
-/****** Object:  StoredProcedure [Purchasing].[GetEndProducts]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Purchasing].[GetEndProducts]    Script Date: 6/1/2024 2:16:13 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1948,7 +1942,7 @@ FROM
 WHERE 
 	IsFinishedGood = 1 
 GO
-/****** Object:  StoredProcedure [Purchasing].[GetSupplierById]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Purchasing].[GetSupplierById]    Script Date: 6/1/2024 2:16:13 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1960,7 +1954,7 @@ CREATE Proc [Purchasing].[GetSupplierById]
 as
 select BusinessEntityId, [Name], IsActive from Purchasing.Supplier where BusinessEntityId = @BusinessEntityId
 GO
-/****** Object:  StoredProcedure [Purchasing].[RawMaterialsForCheckin]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Purchasing].[RawMaterialsForCheckin]    Script Date: 6/1/2024 2:16:13 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1988,7 +1982,7 @@ FROM
 WHERE 
 	IsFinishedGood = 0 
 GO
-/****** Object:  StoredProcedure [Purchasing].[SupplierList]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Purchasing].[SupplierList]    Script Date: 6/1/2024 2:16:13 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1997,7 +1991,7 @@ create proc [Purchasing].[SupplierList]
 as
 Select BusinessEntityId, [Name], IsActive from Purchasing.Supplier
 GO
-/****** Object:  StoredProcedure [Sales].[CustomerList]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Sales].[CustomerList]    Script Date: 6/1/2024 2:16:13 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2006,7 +2000,7 @@ create proc [Sales].[CustomerList]
 as
 Select BusinessEntityId, [Name], IsActive from Sales.Customer
 GO
-/****** Object:  StoredProcedure [Sales].[GetCustomerById]    Script Date: 6/7/2024 7:24:21 PM ******/
+/****** Object:  StoredProcedure [Sales].[GetCustomerById]    Script Date: 6/1/2024 2:16:13 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2019,50 +2013,9 @@ as
 select BusinessEntityId, Name, IsActive from Sales.Customer where BusinessEntityId = @BusinessEntityId
 
 GO
-/****** Object:  StoredProcedure [Sales].[GetDispatchOrderDetailByDate]    Script Date: 6/7/2024 7:24:21 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-Create Proc [Sales].[GetDispatchOrderDetailByDate]
-(
-	@date datetime
-)
-as
-SELECT
-	do.Id,	
-	do.OrderDate,
-	do.CustomerId,
-	c.Name as CustomerName,
-	i.ProductId,
-	production.GetProductNames(i.ProductId) as ProductName,
-	i.BatchNumber,
-	dl.InventoryId,
-	dl.MeasurementUnitId as MeasurementUnitId,
-	(select Name from production.MeasurementUnit where Id=dl.MeasurementUnitId) as ProductMeasurementUnitName,
-	dl.Quantity,
-	i.Flag 
-FROM
-	Sales.SalesOrder do
-INNER JOIN 
-	Sales.Customer c 
-	ON
-		do.CustomerId = c.BusinessEntityId 
-INNER JOIN 
-	Sales.SalesOrderLine dl 
-	ON 
-		do.Id = dl.OrderId
-INNER JOIN 
-	Production.ProductInventory i 
-	ON 
-		dl.InventoryId = i.InventoryId 
-WHERE  
-	DATEDIFF(day,do.OrderDate,@date)=0
-
-GO
 EXEC sys.sp_addextendedproperty @name=N'Description', @value=N'Raw Materials check out for production processing' , @level0type=N'SCHEMA',@level0name=N'Production', @level1type=N'TABLE',@level1name=N'ProductCheckout'
 GO
-EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'' , @level0type=N'SCHEMA',@level0name=N'Production', @level1type=N'TABLE',@level1name=N'ProductInternalCheckIn', @level2type=N'COLUMN',@level2name=N'RevisionNumber'
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'3. Return from Production 6. Check-In from production 7. New Delivery Order 8. Packing 9. Packed 10. Dispatched' , @level0type=N'SCHEMA',@level0name=N'Production', @level1type=N'TABLE',@level1name=N'ProductInternalCheckIn', @level2type=N'COLUMN',@level2name=N'RevisionNumber'
 GO
 EXEC sys.sp_addextendedproperty @name=N'Description', @value=N'Products check-in from production or movement between different location or racking pallets' , @level0type=N'SCHEMA',@level0name=N'Production', @level1type=N'TABLE',@level1name=N'ProductInternalCheckIn'
 GO
