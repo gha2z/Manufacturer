@@ -34,8 +34,8 @@ namespace IntrManHybridApp.UI.Services
         {
             try
             {
-                logger.LogInformation($"Creating Raw Materials Checkout: Post {httpClient.BaseAddress}/ProductCheckOut");
-                var response = await httpClient.PostAsJsonAsync("productCheckout", request);
+                logger.LogInformation($"Creating Raw Materials Checkout: Post {httpClient.BaseAddress}/RawMaterialCheckOut");
+                var response = await httpClient.PostAsJsonAsync("rawMaterialCheckout", request);
                 return response.Content.ReadFromJsonAsync<Guid>().Result;
             } catch(Exception ex)
             {
@@ -313,6 +313,22 @@ namespace IntrManHybridApp.UI.Services
             }
         }
 
+        public async Task<Guid> CreateProductCheckout(ProductCheckOutRequest request)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(request);
+                logger.LogInformation($"Creating Inventory Transfer: Post {httpClient.BaseAddress}/productInternalCheckOut/{json}");
+                var response = await httpClient.PostAsJsonAsync("productInternalCheckout", request);
+                return response.Content.ReadFromJsonAsync<Guid>().Result;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error creating Raw Materials Checkout");
+                return Guid.Empty;
+            }
+        }
+
         public async Task<IEnumerable<InventoryItemExtendedFlag>> GetFinishedProductInventoriesAsync()
         {
             List<InventoryItemExtendedFlag> inventoryItems = [];
@@ -402,7 +418,7 @@ namespace IntrManHybridApp.UI.Services
             List<InventoryItem> inventoryItems = [];
             try
             {
-                logger.LogInformation($"Getting Finished Product Inventory Items : Get {httpClient.BaseAddress}/RawMaterialInventories");
+                logger.LogInformation($"Getting Raw Material Inventory Items : Get {httpClient.BaseAddress}/RawMaterialInventories");
                 IEnumerable<InventoryItem> response = await
                     httpClient.GetFromJsonAsync<IEnumerable<InventoryItem>>($"RawMaterialInventories") ?? [];
 
@@ -524,6 +540,22 @@ namespace IntrManHybridApp.UI.Services
                 logger.LogError(ex, $"Error getting Inventory Ledger for InventoryID: {id}");
             }
             return inventoryLedger;
+        }
+
+        public async Task<IEnumerable<InventoryItemDetail>> GetInventoryItemsByLocation(Guid locationId)
+        {
+            IEnumerable<InventoryItemDetail> inventories = [];
+            try
+            {
+
+                logger.LogInformation($"Getting Inventory items by location: Get {httpClient.BaseAddress}/inventoryItemsByLocation/{locationId}");
+                inventories = await httpClient.GetFromJsonAsync<IEnumerable<InventoryItemDetail>>($"inventoryItemsByLocation/{locationId}") ?? [];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error getting Inventory Ledger for InventoryID: {locationId}");
+            }
+            return inventories;
         }
     }
 }

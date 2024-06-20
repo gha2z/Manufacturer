@@ -10,25 +10,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IntrManApp.Api.Features.Production
 {
-    public static class CreateProductCheckOut
+    public static class CreateProductInternalCheckOut
     {
         public class Command : IRequest<Result<Guid>>
         {
             public DateTime? CheckoutDate { get; set; }
-            public List<ProductCheckOutDetailRequest> ProductCheckoutDetail { get; set; } = [];
+            public List<ProductCheckOutDetailRequest> ProductInternalCheckOutDetail { get; set; } = [];
         }
 
         public class Validator : AbstractValidator<Command>
         {
             public Validator()
             {
-                RuleForEach(checkout => checkout.ProductCheckoutDetail).SetValidator(new ProductCheckoutDetailValidator());
+                RuleForEach(checkout => checkout.ProductInternalCheckOutDetail).SetValidator(new ProductCheckOutDetailValidator());
             }
         }
 
-        private class ProductCheckoutDetailValidator : AbstractValidator<ProductCheckOutDetailRequest>
+        private class ProductCheckOutDetailValidator : AbstractValidator<ProductCheckOutDetailRequest>
         {
-            public ProductCheckoutDetailValidator()
+            public ProductCheckOutDetailValidator()
             {
                 RuleFor(product => product.InventoryId).NotEmpty();
                 RuleFor(product => product.Quantity).GreaterThan(0);
@@ -54,25 +54,27 @@ namespace IntrManApp.Api.Features.Production
                 if (!validationResult.IsValid)
                 {
                     return Result.Failure<Guid>(new Error(
-                        "CreateMaterialCheckOut.Validation", validationResult.ToString()));
+                        "CreateInventoryTransfer.Validation", validationResult.ToString()));
                 }
 
                 using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
                 try
                 {
-                   
-                    var productCheckout = new ProductCheckout() { CheckOutDate = request.CheckoutDate};
-                   
-                    foreach (var item in request.ProductCheckoutDetail)
+
+                    var productInternalCheckOut = new ProductInternalCheckout() { CheckOutDate = request.CheckoutDate };
+                    var productInternalCheckIn = new ProductInternalCheckIn() { CheckInDate = request.CheckoutDate };
+
+                    foreach (var item in request.ProductInternalCheckOutDetail)
                     {
                         var inventory = await _context.ProductInventories.FindAsync(item.InventoryId, cancellationToken);
-                        if(inventory == null)
+                        if (inventory == null)
                         {
                             return Result.Failure<Guid>(new Error(
-                                "CreateProductCheckOut.Validation", $"Inventory Item not found"));
+                                "CreateProductInternalCheckOut.Validation", $"Inventory Item not found"));
                         }
-                        productCheckout.ProductCheckOutLines.Add(
-                            new ProductCheckOutLine()
+
+                        productInternalCheckOut.ProductInternalCheckOutLines.Add(
+                            new ProductInternalCheckOutLine()
                             {
                                 InventoryId = item.InventoryId,
                                 MeasurementUnitId = item.UnitMeasurementId,
@@ -82,38 +84,49 @@ namespace IntrManApp.Api.Features.Production
                                 SourceLocationId = inventory.LocationId,
                                 SourceRackingPalletId = inventory.RackingPalletId
                             });
+                        
+                        productInternalCheckIn.ProductInternalCheckInLines.Add(
+                          new ProductInternalCheckInLine()
+                          {
+                              InventoryId = item.InventoryId,
+                              MeasurementUnitId = item.UnitMeasurementId,
+                              Quantity = item.Quantity,
+                              LocationId = item.LocationId,
+                              RackingPalletId = item.RackingPalletId,
+                              SourceLocationId = inventory.LocationId,
+                              SourceRackingPalletId = inventory.RackingPalletId
+                          });
+                        
                         inventory.LocationId = item.LocationId;
                         inventory.RackingPalletId = item.RackingPalletId;
-                        inventory.Flag = 2;
-
-                       
+                        inventory.Flag = 13;
                     }
-                    _context.ProductCheckouts.Add(productCheckout);
+                    _context.ProductInternalCheckouts.Add(productInternalCheckOut);
+                    _context.ProductInternalCheckIns.Add(productInternalCheckIn);
+
                     await _context.SaveChangesAsync(cancellationToken);
-
-                    await _context.Database.ExecuteSqlInterpolatedAsync(
-                        $"Production.DistributeRawMaterialsCheckout @CheckOutId={productCheckout.Id}", cancellationToken: cancellationToken);
-
                     await transaction.CommitAsync(cancellationToken);
-                    return productCheckout.Id;
+
+                    return productInternalCheckOut.Id;
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync(cancellationToken);
                     return Result.Failure<Guid>(new Error(
-                       "CreateProductCheckOut.Validation", $"{ex.Message}\n\n{ex}"));
+                       "CreateProductInternalCheckOut.Validation", $"{ex.Message}\n\n{ex}"));
                 }
             }
         }
     }
 
-    public class CreateMaterialCheckOutEndPoint : ICarterModule
+    public class CreateProductInternalCheckOutEndPoint : ICarterModule
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/productCheckout", async (ProductCheckOutRequest request, ISender sender) =>
+            app.MapPost("api/ProductInternalCheckOut", async (ProductCheckOutRequest request, ISender sender) =>
             {
-                var command = request.Adapt<CreateProductCheckOut.Command>();
+                var command = request.Adapt<CreateProductInternalCheckOut.Command>();
+                command.ProductInternalCheckOutDetail = request.ProductCheckoutDetail.Adapt<List<ProductCheckOutDetailRequest>>();
 
                 var result = await sender.Send(command);
 
@@ -124,8 +137,8 @@ namespace IntrManApp.Api.Features.Production
                 return Results.Ok(result.Value);
             }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
             {
-                Description = "Creates a bulk of raw materials check out for production and returns the new created checkout id on successful operation",
-                Summary = "Create a bulk of raw materials checkout",
+                Description = "Creates a bulk of raw materials/end products check out for production and returns the new created checkout id on successful operation",
+                Summary = "Create a bulk of raw materials/end products checkout",
                 Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
                 {
                     new Microsoft.OpenApi.Models.OpenApiTag

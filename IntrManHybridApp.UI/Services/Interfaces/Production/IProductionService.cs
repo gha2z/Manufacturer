@@ -24,6 +24,9 @@ public interface IProductionService
 
     Task<IEnumerable<InventoryItemDetail>> GetRunningProductionItemsAsync();
     Task<Guid> CreateFinishedProductCheckin(FinishedProductInternalCheckinRequest request);
+    Task<IEnumerable<InventoryItemDetail>> GetInventoryItemsByLocation(Guid locationId);
+    Task<Guid> CreateProductCheckout(ProductCheckOutRequest request);
+
     Task<IEnumerable<InventoryItemExtendedFlag>> GetFinishedProductInventoriesAsync();
 
     IEnumerable<InventoryLedger> GetInventoryLedger(InventoryLedgerRequest request);

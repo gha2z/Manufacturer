@@ -14,7 +14,7 @@
 @inject IProductionService service
 @inject ISupplierService supplierService
 @inject IProductService productService
-@inject ILogger<ProductionStatus> logger
+@inject ILogger<RawMaterialInventories> logger
 @inject NavigationManager Navigation
 @inject NotificationService NotificationService
 @inject DialogService DialogService
@@ -160,7 +160,7 @@
 
                           
                             <RadzenCard Visible="@isShowingResult">
-                                @inQueryCaption
+                                <strong>INQUIRY RESULT: </strong><small>@inQueryCaption</small>
                             </RadzenCard>
                             <RadzenButton ButtonType="ButtonType.Submit" Text="@inQueryButtonCaption" Style="margin-top:0px" />
                        
@@ -346,7 +346,7 @@
             };
 
             isShowingResult = true;
-            inQueryCaption = "<strong>RESULT</strong>: (";
+            inQueryCaption = "(";
             var inqueryRequst = request.Adapt<RawMaterialTrackingRequest>();
 
             if (!byRawMaterialId) inqueryRequst.RawMaterialId = Guid.Empty;

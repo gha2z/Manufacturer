@@ -11,6 +11,7 @@
 @inject IProductionService service
 @inject ILocationService locationService
 @inject ILogger<RawMaterialCheckOut> logger
+@inject IJSRuntime JSRuntime
 
 @* <RadzenTemplateForm TItem="ProductCheckOutRequest" Data="@checkout" Submit="@Save"> *@
     <RadzenCard Style="margin-bottom:10px">
@@ -65,16 +66,18 @@
                         </RadzenDataGridColumn>
 
                     <RadzenDataGridColumn Property="Location.Name" Title="Location" Width="130px">
-                            <EditTemplate Context="rawMaterial">
-                                <RadzenDropDown @bind-Value="rawMaterial.LocationId" Data="@locations" TextProperty="Name" ValueProperty="Id"
-                                    @ref=@locationDropDown Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true" />
+                            <EditTemplate Context="item">
+                                <RadzenDropDown @bind-Value="item.LocationId" Data="@locations" TextProperty="Name" ValueProperty="Id"
+                                    @ref=@locationDropDown Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"
+                                            Change="@(args => ItemValidated(item))" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
                         <RadzenDataGridColumn Property="RackingPallet.ColRow" Title="Rack" Width="100px">
-                            <EditTemplate Context="rawMaterial">
-                                <RadzenDropDown @bind-Value="rawMaterial.RackingPalletId" Data="@rackingPallets" TextProperty="ColRow"
-                                    @ref=@rackingPalletDropDown ValueProperty="Id" Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"/>
+                            <EditTemplate Context="item"> 
+                                <RadzenDropDown @bind-Value="item.RackingPalletId" Data="@rackingPallets" TextProperty="ColRow"
+                                    @ref=@rackingPalletDropDown ValueProperty="Id" Style="width:100%" AllowClear="true" AllowFiltering="true"
+                                    ClearSearchAfterSelection="true" Change="@(args => ItemValidated(item))"/>
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
@@ -132,6 +135,32 @@
         rackingPallets = await locationService.GetRackingPalletsAsync();
         rawMaterials = await service.GetRawMaterialsForProductionAsync();
         await InsertRow();
+    }
+
+    void LocationChanged(ProductCheckOutDetailRequest item)
+    {
+        // var str = $"Item.LocationId={item.LocationId} - Item.Location?.Id={item.Location?.Id} - " +
+        //     $"Item.rawMaterial.LocationId={item.RawMaterial?.LocationId} - Item.rawMaterial.Location?.Id={item.RawMaterial?.LocationId}" + 
+        //     $"Item.BatchNumber={item.BatchNumber} - Item.Qty={item.Quantity}";
+        // JSRuntime.InvokeVoidAsync("alert", str);
+        if (item.LocationId != Guid.Empty)
+        {
+            item.Location = locations.FirstOrDefault(p => p.Id == item.LocationId);
+            ItemValidated(item);
+        }
+    }
+
+    void RackingChanged(ProductCheckOutDetailRequest item)
+    {
+        // var str = $"Item.LocationId={item.LocationId} - Item.Location?.Id={item.Location?.Id} - " +
+        //     $"Item.rawMaterial.LocationId={item.RawMaterial?.LocationId} - Item.rawMaterial.Location?.Id={item.RawMaterial?.LocationId}" +
+        //     $"Item.BatchNumber={item.BatchNumber} - Item.Qty={item.Quantity}";
+        // JSRuntime.InvokeVoidAsync("alert", str);
+        if (item.RackingPalletId != Guid.Empty)
+        {
+            item.RackingPallet = rackingPallets.FirstOrDefault(p => p.Id == item.RackingPalletId);
+            ItemValidated(item);
+        }
     }
 
     bool ItemValidated(ProductCheckOutDetailRequest item)

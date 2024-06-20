@@ -21,5 +21,17 @@ namespace IntrManApp.Shared.Contract
         public string RackingPalletColRow { get; set; } = string.Empty;
         public int DaysToExpire { get; set; }
         public int DaysToManufacture { get; set; }
+        public DateTime? ExpiryDate { get; set; }
+        public DateTime? ProductionDate { get; set; }
+        public Guid OutLocationId { get; set; } = Guid.Empty;
+        public string OutLocationName { get; set; } = string.Empty;
+        public Guid OutRackingPalletId { get; set; } = Guid.Empty;
+        public string OutRackingPalletColRow { get; set; } = string.Empty;
+        public Guid CurrentLocationId { get; set; } = Guid.Empty;
+        public string CurrentLocationName { get; set; } = string.Empty;
+        public Guid CurrentRackingPalletId { get; set; } = Guid.Empty;
+        public string CurrentRackingPalletColRow { get; set; } = string.Empty;
+        public bool IsFinishedGood { get; set; }
+
     }
 }
