@@ -46,7 +46,11 @@
                                 </Template>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn Property="BatchNumber" Title="Carton ID" TextAlign="TextAlign.Center" Width="140px" />
-                            <RadzenDataGridColumn Property="Description" Title="Description"/>
+                            <RadzenDataGridColumn Property="Description" Title="Description">
+                                <Template Context = "ledger">
+                                    @((MarkupString)ledger.Description)
+                                </Template>
+                            </RadzenDataGridColumn>
                             <RadzenDataGridColumn Property="StockIn" Title="In" Width="90px" TextAlign="TextAlign.Right">
                                 <Template Context="ledger">
                                     @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.StockIn)
@@ -191,8 +195,12 @@
                                             @ledger.TransDate.ToString("MM/dd/yyyy")
                                         </Template>
                                     </RadzenDataGridColumn>
-                                    <RadzenDataGridColumn Property="BatchNumber" Title="Carton ID" TextAlign="TextAlign.Center" Width="140px" />
-                                    <RadzenDataGridColumn Property="Description" Title="Description" />
+                                   @*  <RadzenDataGridColumn Property="BatchNumber" Title="Carton ID" TextAlign="TextAlign.Center" Width="140px" /> *@
+                                    <RadzenDataGridColumn Property="Description" Title="Description" >
+                                          <Template Context = "ledger">
+                                            @((MarkupString)ledger.Description)
+                                        </Template>
+                                    </RadzenDataGridColumn>
                                     <RadzenDataGridColumn Property="StockIn" Title="In" Width="90px" TextAlign="TextAlign.Right">
                                         <Template Context="ledger">
                                             @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.StockIn)

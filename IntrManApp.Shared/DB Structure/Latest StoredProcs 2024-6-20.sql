@@ -1,96 +1,96 @@
 USE [IntrManDB]
 GO
-/****** Object:  StoredProcedure [Sales].[GetDispatchOrderDetailByDate]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Sales].[GetDispatchOrderDetailByDate]
+/****** Object:  StoredProcedure [Sales].[GetDispatchOrderDetailByDate]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Sales].[GetDispatchOrderDetailByDate]
 GO
-/****** Object:  StoredProcedure [Sales].[GetCustomerById]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Sales].[GetCustomerById]
+/****** Object:  StoredProcedure [Sales].[GetCustomerById]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Sales].[GetCustomerById]
 GO
-/****** Object:  StoredProcedure [Sales].[CustomerList]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Sales].[CustomerList]
+/****** Object:  StoredProcedure [Sales].[CustomerList]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Sales].[CustomerList]
 GO
-/****** Object:  StoredProcedure [Purchasing].[SupplierList]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Purchasing].[SupplierList]
+/****** Object:  StoredProcedure [Purchasing].[SupplierList]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Purchasing].[SupplierList]
 GO
-/****** Object:  StoredProcedure [Purchasing].[RawMaterialsForCheckin]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Purchasing].[RawMaterialsForCheckin]
+/****** Object:  StoredProcedure [Purchasing].[RawMaterialsForCheckin]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Purchasing].[RawMaterialsForCheckin]
 GO
-/****** Object:  StoredProcedure [Purchasing].[GetSupplierById]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Purchasing].[GetSupplierById]
+/****** Object:  StoredProcedure [Purchasing].[GetSupplierById]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Purchasing].[GetSupplierById]
 GO
-/****** Object:  StoredProcedure [Purchasing].[GetEndProducts]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Purchasing].[GetEndProducts]
+/****** Object:  StoredProcedure [Purchasing].[GetEndProducts]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Purchasing].[GetEndProducts]
 GO
-/****** Object:  StoredProcedure [Purchasing].[GetCheckinRawMaterials]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Purchasing].[GetCheckinRawMaterials]
+/****** Object:  StoredProcedure [Purchasing].[GetCheckinRawMaterials]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Purchasing].[GetCheckinRawMaterials]
 GO
-/****** Object:  StoredProcedure [Production].[RawMaterialTracking]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[RawMaterialTracking]
+/****** Object:  StoredProcedure [Production].[RawMaterialTracking]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[RawMaterialTracking]
 GO
-/****** Object:  StoredProcedure [Production].[RawMaterialLedgerById]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[RawMaterialLedgerById]
+/****** Object:  StoredProcedure [Production].[RawMaterialLedgerById]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[RawMaterialLedgerById]
 GO
-/****** Object:  StoredProcedure [Production].[RawMaterialLedger]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[RawMaterialLedger]
+/****** Object:  StoredProcedure [Production].[RawMaterialLedger]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[RawMaterialLedger]
 GO
-/****** Object:  StoredProcedure [Production].[RawMaterialInventories]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[RawMaterialInventories]
+/****** Object:  StoredProcedure [Production].[RawMaterialInventories]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[RawMaterialInventories]
 GO
-/****** Object:  StoredProcedure [Production].[RackingPalletList]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[RackingPalletList]
+/****** Object:  StoredProcedure [Production].[RackingPalletList]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[RackingPalletList]
 GO
-/****** Object:  StoredProcedure [Production].[ProductList]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[ProductList]
+/****** Object:  StoredProcedure [Production].[ProductList]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[ProductList]
 GO
-/****** Object:  StoredProcedure [Production].[ProductCategoryList]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[ProductCategoryList]
+/****** Object:  StoredProcedure [Production].[ProductCategoryList]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[ProductCategoryList]
 GO
-/****** Object:  StoredProcedure [Production].[LocationList]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[LocationList]
+/****** Object:  StoredProcedure [Production].[LocationList]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[LocationList]
 GO
-/****** Object:  StoredProcedure [Production].[GetRunningProductionItems]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[GetRunningProductionItems]
+/****** Object:  StoredProcedure [Production].[GetRunningProductionItems]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[GetRunningProductionItems]
 GO
-/****** Object:  StoredProcedure [Production].[GetRawMaterialsForProduction]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[GetRawMaterialsForProduction]
+/****** Object:  StoredProcedure [Production].[GetRawMaterialsForProduction]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[GetRawMaterialsForProduction]
 GO
-/****** Object:  StoredProcedure [Production].[GetRawMaterialsBasicInfo]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[GetRawMaterialsBasicInfo]
+/****** Object:  StoredProcedure [Production].[GetRawMaterialsBasicInfo]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[GetRawMaterialsBasicInfo]
 GO
-/****** Object:  StoredProcedure [Production].[GetRackingPalletById]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[GetRackingPalletById]
+/****** Object:  StoredProcedure [Production].[GetRackingPalletById]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[GetRackingPalletById]
 GO
-/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailById]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[GetProductionOrderDetailById]
+/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailById]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[GetProductionOrderDetailById]
 GO
-/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailByDate]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[GetProductionOrderDetailByDate]
+/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailByDate]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[GetProductionOrderDetailByDate]
 GO
-/****** Object:  StoredProcedure [Production].[GetLocationById]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[GetLocationById]
+/****** Object:  StoredProcedure [Production].[GetLocationById]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[GetLocationById]
 GO
-/****** Object:  StoredProcedure [Production].[GetInventoryItemsByLocation]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[GetInventoryItemsByLocation]
+/****** Object:  StoredProcedure [Production].[GetInventoryItemsByLocation]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[GetInventoryItemsByLocation]
 GO
-/****** Object:  StoredProcedure [Production].[GetDispatchableProducts]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[GetDispatchableProducts]
+/****** Object:  StoredProcedure [Production].[GetDispatchableProducts]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[GetDispatchableProducts]
 GO
-/****** Object:  StoredProcedure [Production].[FinishedProductLedger]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[FinishedProductLedger]
+/****** Object:  StoredProcedure [Production].[FinishedProductLedger]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[FinishedProductLedger]
 GO
-/****** Object:  StoredProcedure [Production].[FinishedProductInventories]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[FinishedProductInventories]
+/****** Object:  StoredProcedure [Production].[FinishedProductInventories]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[FinishedProductInventories]
 GO
-/****** Object:  StoredProcedure [Production].[DistributeRawMaterialsCheckout]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[DistributeRawMaterialsCheckout]
+/****** Object:  StoredProcedure [Production].[DistributeRawMaterialsCheckout]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[DistributeRawMaterialsCheckout]
 GO
-/****** Object:  StoredProcedure [Production].[BomSpecification]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [Production].[BomSpecification]
+/****** Object:  StoredProcedure [Production].[BomSpecification]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [Production].[BomSpecification]
 GO
-/****** Object:  StoredProcedure [dbo].[ResetTransactions]    Script Date: 6/20/2024 10:28:03 AM ******/
-DROP PROCEDURE [dbo].[ResetTransactions]
+/****** Object:  StoredProcedure [dbo].[ResetTransactions]    Script Date: 6/20/2024 8:58:23 PM ******/
+DROP PROCEDURE IF EXISTS [dbo].[ResetTransactions]
 GO
-/****** Object:  StoredProcedure [dbo].[ResetTransactions]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [dbo].[ResetTransactions]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -106,7 +106,7 @@ delete from production.ProductCheckout
 delete from Purchasing.ProductCheckIn
 delete from Production.ProductInventory
 GO
-/****** Object:  StoredProcedure [Production].[BomSpecification]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[BomSpecification]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -123,7 +123,7 @@ INNER JOIN Production.Product p ON bom.RawMaterialId=p.id
 INNER JOIN Production.MeasurementUnit mu ON BOM.RawMaterialMeasurementUnitId = mu.Id 
 WHERE bom.ProductId = @ProductId
 GO
-/****** Object:  StoredProcedure [Production].[DistributeRawMaterialsCheckout]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[DistributeRawMaterialsCheckout]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -237,7 +237,7 @@ close c
 deallocate c
 
 GO
-/****** Object:  StoredProcedure [Production].[FinishedProductInventories]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[FinishedProductInventories]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -292,7 +292,7 @@ GROUP BY
 	p.CategoryId, c.Name, p.Id, p.ProductNumber, production.GetProductNames(p.Id), i.Quantity, mu.Name, 
 	i.LocationId, l.Name, r.Col+'-'+cast(r.Row as nvarchar(5)), i.Flag, f.Name  
 GO
-/****** Object:  StoredProcedure [Production].[FinishedProductLedger]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[FinishedProductLedger]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -378,7 +378,7 @@ UPDATE @stockFlow set @balance = balance=@balance+StockIn-StockOut
 
 SELECT * FROM @stockFlow
 GO
-/****** Object:  StoredProcedure [Production].[GetDispatchableProducts]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[GetDispatchableProducts]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -420,7 +420,7 @@ INNER JOIN
 WHERE 
 	inv.Flag=7 AND p.IsFinishedGood = 1
 GO
-/****** Object:  StoredProcedure [Production].[GetInventoryItemsByLocation]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[GetInventoryItemsByLocation]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -498,7 +498,7 @@ WHERE
 	
 	inv.Flag in (1,3,7,8,9,10,11,13,14,15) 
 GO
-/****** Object:  StoredProcedure [Production].[GetLocationById]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[GetLocationById]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -510,7 +510,7 @@ Create Proc [Production].[GetLocationById]
 as
 select Id, Name from Production.Location where Id = @Id
 GO
-/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailByDate]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailByDate]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -561,7 +561,7 @@ WHERE
 	DATEDIFF(day,po.scheduledDate,@date)=0
 
 GO
-/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailById]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[GetProductionOrderDetailById]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -616,7 +616,7 @@ WHERE
 	PO.Id = @Id
 
 GO
-/****** Object:  StoredProcedure [Production].[GetRackingPalletById]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[GetRackingPalletById]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -630,7 +630,7 @@ SELECT Id, Col, Row, Description, Col + '-' + cast(Row as nvarchar(50)) as ColRo
 FROM Production.RackingPallet 
 WHERE Id=@Id
 GO
-/****** Object:  StoredProcedure [Production].[GetRawMaterialsBasicInfo]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[GetRawMaterialsBasicInfo]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -648,7 +648,7 @@ FROM
 		ON p.MeasurementUnitOrderId = mu.Id 
 WHERE IsFinishedGood=0
 GO
-/****** Object:  StoredProcedure [Production].[GetRawMaterialsForProduction]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[GetRawMaterialsForProduction]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -694,7 +694,7 @@ INNER JOIN
 WHERE 
 	inv.Flag in (1,3) AND p.IsFinishedGood = 0
 GO
-/****** Object:  StoredProcedure [Production].[GetRunningProductionItems]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[GetRunningProductionItems]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -736,7 +736,7 @@ left outer JOIN
 WHERE 
 	inv.Flag=6 AND p.IsFinishedGood = 1
 GO
-/****** Object:  StoredProcedure [Production].[LocationList]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[LocationList]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -745,7 +745,7 @@ create proc [Production].[LocationList]
 as
 Select Id, [Name] from production.[Location]
 GO
-/****** Object:  StoredProcedure [Production].[ProductCategoryList]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[ProductCategoryList]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -754,7 +754,7 @@ Create Proc [Production].[ProductCategoryList]
 as
 select Id, Name from Production.ProductCategory
 GO
-/****** Object:  StoredProcedure [Production].[ProductList]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[ProductList]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -784,7 +784,7 @@ INNER JOIN Production.MeasurementUnitGroup mg
 INNER JOIN Production.MeasurementUnit mu 
 	ON p.MeasurementUnitOrderId = mu.Id
 GO
-/****** Object:  StoredProcedure [Production].[RackingPalletList]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[RackingPalletList]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -793,7 +793,7 @@ create proc [Production].[RackingPalletList]
 as
 Select Id, Col, Row, [Description], Col+'-'+cast(Row as nvarchar(5)) as ColRow from production.RackingPallet
 GO
-/****** Object:  StoredProcedure [Production].[RawMaterialInventories]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[RawMaterialInventories]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -848,11 +848,15 @@ GROUP BY
 	p.CategoryId, c.Name, p.Id, p.ProductNumber, production.GetProductNames(p.Id), i.Quantity, mu.Name, 
 	i.LocationId, l.Name, r.Col+'-'+cast(r.Row as nvarchar(5)), i.Flag, f.Name  
 GO
-/****** Object:  StoredProcedure [Production].[RawMaterialLedger]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[RawMaterialLedger]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+--select id, production.GetProductNames(id) from production.Product
+--select * from production.Location
+
+--select month(getdate())
 CREATE Proc [Production].[RawMaterialLedger]
 (
 	@ProductId uniqueidentifier,
@@ -864,7 +868,7 @@ declare @stockFlow table
 	TransDate datetime,
 	InventoryId uniqueidentifier,
 	BatchNumber nvarchar(15),
-	Description nvarchar(50),
+	Description nvarchar(250),
 	StockIn float,
 	StockOut Float,
 	Balance float,
@@ -874,7 +878,9 @@ declare @balance float = 0
 INSERT @stockFlow 
 	SELECT 
 		c.CheckInDate as TransDate, cl.InventoryId, i.BatchNumber, 
-		'Move From ' + (select Name from Production.Location where id=cl.SourceLocationId),
+		'Move/Return From <strong>' + 
+		(select col+'-'+cast(row as nvarchar(5)) from production.RackingPallet where id = cl.SourceRackingPalletId)+'@'+
+		(select Name from Production.Location where id=cl.SourceLocationId)+'</strong>',
 		cl.Quantity, 0, 0, 13 as flag
 	FROM 
 		Production.ProductInternalCheckInLine cl
@@ -890,7 +896,9 @@ INSERT @stockFlow
 UNION ALL 
 	SELECT 
 		c.CheckOutDate as TransDate, cl.InventoryId, i.BatchNumber, 
-		Description =  'Move to ' + (select Name from Production.Location where id=cl.LocationId),
+		Description =  'Move/Return to <strong>' + 
+		(select col+'-'+cast(row as nvarchar(5)) from production.RackingPallet where id = cl.RackingPalletId)+'@'+
+		(select Name from Production.Location where id=cl.LocationId) + '</strong>',
 		0, cl.Quantity, 0,
 		13 
 	FROM 
@@ -906,7 +914,9 @@ UNION ALL
 	WHERE I.ProductId = @ProductId AND CL.SourceLocationId=@LocationId 
 UNION ALL
 	SELECT 
-		SO.CheckOutDate, sl.InventoryId, I.BatchNumber, 'Checkout for Production', 0, sl.Quantity, 0, 2  
+		SO.CheckOutDate, sl.InventoryId, I.BatchNumber, 'Checkout to <strong>'+
+		r.Col+'-'+cast(r.row as nvarchar(5))+'@'+
+		l.Name+'</strong>', 0, sl.Quantity, 0, 2  
 	FROM 
 		Production.ProductCheckOutLine sl 
 	INNER JOIN 
@@ -917,10 +927,20 @@ UNION ALL
 		Production.ProductInventory i 
 		ON
 			sl.InventoryId = i.InventoryId 
+	INNER JOIN 
+		Production.Location l 
+		ON 
+			sl.LocationId = l.id 
+	INNER JOIN 
+		Production.RackingPallet r 
+		ON
+			sl.RackingPalletId = r.Id 
 	WHERE I.ProductId = @ProductId AND sl.SourceLocationId = @LocationId 
 UNION ALL
 	SELECT 
-		SO.CheckOutDate, sl.InventoryId, i.BatchNumber, 'Check-in for Production', sl.Quantity, 0, 0, 2  
+		SO.CheckOutDate, sl.InventoryId, i.BatchNumber, 'Checked-out from <strong> ' + 
+		isnull((select col+'-'+cast(row as nvarchar(5)) from production.RackingPallet where id = sl.SourceRackingPalletId),'')+'@'+
+		isnull((select Name from Production.Location where id=sl.SourceLocationId),'')+'</strong>', sl.Quantity, 0, 0, 2  
 	FROM 
 		Production.ProductCheckOutLine sl 
 	INNER JOIN 
@@ -934,7 +954,10 @@ UNION ALL
 	WHERE I.ProductId = @ProductId AND sl.LocationId = @LocationId 
 UNION ALL
 	SELECT 
-		c.CheckInDate, cd.InventoryId, cd.BatchNumber, 'Check-in from '+ s.Name, cl.QuantityPerBatch, 0, 0, 1 
+		c.CheckInDate, cd.InventoryId, cd.BatchNumber, 'Check-in from <strong>'+ s.Name + '</strong> to '+
+		(select col+'-'+cast(row as nvarchar(5)) from production.RackingPallet where id = cl.RackingPalletId)+'@'+
+		(select Name from Production.Location where id=cl.LocationId) + '</strong>',
+		cl.QuantityPerBatch, 0, 0, 1 
 	FROM 
 		Purchasing.ProductCheckInLineDetail cd 
 	INNER JOIN 
@@ -953,7 +976,19 @@ UNION ALL
 UNION ALL
 	SELECT
 	--+production.GetProductNames(l.ProductId) + '#' + d.BatchNumber
-		C.CheckOutDate, a.InventoryId, i.BatchNumber, 'Allocated for Production ', 0, a.Quantity, 0, 6 
+		C.CheckOutDate, a.InventoryId, i.BatchNumber, 'Allocated for <strong>'+ 
+		(select production.GetProductNames(rsl.ProductId) + '</strong> production, #<strong>'+rsd.BatchNumber+'</strong> - <i>'+
+		 cast(month(isnull(rsd.StartDate,po.ScheduledDate)) as nvarchar(2)) + '/' +
+		 cast(day(isnull(rsd.StartDate,po.ScheduledDate)) as nvarchar(2)) + '/' +
+		 cast(year(isnull(rsd.StartDate,po.ScheduledDate)) as nvarchar(4)) + '</i>'
+		 from production.ProductionOrderLineDetailResource rss 
+		 Inner join production.ProductionOrderLineDetail rsd 
+		 ON rss.InventoryId=rsd.InventoryId 
+		 inner join production.ProductionOrderLine rsl 
+		 ON rsd.LineId = rsl.LineId 
+		 inner join Production.ProductionOrder po 
+		 ON rsl.ProductionOrderId = po.Id 
+		 WHERE rss.ResourceId=a.ResourceId), 0, a.Quantity, 0, 6 
 	FROM 
 		Production.ProductionOrderLineDetailResourceAllocation a 
 	INNER JOIN 
@@ -989,7 +1024,7 @@ UPDATE @stockFlow set @balance = balance=@balance+StockIn-StockOut
 SELECT * FROM @stockFlow
 
 GO
-/****** Object:  StoredProcedure [Production].[RawMaterialLedgerById]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[RawMaterialLedgerById]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1005,7 +1040,7 @@ declare @stockFlow table
 	TransDate datetime,
 	InventoryId uniqueidentifier,
 	BatchNumber nvarchar(15),
-	Description nvarchar(50),
+	Description nvarchar(250),
 	StockIn float,
 	StockOut Float,
 	Balance float,
@@ -1031,9 +1066,16 @@ INSERT @stockFlow
 --UNION ALL 
 	SELECT 
 		c.CheckOutDate as TransDate, cl.InventoryId, i.BatchNumber, 
-		Description =  'Return from '+(select Name from Production.Location where id=cl.SourceLocationId) +' to' + (select Name from Production.Location where id=cl.LocationId),
-		0, 0, 0,
-		13 
+		Description =  
+		'Move/Return from <strong>'+
+		(select col+':'+cast(row as nvarchar(5)) from production.rackingPallet where id=cl.SourceRackingPalletId)+'@'+
+		(select Name from Production.Location where id=cl.SourceLocationId) + 
+		'</strong> to <strong>' + 
+		(select col + ':' + cast(row as nvarchar(5)) from production.RackingPallet where id=cl.RackingPalletId)+'@'+
+		(select Name from Production.Location where id=cl.LocationId) + 
+		'</strong> (no weight change)',
+		cl.Quantity, cl.Quantity, 0,
+		13 as flag
 	FROM 
 		Production.ProductInternalCheckOutLine cl
 	INNER JOIN 
@@ -1047,7 +1089,15 @@ INSERT @stockFlow
 	WHERE i.InventoryId=@InventoryId 
 UNION ALL
 	SELECT 
-		SO.CheckOutDate as TransDate, sl.InventoryId, I.BatchNumber, 'Checkout for Production', 0, 0, 0, 2  
+		SO.CheckOutDate as TransDate, sl.InventoryId, I.BatchNumber, 
+		'Checkout from <strong>'+
+			(select col+':'+cast(row as nvarchar(5)) from production.rackingPallet where id=sl.SourceRackingPalletId) + '@' +
+			(select name from production.Location where id=sl.SourceLocationId) + 
+			'</strong>  to <strong>'+
+			(select col+':'+cast(row as nvarchar(5)) from production.rackingPallet where id=sl.RackingPalletId) + '@' +
+			(select name from production.Location where id=sl.LocationId)+
+			'</strong> (no weight change)', 
+		sl.Quantity, sl.Quantity, 0, 2  
 	FROM 
 		Production.ProductCheckOutLine sl 
 	INNER JOIN 
@@ -1059,23 +1109,13 @@ UNION ALL
 		ON
 			sl.InventoryId = i.InventoryId 
 	WHERE i.InventoryId=@InventoryId 
---UNION ALL
---	SELECT 
---		SO.CheckOutDate, sl.InventoryId, i.BatchNumber, 'Check-in for Production', sl.Quantity, 0, 0, 2  
---	FROM 
---		Production.ProductCheckOutLine sl 
---	INNER JOIN 
---		Production.ProductCheckout so 
---		ON
---			sl.CheckOutId = so.Id 
---	INNER JOIN 
---		Production.ProductInventory i 
---		ON
---			sl.InventoryId = i.InventoryId 
---	WHERE I.ProductId = @ProductId AND sl.LocationId = @LocationId 
 UNION ALL
 	SELECT 
-		c.CheckInDate as TransDate, cd.InventoryId, cd.BatchNumber, 'Check-in from '+ s.Name, cl.QuantityPerBatch, 0, 0, 1 
+		c.CheckInDate as TransDate, cd.InventoryId, cd.BatchNumber, 'Check-in from <strong>'+ s.Name+'</strong> to <strong>'+
+		(select col+':'+cast(row as nvarchar(5)) from production.RackingPallet where id=cl.RackingPalletId)+'@'+
+		(select name from production.Location where id=cl.LocationId)+
+		'</strong>', 
+		cl.QuantityPerBatch, 0, 0, 1 
 	FROM 
 		Purchasing.ProductCheckInLineDetail cd 
 	INNER JOIN 
@@ -1094,7 +1134,19 @@ UNION ALL
 UNION ALL
 	SELECT
 	--+production.GetProductNames(l.ProductId) + '#' + d.BatchNumber
-		C.CheckOutDate, a.InventoryId, i.BatchNumber, 'Allocated for Production ', 0, a.Quantity, 0, 6 
+		C.CheckOutDate, a.InventoryId, i.BatchNumber, 'Allocated for <strong>'+ 
+		isnull((select production.GetProductNames(rsl.ProductId) + '</strong> production, #<strong>'+rsd.BatchNumber+'</strong> - <i>'+
+		 cast(month(isnull(rsd.StartDate,po.ScheduledDate)) as nvarchar(2)) + '/' +
+		 cast(day(isnull(rsd.StartDate,po.ScheduledDate)) as nvarchar(2)) + '/' +
+		 cast(year(isnull(rsd.StartDate,po.ScheduledDate)) as nvarchar(4)) + '</i>'
+		 from production.ProductionOrderLineDetailResource rss 
+		 Inner join production.ProductionOrderLineDetail rsd 
+		 ON rss.InventoryId=rsd.InventoryId 
+		 inner join production.ProductionOrderLine rsl 
+		 ON rsd.LineId = rsl.LineId 
+		 inner join Production.ProductionOrder po 
+		 ON rsl.ProductionOrderId = po.Id 
+		 WHERE rss.ResourceId=a.ResourceId),' Production</strong>'), 0, a.Quantity, 0, 6 
 	FROM 
 		Production.ProductionOrderLineDetailResourceAllocation a 
 	INNER JOIN 
@@ -1109,28 +1161,15 @@ UNION ALL
 		Production.ProductInventory i 
 		ON 
 			a.InventoryId = i.InventoryId 
-	--INNER JOIN 
-	--	production.ProductionOrderLineDetailResource r 
-	--	ON
-	--		a.ResourceId = r.ResourceId 
-	--INNER JOIN 
-	--	production.ProductionOrderLineDetail d 
-	--	ON
-	--		a.InventoryId = d.InventoryId 
-	--INNER JOIN 
-	--	Production.ProductionOrderLine l 
-	--	ON
-	--		d.LineId = l.LineId 
 	WHERE i.InventoryId=@InventoryId 
 
-	ORDER BY TransDate 
+	ORDER BY TransDate, flag 
 
 UPDATE @stockFlow set @balance = balance=@balance+StockIn-StockOut
 
 SELECT * FROM @stockFlow
-
 GO
-/****** Object:  StoredProcedure [Production].[RawMaterialTracking]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Production].[RawMaterialTracking]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1273,7 +1312,7 @@ WHERE
 		isnull(pd.BatchNumber,'0C64BE54-A555-472C-8DF8-73A8FD76A845') else @EndProductBatchNumber end
 
 GO
-/****** Object:  StoredProcedure [Purchasing].[GetCheckinRawMaterials]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Purchasing].[GetCheckinRawMaterials]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1318,7 +1357,7 @@ FROM
 WHERE
 	c.Id=@Id
 GO
-/****** Object:  StoredProcedure [Purchasing].[GetEndProducts]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Purchasing].[GetEndProducts]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1348,7 +1387,7 @@ FROM
 WHERE 
 	IsFinishedGood = 1 
 GO
-/****** Object:  StoredProcedure [Purchasing].[GetSupplierById]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Purchasing].[GetSupplierById]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1360,7 +1399,7 @@ CREATE Proc [Purchasing].[GetSupplierById]
 as
 select BusinessEntityId, [Name], IsActive from Purchasing.Supplier where BusinessEntityId = @BusinessEntityId
 GO
-/****** Object:  StoredProcedure [Purchasing].[RawMaterialsForCheckin]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Purchasing].[RawMaterialsForCheckin]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1388,7 +1427,7 @@ FROM
 WHERE 
 	IsFinishedGood = 0 
 GO
-/****** Object:  StoredProcedure [Purchasing].[SupplierList]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Purchasing].[SupplierList]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1397,7 +1436,7 @@ create proc [Purchasing].[SupplierList]
 as
 Select BusinessEntityId, [Name], IsActive from Purchasing.Supplier
 GO
-/****** Object:  StoredProcedure [Sales].[CustomerList]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Sales].[CustomerList]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1406,7 +1445,7 @@ create proc [Sales].[CustomerList]
 as
 Select BusinessEntityId, [Name], IsActive from Sales.Customer
 GO
-/****** Object:  StoredProcedure [Sales].[GetCustomerById]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Sales].[GetCustomerById]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1419,7 +1458,7 @@ as
 select BusinessEntityId, Name, IsActive from Sales.Customer where BusinessEntityId = @BusinessEntityId
 
 GO
-/****** Object:  StoredProcedure [Sales].[GetDispatchOrderDetailByDate]    Script Date: 6/20/2024 10:28:03 AM ******/
+/****** Object:  StoredProcedure [Sales].[GetDispatchOrderDetailByDate]    Script Date: 6/20/2024 8:58:23 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
