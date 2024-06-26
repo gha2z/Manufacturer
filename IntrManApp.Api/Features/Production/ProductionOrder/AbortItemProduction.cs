@@ -1,6 +1,7 @@
 ﻿using Carter;
 using FluentValidation;
 using IntrManApp.Api.Database;
+using IntrManApp.Api.Entities;
 using IntrManApp.Shared.Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -69,7 +70,11 @@ namespace IntrManApp.Api.Features.Production.ProductionOrder
                             inventoryItem.Flag = 4;
                             inventoryItem.ModifiedDate = DateTime.Now;
                         }
+
                         await _context.SaveChangesAsync(cancellationToken);
+
+                        await _context.Database.ExecuteSqlInterpolatedAsync(
+                       $"Production.DeleteRawMaterialAllocation @inventoryId={request.Id}", cancellationToken: cancellationToken);
                         await transaction.CommitAsync(cancellationToken);
                     }
                     catch (Exception ex)

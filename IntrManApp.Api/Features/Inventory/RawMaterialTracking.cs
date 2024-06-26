@@ -7,7 +7,7 @@ using Mapster;
 using MediatR;
 using System.Data;
 
-namespace IntrManApp.Api.Features.Production;
+namespace IntrManApp.Api.Features.Inventory;
 
 public static class RawMaterialTracking
 {
@@ -34,8 +34,9 @@ public static class RawMaterialTracking
 
             IEnumerable<RawMaterialTrackingResponse>? queryResults =
                 (IEnumerable<RawMaterialTrackingResponse>?)await connection.QueryAsync<RawMaterialTrackingResponse>(
-                    "Production.RawMaterialTracking", new { 
-                        request.RawMaterialId, 
+                    "Production.RawMaterialTracking", new
+                    {
+                        request.RawMaterialId,
                         request.CartonId,
                         request.SupplierId,
                         request.CheckInDate,
@@ -43,7 +44,7 @@ public static class RawMaterialTracking
                         request.ReturnDate,
                         request.EndProductId,
                         request.EndProductBatchNumber,
-                        request.EndProductionStartDate 
+                        request.EndProductionStartDate
                     }, commandType: CommandType.StoredProcedure);
 
             if (queryResults == null)

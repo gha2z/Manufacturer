@@ -13,5 +13,7 @@ public partial class StockAdjustMent
 
     public DateTime? ModifierDate { get; set; }
 
+    public bool? FromInventoryTransfer { get; set; }
+
     public virtual ICollection<StockAdjustmentLine> StockAdjustmentLines { get; set; } = new List<StockAdjustmentLine>();
 }

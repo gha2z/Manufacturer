@@ -81,6 +81,8 @@ public static class MauiProgram
         builder.Services.AddHttpClient<IProductionService, ProductionService>(client => { client.BaseAddress = uri; });
         builder.Services.AddHttpClient<ILabelPrintingService, LabelPrintingService>(client => { client.BaseAddress = bartenderUri; });
         builder.Services.AddHttpClient<ISaleService, SaleService>(client => { client.BaseAddress = uri; });
+        builder.Services.AddHttpClient<IInventoryService, InventoryService>(client => { client.BaseAddress = uri; });
+        builder.Services.AddHttpClient<IAuthService, AuthService>(client => { client.BaseAddress = uri; });
         //builder.Services.AddTransient<ISupplierService, SupplierService>();
         //builder.Services.AddTransient<ILocationService, LocationService>();
 

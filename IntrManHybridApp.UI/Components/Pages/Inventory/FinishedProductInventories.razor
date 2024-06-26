@@ -10,8 +10,8 @@
 @using Newtonsoft.Json
 
 
-@inject IProductionService service
-@inject ILogger<ProductionStatus> logger
+@inject IInventoryService service
+@inject ILogger<FinishedProductInventories> logger
 @inject NavigationManager Navigation
 @inject NotificationService NotificationService
 @inject DialogService DialogService
@@ -43,7 +43,7 @@
                 <RadzenDataGridColumn Property="Description" Title="Description"/>
                 <RadzenDataGridColumn Property="StockIn" Title="In" Width="90px" TextAlign="TextAlign.Right">
                     <Template Context="ledger">
-                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N0}", ledger.StockIn)
+                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", ledger.StockIn)
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn Property="StockOut" Title="Out" Width="90px" TextAlign="TextAlign.Right">
@@ -118,7 +118,7 @@
 
     async Task OpenPrintDialog()
     {
-        await DialogService.OpenSideAsync<LabelPrintDialog>("Print Label",
+        await DialogService.OpenSideAsync<Production.LabelPrintDialog>("Print Label",
             new Dictionary<string, object> { { "selectedItems", selectedItems } },
             options: new SideDialogOptions { CloseDialogOnOverlayClick = false, Position = DialogPosition.Right, ShowMask = true });
     }

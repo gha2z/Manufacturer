@@ -23,6 +23,10 @@ public partial class ProductInternalCheckOutLine
 
     public DateTime? ModifiedDate { get; set; }
 
+    public DateTime? ProductionDate { get; set; }
+
+    public DateTime? ExpirationDate { get; set; }
+
     public virtual ProductInternalCheckout CheckOut { get; set; } = null!;
 
     public virtual ProductInventory Inventory { get; set; } = null!;

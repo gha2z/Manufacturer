@@ -14,9 +14,9 @@
 <RadzenTemplateForm TItem="ProductionOrderRequest" Data="@order" Submit="@Save">
     <RadzenCard Style="margin-bottom:10px">
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-            <RadzenButton ButtonStyle="ButtonStyle.Success" Shade="Shade.Light"  class="rz-shadow-0">
-                @caption
-                <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="@true" Text="@captionExt" class="rz-ml-2" />
+            <RadzenButton ButtonStyle="ButtonStyle.Success" Shade="Shade.Light"  class="rz-shadow-0" Click="ShowUnstartedProduction">
+                Show Unstarted Production
+                @* <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="@true" Text="@captionExt" class="rz-ml-2" /> *@
             </RadzenButton>
             <RadzenProgressBarCircular Visible="@isSaving" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium">
                 <Template>Saving</Template>
@@ -32,9 +32,9 @@
         <RadzenStack>
 
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1.5rem">
-                <RadzenFormField Text="Production Order Date">
+               @*  <RadzenFormField Text="Production Order Date">
                     <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="order.OrderDate" Name="orderDate" ShowTime="true" />
-                </RadzenFormField>
+                </RadzenFormField> *@
                 <RadzenFormField Text="Schedule Date">
                     <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="order.ScheduleDate" Name="scheduleDate" ShowTime="true" />
                 </RadzenFormField>
@@ -321,6 +321,12 @@
         }
     }
 
+    async Task ShowUnstartedProduction()
+    {
+        await DialogService.OpenSideAsync<CustomeProductionStatus>("Unstarted Production",
+            new Dictionary<string, object> { { "status", 5 } }, 
+            new SideDialogOptions { Width = "1180px", Position = DialogPosition.Left, ShowMask = true});
+    }
 
 
 

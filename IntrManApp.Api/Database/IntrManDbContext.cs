@@ -30,6 +30,8 @@ public partial class IntrManDbContext : DbContext
 
     public virtual DbSet<DiscrepantReason> DiscrepantReasons { get; set; }
 
+    public virtual DbSet<Feature> Features { get; set; }
+
     public virtual DbSet<InventoryFlag> InventoryFlags { get; set; }
 
     public virtual DbSet<Location> Locations { get; set; }
@@ -93,6 +95,12 @@ public partial class IntrManDbContext : DbContext
     public virtual DbSet<StockAdjustmentLine> StockAdjustmentLines { get; set; }
 
     public virtual DbSet<Supplier> Suppliers { get; set; }
+
+    public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<UserType> UserTypes { get; set; }
+
+    public virtual DbSet<UserTypeFeature> UserTypeFeatures { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=ConnectionStrings:Database");
@@ -212,6 +220,16 @@ public partial class IntrManDbContext : DbContext
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.Reason).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<Feature>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_Table_1_1");
+
+            entity.ToTable("Feature");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Name).HasMaxLength(50);
         });
 
         modelBuilder.Entity<InventoryFlag>(entity =>
@@ -538,7 +556,6 @@ public partial class IntrManDbContext : DbContext
 
             entity.HasOne(d => d.CheckIn).WithMany(p => p.ProductInternalCheckInLines)
                 .HasForeignKey(d => d.CheckInId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProductReadyCheckInLine_ProductReadyCheckIn");
 
             entity.HasOne(d => d.Inventory).WithMany(p => p.ProductInternalCheckInLines)
@@ -573,14 +590,15 @@ public partial class IntrManDbContext : DbContext
 
             entity.ToTable("ProductInternalCheckOutLine", "Production");
 
+            entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
             entity.Property(e => e.ModifiedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.CheckOut).WithMany(p => p.ProductInternalCheckOutLines)
                 .HasForeignKey(d => d.CheckOutId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProductInternalCheckOutLine_ProductInternalCheckout");
 
             entity.HasOne(d => d.Inventory).WithMany(p => p.ProductInternalCheckOutLines)
@@ -884,7 +902,6 @@ public partial class IntrManDbContext : DbContext
 
             entity.HasOne(d => d.Order).WithMany(p => p.SalesOrderLines)
                 .HasForeignKey(d => d.OrderId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_SalesOrderLine_SalesOrder");
         });
 
@@ -896,6 +913,7 @@ public partial class IntrManDbContext : DbContext
             entity.Property(e => e.AdjustmentDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.FromInventoryTransfer).HasDefaultValue(false);
             entity.Property(e => e.ModifierDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -909,14 +927,16 @@ public partial class IntrManDbContext : DbContext
             entity.ToTable("StockAdjustmentLine", "Production");
 
             entity.Property(e => e.Adjustment).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
+            entity.Property(e => e.InitialQuantity).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.ModifiedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.AdjustmentNavigation).WithMany(p => p.StockAdjustmentLines)
                 .HasForeignKey(d => d.AdjustmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_StockAdjustmentLine_StockAdjustMent");
 
             entity.HasOne(d => d.Inventory).WithMany(p => p.StockAdjustmentLines)
@@ -952,6 +972,48 @@ public partial class IntrManDbContext : DbContext
                 .HasForeignKey<Supplier>(d => d.BusinessEntityId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Supplier_BusinessEntity");
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasIndex(e => e.Name, "IX_Users").IsUnique();
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Name).HasMaxLength(35);
+            entity.Property(e => e.Password).HasMaxLength(50);
+
+            entity.HasOne(d => d.Type).WithMany(p => p.Users)
+                .HasForeignKey(d => d.TypeId)
+                .HasConstraintName("FK_Users_UserType");
+        });
+
+        modelBuilder.Entity<UserType>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_Table_1");
+
+            entity.ToTable("UserType");
+
+            entity.HasIndex(e => e.Name, "IX_Table_1").IsUnique();
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Name).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<UserTypeFeature>(entity =>
+        {
+            entity.HasKey(e => new { e.FeatureId, e.UserTypeId });
+
+            entity.ToTable("UserTypeFeature");
+
+            entity.Property(e => e.Accessible).HasDefaultValue(false);
+
+            entity.HasOne(d => d.Feature).WithMany(p => p.UserTypeFeatures)
+                .HasForeignKey(d => d.FeatureId)
+                .HasConstraintName("FK_UserTypeFeature_Feature");
+
+            entity.HasOne(d => d.UserType).WithMany(p => p.UserTypeFeatures)
+                .HasForeignKey(d => d.UserTypeId)
+                .HasConstraintName("FK_UserTypeFeature_UserType");
         });
 
         OnModelCreatingPartial(modelBuilder);

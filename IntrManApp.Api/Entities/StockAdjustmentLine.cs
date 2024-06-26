@@ -11,6 +11,8 @@ public partial class StockAdjustmentLine
 
     public Guid? MeasurementUnitId { get; set; }
 
+    public decimal? InitialQuantity { get; set; }
+
     public decimal? Quantity { get; set; }
 
     public decimal? Adjustment { get; set; }
@@ -18,6 +20,14 @@ public partial class StockAdjustmentLine
     public Guid? ReasonId { get; set; }
 
     public DateTime? ModifiedDate { get; set; }
+
+    public DateTime? ProductionDate { get; set; }
+
+    public DateTime? ExpirationDate { get; set; }
+
+    public Guid? LocationId { get; set; }
+
+    public Guid? RackingPalletId { get; set; }
 
     public virtual StockAdjustMent AdjustmentNavigation { get; set; } = null!;
 

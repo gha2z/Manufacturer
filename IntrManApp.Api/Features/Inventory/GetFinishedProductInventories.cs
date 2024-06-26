@@ -6,7 +6,7 @@ using IntrManApp.Shared.Contract;
 using MediatR;
 using System.Data;
 
-namespace IntrManApp.Api.Features.Production;
+namespace IntrManApp.Api.Features.Inventory;
 
 public static class GetFinishedProductInventories
 {

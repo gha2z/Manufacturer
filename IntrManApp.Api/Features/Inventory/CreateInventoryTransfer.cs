@@ -7,10 +7,11 @@ using IntrManApp.Api.Entities;
 using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.Design.Serialization;
 
-namespace IntrManApp.Api.Features.Production
+namespace IntrManApp.Api.Features.Inventory
 {
-    public static class CreateProductInternalCheckOut
+    public static class CreateInventoryTransfer
     {
         public class Command : IRequest<Result<Guid>>
         {
@@ -64,6 +65,14 @@ namespace IntrManApp.Api.Features.Production
                     var productInternalCheckOut = new ProductInternalCheckout() { CheckOutDate = request.CheckoutDate };
                     var productInternalCheckIn = new ProductInternalCheckIn() { CheckInDate = request.CheckoutDate };
 
+                    var adjustment = new StockAdjustMent()
+                    {
+                        AdjustmentDate = DateTime.Now,
+                        ModifierDate = DateTime.Now,
+                        FromInventoryTransfer = true,
+                        RevisionNumber = 0
+                    };
+
                     foreach (var item in request.ProductInternalCheckOutDetail)
                     {
                         var inventory = await _context.ProductInventories.FindAsync(item.InventoryId, cancellationToken);
@@ -78,32 +87,72 @@ namespace IntrManApp.Api.Features.Production
                             {
                                 InventoryId = item.InventoryId,
                                 MeasurementUnitId = item.UnitMeasurementId,
-                                Quantity = item.Quantity,
+                                Quantity = inventory.Quantity,
                                 LocationId = item.LocationId,
                                 RackingPalletId = item.RackingPalletId,
                                 SourceLocationId = inventory.LocationId,
-                                SourceRackingPalletId = inventory.RackingPalletId
+                                SourceRackingPalletId = inventory.RackingPalletId,
+                                ProductionDate = item.ProductionDate,
+                                ExpirationDate = item.ExpirationDate
                             });
-                        
+
                         productInternalCheckIn.ProductInternalCheckInLines.Add(
                           new ProductInternalCheckInLine()
                           {
                               InventoryId = item.InventoryId,
                               MeasurementUnitId = item.UnitMeasurementId,
-                              Quantity = item.Quantity,
+                              Quantity = inventory.Quantity,
                               LocationId = item.LocationId,
                               RackingPalletId = item.RackingPalletId,
                               SourceLocationId = inventory.LocationId,
                               SourceRackingPalletId = inventory.RackingPalletId
                           });
-                        
+
                         inventory.LocationId = item.LocationId;
                         inventory.RackingPalletId = item.RackingPalletId;
                         inventory.Flag = 13;
+                        inventory.ModifiedDate = DateTime.Now;
+                        inventory.ProductionDate = item.ProductionDate;
+                        inventory.ExpirationDate = item.ExpirationDate;
+                        if (inventory.Quantity != item.Quantity)
+                        {
+                          
+                            var reason = await _context.DiscrepantReasons
+                                .FirstOrDefaultAsync(x => x.Reason.ToLower().Equals(item.QuantityChangeReason.Trim().ToLower()), cancellationToken);
+
+                            if (reason == null)
+                            {
+                                reason = new DiscrepantReason()
+                                {
+                                    Reason = item.QuantityChangeReason.Trim()
+                                };
+                                _context.DiscrepantReasons.Add(reason);
+                                await _context.SaveChangesAsync();
+                            }
+
+                            adjustment.StockAdjustmentLines.Add(new StockAdjustmentLine()
+                            {
+                                InventoryId = item.InventoryId,
+                                MeasurementUnitId = item.UnitMeasurementId,
+                                Quantity = item.Quantity,
+                                InitialQuantity = inventory.Quantity,
+                                Adjustment = item.Quantity - inventory.Quantity,
+                                ExpirationDate = item.ExpirationDate,
+                                ProductionDate = item.ProductionDate, 
+                                ReasonId = reason.Id,
+                                LocationId = item.LocationId,
+                                RackingPalletId = item.RackingPalletId
+                            });
+                            inventory.Quantity = item.Quantity;
+                        }
                     }
                     _context.ProductInternalCheckouts.Add(productInternalCheckOut);
                     _context.ProductInternalCheckIns.Add(productInternalCheckIn);
 
+                    if (adjustment.StockAdjustmentLines.Count > 0)
+                    {
+                        _context.StockAdjustMents.Add(adjustment);
+                    }
                     await _context.SaveChangesAsync(cancellationToken);
                     await transaction.CommitAsync(cancellationToken);
 
@@ -125,7 +174,7 @@ namespace IntrManApp.Api.Features.Production
         {
             app.MapPost("api/ProductInternalCheckOut", async (ProductCheckOutRequest request, ISender sender) =>
             {
-                var command = request.Adapt<CreateProductInternalCheckOut.Command>();
+                var command = request.Adapt<CreateInventoryTransfer.Command>();
                 command.ProductInternalCheckOutDetail = request.ProductCheckoutDetail.Adapt<List<ProductCheckOutDetailRequest>>();
 
                 var result = await sender.Send(command);
@@ -143,7 +192,7 @@ namespace IntrManApp.Api.Features.Production
                 {
                     new Microsoft.OpenApi.Models.OpenApiTag
                     {
-                        Name = "Raw Materials Checkout"
+                        Name = "Inventory"
                     }
                 }
             });

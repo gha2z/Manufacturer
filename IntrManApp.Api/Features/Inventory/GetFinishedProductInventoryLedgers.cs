@@ -7,13 +7,14 @@ using Mapster;
 using MediatR;
 using System.Data;
 
-namespace IntrManApp.Api.Features.Production;
+namespace IntrManApp.Api.Features.Inventory;
 
-public static class GetRawMaterialLedgerById
+public static class GetFinishedProductInventoryLedgers
 {
     public class Query : IRequest<Result<IEnumerable<InventoryLedger>>>
     {
-        public Guid InventoryId { get; set; }
+        public Guid ProductId { get; set; }
+        public Guid LocationId { get; set; }
     }
 
     internal sealed class Handler(IDbConnectionFactory dbConnectionFactory) : IRequestHandler<Query, Result<IEnumerable<InventoryLedger>>>
@@ -26,11 +27,11 @@ public static class GetRawMaterialLedgerById
 
             IEnumerable<InventoryLedger>? queryResults =
                 (IEnumerable<InventoryLedger>?)await connection.QueryAsync<InventoryLedger>(
-                    "Production.RawMaterialLedgerById", new { request.InventoryId }, commandType: CommandType.StoredProcedure);
+                    "Production.FinishedProductLedger", new { request.ProductId, request.LocationId }, commandType: CommandType.StoredProcedure);
 
             if (queryResults == null)
             {
-                return Result.Failure<IEnumerable<InventoryLedger>>(new Error("GetRawMaterialLedgerById.NotFound", "No products found"));
+                return Result.Failure<IEnumerable<InventoryLedger>>(new Error("GetFinishedProductInventoryLedgers.NotFound", "No products found"));
             }
             else
             {
@@ -40,13 +41,13 @@ public static class GetRawMaterialLedgerById
     }
 }
 
-public class GetRawMaterialLedgerByIdEndPoint : ICarterModule
+public class GetFinishedProductInventoryLedgersEndPoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/rawMaterialInventoryLedger/{id}", async (Guid id, ISender sender) =>
+        app.MapPost("api/finishedProductInventoryLedger", async (InventoryLedgerRequest request, ISender sender) =>
         {
-            var query = new GetRawMaterialLedgerById.Query { InventoryId = id };
+            var query = request.Adapt<GetFinishedProductInventoryLedgers.Query>();
 
             var result = await sender.Send(query);
 
@@ -57,13 +58,13 @@ public class GetRawMaterialLedgerByIdEndPoint : ICarterModule
             return Results.Ok(result.Value);
         }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
         {
-            Description = "Show Inventory Ledger based on Inventory Id",
-            Summary = "Inventory Ledger by InventoryID",
+            Description = "Show Inventory Ledger based on Product Id",
+            Summary = "Inventory Ledger",
             Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
             {
                 new Microsoft.OpenApi.Models.OpenApiTag
                 {
-                    Name = "Raw Material"
+                    Name = "Product"
                 }
             }
         });

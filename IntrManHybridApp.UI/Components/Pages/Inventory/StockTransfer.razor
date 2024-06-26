@@ -8,7 +8,7 @@
 
 @inject NotificationService NotificationService
 @inject DialogService DialogService
-@inject IProductionService service
+@inject IInventoryService service
 @inject ILocationService locationService
 @inject ILogger<StockTransfer> logger
 @inject IJSRuntime JSRuntime
@@ -44,14 +44,14 @@
                 </HeaderTemplate>
                 <Columns>
                     <RadzenDataGridColumn Property="BatchNumber" Title="Carton Id/Batch #" Width="120px" />
-                    <RadzenDataGridColumn Property="Names" Title="Item" Width="230px"/>
-                    <RadzenDataGridColumn Property="Quantity" Title="Quantity (kg)">
+                    <RadzenDataGridColumn Property="Names" Title="Item" Width="220px"/>
+                    <RadzenDataGridColumn Property="Quantity" Title="Weight (kg)" >
                         <Template Context = "item">
-                            @FormatQtyItem(item)
-                        </Template>
+                            @item.Quantity.ToString("N2")
+                        </Template> 
                     </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
+                </Columns> 
+            </RadzenDataGrid>   
         </RadzenCard>
     </RadzenSplitterPane>
 
@@ -86,21 +86,41 @@
                                 </EditTemplate>
                             </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn Property="RawMaterial.Names" Title="Item" Width="230px" />
+                            <RadzenDataGridColumn Property="RawMaterial.Names" Title="Item" Width="240px" />
 
-                            <RadzenDataGridColumn Property="Quantity" Title="Weight (kg)" Width="80px">
+                            <RadzenDataGridColumn Property="Quantity" Title="Weight (kg)" Width="240px">
                                 <Template Context="raw">
-                                    @FormatQtyItem(raw)
-                                </Template >
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                        @(FormatQtyItem(raw))
+                                        <RadzenText Style="font-size:smaller" Visible="@(raw.Quantity!=raw.InitialQuantity)">
+                                            @string.Format($"Adjustment reason: {raw.QuantityChangeReason}")
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </Template>
+                                <EditTemplate Context="raw">
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                                        <RadzenStack Orientation="Orientation.Horizontal">
+                                            <RadzenNumeric @bind-Value="raw.Quantity" Step="0.5" Format="N2" Style="width:100px;" Min="0"/>
+                                           
+                                        </RadzenStack>
+                                        <RadzenFormField Text="Adjustment Reason" Style="width: 200px; margin-top:-9px">
+                                            <RadzenAutoComplete FilterOperator="StringFilterOperator.Contains" FilterDelay="100" 
+                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" @bind-Value=raw.QuantityChangeReason 
+                                                Data=@stockAdjustmentReasons TextProperty="Reason"  Style="width: 200px; font-size:small" 
+                                                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Reason" }})"  />
+                                            
+                                        </RadzenFormField>
+                                    </RadzenStack>
+                                 </EditTemplate>
                             </RadzenDataGridColumn >
 
-                            <RadzenDataGridColumn Title="Source Location" Width="150px">
+                         @*    <RadzenDataGridColumn Title="Source Location" Width="150px">
                                 <Template Context="raw">
                                     @FormatSourceLocationAndRack(raw)
                                 </Template>
-                            </RadzenDataGridColumn>
+                            </RadzenDataGridColumn> *@
 
-                            <RadzenDataGridColumn Property="Location.Name" Title="Target Location" Width="130px">
+                            <RadzenDataGridColumn Property="Location.Name" Title="Target Location" Width="180px">
                                 <EditTemplate Context="rawMaterial">
                                     <RadzenDropDown @bind-Value="rawMaterial.LocationId" Data="@targetLocations" TextProperty="Name" ValueProperty="Id"
                                         @ref=@locationDropDown Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true" />
@@ -110,8 +130,27 @@
                             <RadzenDataGridColumn Property="RackingPallet.ColRow" Title="Rack" Width="100px">
                                 <EditTemplate Context="rawMaterial">
                                     <RadzenDropDown @bind-Value="rawMaterial.RackingPalletId" Data="@rackingPallets" TextProperty="ColRow"
-                                        @ref=@rackingPalletDropDown ValueProperty="Id" Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true"/>
+                                        @ref=@rackingPalletDropDown ValueProperty="Id" Style="width:100%" AllowClear="false" AllowFiltering="true" 
+                                        ClearSearchAfterSelection="true"/>
                                 </EditTemplate>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="ProductionDate" Title="Production Date" Width="140px">
+                                <EditTemplate Context="item">
+                                    <RadzenDatePicker @bind-Value="item.ProductionDate" DateFormat="MM/dd/yyyy" ShowTime="false" />
+                                </EditTemplate>
+                                <Template Context="item">
+                                    @item.ProductionDate.ToString("MM/dd/yyyy")
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="ExpirationDate" Title="Expiry Date" Width="140px">
+                                <EditTemplate Context="item">
+                                    <RadzenDatePicker @bind-Value="item.ExpirationDate" DateFormat="MM/dd/yyyy" ShowTime="false" />
+                                </EditTemplate>
+                                <Template Context="item">
+                                    @item.ExpirationDate.ToString("MM/dd/yyyy")
+                                </Template>
                             </RadzenDataGridColumn>
 
                             <RadzenDataGridColumn Context="raw" Filterable="false" Sortable="false" TextAlign="TextAlign.Right"
@@ -155,6 +194,7 @@
     IEnumerable<LocationResponse> locations = [];
     IEnumerable<LocationResponse> targetLocations = [];
     IEnumerable<RackingPalletResponse> rackingPallets = [];
+    IEnumerable<StockAdjustmentReason> stockAdjustmentReasons = [];
     Guid selectedLocationId = Guid.Empty;
 
     string caption = "New Inventory Item Transfer";
@@ -179,9 +219,17 @@
         locations = await locationService.GetLocationsAsync();
         var selectedLocation = locations.FirstOrDefault();
         if(selectedLocation!=null) selectedLocationId = selectedLocation.Id;
-        inventoryItems = await service.GetInventoryItemsByLocation(selectedLocationId);
+        inventoryItems = await service.GetInventoryItemsByLocation();
+
         rackingPallets = await locationService.GetRackingPalletsAsync();
 
+        try
+        {
+            stockAdjustmentReasons = await service.GetStockAdjustmentReasonsAsync();
+        } catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"{ex.Message}");
+        }
         InitInventoryByLocation(selectedLocationId);
 
         await InsertRow();
@@ -208,24 +256,11 @@
     string FormatQtyItem(ProductCheckOutDetailRequest item)
     {
         string ret = "0";
-        var product = inventoryItems.FirstOrDefault(p => p.InventoryId == item.InventoryId);
-        if (product != null)
-        {
-            if (product.IsFinishedGood)
-                ret = String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", item.Quantity); 
-            else 
-                ret = String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", item.Quantity / 1000);
-        }
-        return ret;
-    }
 
-    string FormatQtyItem(InventoryItemDetail item)
-    {
-        var ret = "0";
-        if (item.IsFinishedGood)
-            ret = String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", item.Quantity);
+        if (item.InitialQuantity != item.Quantity)
+            ret = String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2} >> {1:N2}", item.InitialQuantity, item.Quantity);
         else
-            ret = String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", item.Quantity / 1000);
+            ret = String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", item.Quantity);
 
         return ret;
     }
@@ -257,11 +292,6 @@
             if (filterResults != null && filterResults.Any())
             {
                 inventoryItemsByLocation = filterResults.Adapt<List<InventoryItemDetail>>();
-                // foreach(var i in filterResults)
-                // {
-                //     var item = i.Adapt<InventoryItemDetail>();
-                //     inventoryItemsByLocation.Add(item);
-                // }
             } 
             currentLocationName = $"Inventory Items at {locationName} ({inventoryItemsByLocation.Count} items)";
             targetLocations = locations.Where(p => p.Id != selectedLocationId);
@@ -269,8 +299,6 @@
         }
         catch (Exception ex)
         {
-            // var str = $"{ex.Message}{Environment.NewLine}{Environment.NewLine}{ex}";
-            // JSRuntime.InvokeVoidAsync("alert", str);
             NotificationService.Notify(NotificationSeverity.Error, "Error", $"{ex.Message}");
         }
     }
@@ -284,7 +312,7 @@
         {
             if(checkout.ProductCheckoutDetail.Any(p=>p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()) && p!=item))
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Carton ID already exists");
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Carton ID/Batch Number already exists");
                 if (!isAddNew && tmpItem != null) item.BatchNumber = tmpItem.BatchNumber; 
                 return false;
             };
@@ -292,24 +320,31 @@
             if (raw != null)
             {
                 item.UnitMeasurementId = raw.MeasurementUnitId;
-                item.Quantity = raw.Quantity;
+                item.InitialQuantity = raw.Quantity;
                 item.InventoryId = raw.InventoryId;
                 item.RawMaterial = raw;
 
+                // JSRuntime.InvokeVoidAsync("alert", item.QuantityChangeReason);
+
+                if(isAddNew) {
+                    item.ProductionDate = raw.ProductionDate;
+                    item.ExpirationDate = raw.ExpiryDate;
+                    item.Quantity = raw.Quantity;
+                }
 
                 if(item.LocationId==Guid.Empty) {
                     if (raw.CurrentLocationId == raw.OutLocationId)
                         item.LocationId = raw.LocationId;
                     else
                         item.LocationId = raw.OutLocationId;
-                    
+
                 }
                 if(item.RackingPalletId==Guid.Empty) 
                     if (raw.CurrentRackingPalletId == raw.OutRackingPalletId)
                         item.RackingPalletId = raw.RackingPalletId;
                     else
                         item.RackingPalletId = raw.OutRackingPalletId;
-                
+
                 if(item.LocationId==Guid.Empty) 
                     locationDropDown?.Element.FocusAsync();
                 else 
@@ -333,7 +368,7 @@
         var newItem = new ProductCheckOutDetailRequest();
         isAddNew = true;
         await rawMaterialsGrid.InsertRow(newItem);
-        
+
     }
 
     void OnRowEdit(ProductCheckOutDetailRequest item)
@@ -376,7 +411,7 @@
 
     void OnUpdateRow(ProductCheckOutDetailRequest item)
     {
-       
+
 
         if (ItemValidated(item))
         {
@@ -438,11 +473,15 @@
             NotificationService.Notify(NotificationSeverity.Error, "Error", "No items to save");
             return;
         };
-        
+
         var json = JsonSerializer.Serialize(checkout);
         logger.LogInformation($"Saving inventory transfer:{Environment.NewLine}{json}");
         progressCaption = "Saving";
         isSaving = true;
+        foreach(var item in checkout.ProductCheckoutDetail)
+        {
+            if (!item.RawMaterial.IsFinishedGood) item.Quantity *= 1000;
+        }
         response = await service.CreateProductCheckout(checkout);
 
         if (response != Guid.Empty)
@@ -450,7 +489,7 @@
             NotificationService.Notify(NotificationSeverity.Success,
                 "Transaction Saved", "Inventory transfer has been saved successfully");
             Clear();
-            inventoryItems = await service.GetInventoryItemsByLocation(selectedLocationId);
+            inventoryItems = await service.GetInventoryItemsByLocation();
             InitInventoryByLocation(selectedLocationId);
             isSaving = false;
         }

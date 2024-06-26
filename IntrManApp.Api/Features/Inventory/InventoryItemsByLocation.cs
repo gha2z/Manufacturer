@@ -6,13 +6,12 @@ using IntrManApp.Shared.Contract;
 using MediatR;
 using System.Data;
 
-namespace IntrManApp.Api.Features.Production;
+namespace IntrManApp.Api.Features.Inventory;
 
 public static class InventoryItemsByLocation
 {
     public class Query : IRequest<Result<List<InventoryItemDetail>>>
     {
-        public Guid LocationId { get; set; }
     }
 
     internal sealed class Handler(IDbConnectionFactory dbConnectionFactory) : IRequestHandler<Query, Result<List<InventoryItemDetail>>>
@@ -25,7 +24,7 @@ public static class InventoryItemsByLocation
 
             List<InventoryItemDetail>? queryResults =
                 (List<InventoryItemDetail>?)await connection.QueryAsync<InventoryItemDetail>(
-                    "Production.GetInventoryItemsByLocation",  new { request.LocationId }, commandType: CommandType.StoredProcedure);
+                    "Production.GetInventoryItemsByLocation", commandType: CommandType.StoredProcedure);
 
             if (queryResults == null)
             {
@@ -43,9 +42,9 @@ public class InventoryItemsByLocationEndPoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/inventoryItemsByLocation/{locationId}", async (Guid locationId, ISender sender) =>
+        app.MapGet("api/inventoryItemsByLocation", async (ISender sender) =>
         {
-            var query = new InventoryItemsByLocation.Query() { LocationId = locationId };
+            var query = new InventoryItemsByLocation.Query();
 
             var result = await sender.Send(query);
 
@@ -62,7 +61,7 @@ public class InventoryItemsByLocationEndPoint : ICarterModule
             {
                 new Microsoft.OpenApi.Models.OpenApiTag
                 {
-                    Name = "Product"
+                    Name = "Inventory"
                 }
             }
         });

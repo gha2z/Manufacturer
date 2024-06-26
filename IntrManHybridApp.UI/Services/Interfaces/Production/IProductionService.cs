@@ -16,6 +16,7 @@ public interface IProductionService
     Task<IEnumerable<EndProduct>> GetEndProductsAsync();
     Task<IEnumerable<ProductionItem>> GetProductionOrderItemsAsync(Guid id);
     Task<IEnumerable<ProductionItem>> GetProductionOrderItemsByDateAsync(DateTime date);
+    Task<IEnumerable<ProductionItem>> GetProductionOrderItemsByStatusAsync(int status);
     Task<bool> StartItemProduction(Guid inventoryId);
     Task<bool> AbortItemProduction(Guid inventoryId);
 
@@ -24,19 +25,5 @@ public interface IProductionService
 
     Task<IEnumerable<InventoryItemDetail>> GetRunningProductionItemsAsync();
     Task<Guid> CreateFinishedProductCheckin(FinishedProductInternalCheckinRequest request);
-    Task<IEnumerable<InventoryItemDetail>> GetInventoryItemsByLocation(Guid locationId);
-    Task<Guid> CreateProductCheckout(ProductCheckOutRequest request);
-
-    Task<IEnumerable<InventoryItemExtendedFlag>> GetFinishedProductInventoriesAsync();
-
-    IEnumerable<InventoryLedger> GetInventoryLedger(InventoryLedgerRequest request);
-
-    Task<IEnumerable<InventoryItem>> GetRawMaterialInventoriesAsync();
-
-    IEnumerable<InventoryLedger> GetRawMaterialInventoryLedger(InventoryLedgerRequest request);
-
-    Task<IEnumerable<RawMaterialTrackingResponse>> RawMaterialTracking(RawMaterialTrackingRequest request);
-
-    IEnumerable<InventoryLedger> GetRawMaterialInventoryLedgerById(Guid id);
 
 }

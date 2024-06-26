@@ -10,8 +10,8 @@
 @using Newtonsoft.Json
 @using Mapster
 
-
-@inject IProductionService service
+@inject IProductionService productionService
+@inject IInventoryService service
 @inject ISupplierService supplierService
 @inject IProductService productService
 @inject ILogger<RawMaterialInventories> logger
@@ -276,7 +276,7 @@
 
     async Task OpenPrintDialog()
     {
-        await DialogService.OpenSideAsync<LabelPrintDialog>("Print Label",
+        await DialogService.OpenSideAsync<Production.LabelPrintDialog>("Print Label",
             new Dictionary<string, object> { { "selectedItems", selectedItems } },
             options: new SideDialogOptions { CloseDialogOnOverlayClick = false, Position = DialogPosition.Right, ShowMask = true });
     }
@@ -293,7 +293,7 @@
         items = await service.GetRawMaterialInventoriesAsync();
         rawMaterials = await productService.GetRawMaterialsBasicInfoAsync();
         suppliers = await supplierService.GetSuppliersAsync();
-        endProducts = await service.GetEndProductsAsync();
+        endProducts = await productionService.GetEndProductsAsync();
     }
 
     void RowRender(RowRenderEventArgs<InventoryItem> args)
