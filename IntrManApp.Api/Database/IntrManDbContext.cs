@@ -229,7 +229,9 @@ public partial class IntrManDbContext : DbContext
             entity.ToTable("Feature");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Icon).HasMaxLength(50);
             entity.Property(e => e.Name).HasMaxLength(50);
+            entity.Property(e => e.Path).HasMaxLength(50);
         });
 
         modelBuilder.Entity<InventoryFlag>(entity =>

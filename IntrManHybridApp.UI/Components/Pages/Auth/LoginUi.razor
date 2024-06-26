@@ -2,26 +2,38 @@
 @using System.Diagnostics
 @using System.Text.Json
 @using IntrManHybridApp.UI.Services
+@using IntrManApp.Shared.Common
 
 @inject NotificationService NotificationService
 @inject IAuthService AuthService
+@inject NavigationManager navigationManager;
 
 <RadzenStack Gap="0" Class="rz-my-12 rz-mx-auto rz-border-radius-6 rz-shadow-10" Style="width: 100%; max-width: 400px; overflow: hidden;">
-    <RadzenCard Class="rz-shadow-0 rz-border-radius-0 rz-background-color-info rz-p-12" style="text-align: center;">
-        <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.H2" Class="rz-color-white rz-mb-0">Login</RadzenText>
+    <RadzenCard Class="rz-shadow-0 rz-border-radius-0 rz-background-color-info rz-p-12" style="text-align: center; height:50px; margin-top:-24px">
+        <RadzenText TextStyle="TextStyle.DisplayH5" TagName="TagName.H2" Class="rz-color-white rz-mb-0" >Login</RadzenText>
     </RadzenCard>
     <RadzenCard Class="rz-shadow-0 rz-p-12">
-        <RadzenTemplateForm Data=@("SimpleLogin") Action="http://www.google.com">
+        <RadzenTemplateForm Data=@("SimpleLogin") >
             <RadzenLogin AllowRegister="false" AllowResetPassword="false" Login="@OnLogin"/>
         </RadzenTemplateForm>
+        <RadzenText TextStyle="TextStyle.Body2" Style="margin-top:24px;">@result</RadzenText>
     </RadzenCard>
 </RadzenStack>
 
 @code 
 {
+    string result = string.Empty;
 
-    void OnLogin(LoginArgs args)
+    async Task OnLogin(LoginArgs args)
     {
-        AuthService.Login(args.Username, args.Password);
+        await AuthService.Login(args.Username, args.Password);
+        if (AppUser.Token != Guid.Empty)
+        {
+            result = AppUser.Token.ToString();
+            navigationManager.NavigateTo("/Dashboard");
+        } else
+        {
+            result = "Login failed";
+        }
     }
 }

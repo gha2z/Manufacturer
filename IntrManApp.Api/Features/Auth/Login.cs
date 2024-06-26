@@ -44,7 +44,14 @@ public static class Login
                          Id = x.FeatureId,
                          Name = x.Feature.Name ?? string.Empty,
                          CanView = x.Accessible ?? false,
+                         Icon = x.Feature.Icon ?? string.Empty,
+                         Path = x.Feature.Path ?? string.Empty,
+                         ParentId = x.Feature.ParentId ?? Guid.Empty
                     }).ToListAsync();
+            } else
+            {
+                var allFeatures = await dbContext.Features.ToListAsync(cancellationToken);
+                ret.FeatureAccesses = allFeatures.Adapt<List<FeatureAccess>>();
             }
             return Result.Success(ret);
            

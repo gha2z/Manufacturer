@@ -14,6 +14,20 @@ namespace IntrManHybridApp.UI.Services;
 
 public class AuthService(HttpClient httpClient, ILogger<AuthService> logger) : IAuthService
 {
+    public async Task<List<FeatureAccess>> GetFeatures()
+    {
+        List<FeatureAccess> features = [];
+        try
+        {
+            logger.LogInformation("Getting app features");
+            features = await httpClient.GetFromJsonAsync<List<FeatureAccess>>("features") ?? [];
+        } catch(Exception ex)
+        {
+            logger.LogInformation("Error Getting app features: {0}", ex.Message);
+        }
+        return features;
+    }
+
     public async Task Login(string username, string password)
     {
        
@@ -28,39 +42,13 @@ public class AuthService(HttpClient httpClient, ILogger<AuthService> logger) : I
             logger.LogInformation("Login request: {0}", json);
             var response = await httpClient.PostAsJsonAsync("login", loginRequest);
             var loginResponse = response.Content.ReadFromJsonAsync<LoginResponse>().Result ?? new();
-            AppUser.Init(AppUser.Token, loginResponse.UserId, loginResponse.Username, loginResponse.Role, loginResponse.FeatureAccesses);
+            AppUser.Init(loginResponse.Token, loginResponse.UserId, loginResponse.Username, loginResponse.Role, loginResponse.FeatureAccesses);
         } catch (Exception ex)
         {
             logger.LogError(ex, "Error while logging in");
             AppUser.Reset();
         }
-
     }
 }
 
-public class AppUser
-{
-    public static Guid Token { get; set; } = Guid.Empty;
-    public static Guid UserId { get; set; } = Guid.Empty;
-    public static string Username { get; set; } = string.Empty;
-    public static string Role { get; set; } = string.Empty;
-    public static List<FeatureAccess> FeatureAccesses { get; set; } = [];
 
-    public static void Init(Guid token, Guid userId, string username, string role, List<FeatureAccess> featureAccesses)
-    {
-        Token = token;
-        UserId = userId;
-        Username = username;
-        Role = role;
-        FeatureAccesses = featureAccesses;
-    }
-
-    public static void Reset()
-    {
-        Token = Guid.Empty;
-        UserId = Guid.Empty;
-        Username = string.Empty;
-        Role = string.Empty;
-        FeatureAccesses = [];
-    }
-}

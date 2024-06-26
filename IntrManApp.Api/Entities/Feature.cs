@@ -11,5 +11,9 @@ public partial class Feature
 
     public Guid? ParentId { get; set; }
 
+    public string? Path { get; set; }
+
+    public string? Icon { get; set; }
+
     public virtual ICollection<UserTypeFeature> UserTypeFeatures { get; set; } = new List<UserTypeFeature>();
 }
