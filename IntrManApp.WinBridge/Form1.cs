@@ -37,6 +37,7 @@ namespace IntrManApp.WinBridge
                 textBox1.AppendText($"{Environment.NewLine}{ex.Message}");
             }
             this.ResumeLayout();
+            this.Hide();
         }
 
         private void HubConnection_EventMessage(object sender, string e)
@@ -81,8 +82,8 @@ namespace IntrManApp.WinBridge
                                
                                         textBox1.Clear();
                                         this.Visible = true;
-                                    this.Show();
-                                    this.BringToFront();
+                                        this.Show();
+                                        this.BringToFront();
                                         textBox1.Text = $"Processing label printing \"{arguments.LabelFilePath}\"";
                                 
                                         var labelFormat = engine.Documents.Open(arguments.LabelFilePath);

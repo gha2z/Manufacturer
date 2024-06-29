@@ -4,6 +4,7 @@
 @using IntrManApp.Shared.Common;
 @using IntrManApp.Shared.Contract;
 @using IntrManHybridApp.UI.Services;
+@using IntrManHybridApp.UI.Components.Pages.Auth;
 
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
@@ -27,12 +28,12 @@
                     @activeWindow
                 </RadzenStack>
             </RadzenColumn>
-           
+
             <RadzenColumn Size="7">
-                 <RadzenStack AlignItems="AlignItems.End" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="3">
-                     <RadzenMenu>
+                <RadzenStack AlignItems="AlignItems.End" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="3">
+                    <RadzenMenu>
                         <RadzenMenuItem Icon="account_circle" Visible="@(AppUser.Token!=Guid.Empty)" Text="@AppUser.Username" Style="margin-right:48px">
-                            <RadzenMenuItem Style="font-size:small;" Text="Change Password"  Path="/" Icon="password"></RadzenMenuItem>
+                            <RadzenMenuItem Style="font-size:small;" Text="Change Password" Click="@ChangePassword" Icon="password"></RadzenMenuItem>
                             <RadzenMenuItem Style="font-size:small;" Text="Logout ..." Click="@Logout" Icon="logout"></RadzenMenuItem>
                         </RadzenMenuItem>
                     </RadzenMenu>
@@ -40,28 +41,29 @@
             </RadzenColumn>
         </RadzenRow>
     </RadzenHeader>
-    <RadzenBody Expanded="@sidebarExpanded" >
-        <RadzenRow class="rz-mx-auto rz-px-4 rz-pt-2 rz-pt-md-4 rz-pt-lg-6 rz-pt-xl-12 rz-pb-2 rz-pb-lg-12" 
-        Style="margin:10px; padding:0px">
-            <RadzenColumn Size="12" >
-            @Body
+    <RadzenBody Expanded="@sidebarExpanded">
+        <RadzenRow class="rz-mx-auto rz-px-4 rz-pt-2 rz-pt-md-4 rz-pt-lg-6 rz-pt-xl-12 rz-pb-2 rz-pb-lg-12"
+                   Style="margin:10px; padding:0px">
+            <RadzenColumn Size="12">
+                @Body
             </RadzenColumn>
         </RadzenRow>
     </RadzenBody>
-    <RadzenSidebar Expanded="@sidebarExpanded" style="z-index: 2" >
+    <RadzenSidebar Expanded="@sidebarExpanded" style="z-index: 2">
         <RadzenStack AlignItems="Radzen.AlignItems.Center" class="rz-py-4 rz-py-lg-6" Style="padding: var(--rz-panel-menu-item-padding); border-bottom: var(--rz-panel-menu-item-border);">
-            <RadzenImage Path="images/logo.png"  style="width: 96px; height: 96px;" AlternateText="Application logo"></RadzenImage>
+            <RadzenImage Path="images/logo.png" style="width: 96px; height: 96px;" AlternateText="Application logo"></RadzenImage>
             <RadzenText Text="Intrepid Manufacture App" TextStyle="Radzen.Blazor.TextStyle.Subtitle1" class="rz-mb-0" style="color: var(--rz-sidebar-color);" />
         </RadzenStack>
         <RadzenPanelMenu>
-            @foreach (var item in AppUser.FeatureAccesses.Where(f => f.ParentId==Guid.Empty)) 
+            @foreach (var item in AppUser.FeatureAccesses)
             {
-                logger.LogInformation($"Adding Feature: {item.Name}, children: {AppUser.FeatureAccesses.Where(s =>s.ParentId==item.Id).Count()}");
-                <RadzenPanelMenuItem Text="@item.Name" Visible="@item.CanView" Icon="@item.Icon" Click="setActiveWindow">
-                    @foreach (var subItem in AppUser.FeatureAccesses.Where(s => s.ParentId == item.Id))
-                    {   
+                logger.LogInformation($"Adding Feature: {item.Name}");
+                <RadzenPanelMenuItem Text="@item.Name" Visible="@item.ChildrenFeatures.Where(c=>c.CanView).Any()" Icon="@item.Icon" Click="setActiveWindow">
+                    @foreach (var subItem in item.ChildrenFeatures)
+                    {
+                        logger.LogInformation($"Adding sub Feature {subItem.Name} to {item.Name}");
                         <RadzenPanelMenuItem Text="@subItem.Name" Icon="@subItem.Icon" Style="margin-left:6px"
-                            Click="setActiveWindow" Path="@subItem.Path" Visible="@subItem.CanView"/>
+                                             Click="setActiveWindow" Path="@subItem.Path" Visible="@subItem.CanView" />
                     }
                 </RadzenPanelMenuItem>
             }
@@ -92,14 +94,21 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        await auth.Login("", "");
+        await auth.LoginAsync("", "");
     }
 
     async Task Logout()
     {
-        await auth.Login("", "");
+        await auth.LoginAsync("", "");
         NavigationManager.NavigateTo("/");
         activeWindow = "Home";
         activeIcon = "home";
+    }
+
+    async Task ChangePassword()
+    {
+        await DialogService.OpenAsync<ChangePassword>("Change Password",
+            new Dictionary<string, object>() { { "Id", AppUser.UserId } },
+            new DialogOptions { CloseDialogOnEsc = true, ShowClose = true, Width = "350px", Height = "400px" });
     }
 }

@@ -1,7 +1,259 @@
 ﻿@page "/UserManagement"
 
 @using IntrManApp.Shared.Contract
+@using IntrManHybridApp.UI.Services
 
-@code {
-    
+@inject IAuthService service
+@inject ILogger<UserManagement> logger
+@inject DialogService dialogService
+@inject NotificationService notificationService
+@inject IJSRuntime js
+
+<RadzenCard Class="rz-shadow-0 rz-border-radius-0 rz-text-align-center rz-p-6">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start"   JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText TextStyle="TextStyle.Body1">@($"User Roles ({appRoles.Count})")</RadzenText>
+        <RadzenButton Icon="add" ButtonStyle="ButtonStyle.Secondary" Click="CreateNewRole" Text="New User Role" />
+    </RadzenStack>
+
+    <RadzenDataList PageSize="5" WrapItems="false" Density="Density.Compact" AllowPaging="true" Data="@appRoles" 
+        TItem="ApplicationUserRoleResponse" class="rz-m-0 rz-mt-3 rz-p-0" PagerAlwaysVisible="true" PagerPosition="PagerPosition.TopAndBottom">
+        <Template Context="role">
+            <RadzenPanel AllowCollapse="true" Collapsed="@(NotInExpandedItems(role))" Class="rz-m-3" Style="border:none" 
+            Collapse="@(args=>CollapseItem(role))" Expand="@(args=>ExpandItem(role))">
+                <HeaderTemplate>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" 
+                            JustifyContent="JustifyContent.SpaceEvenly" >
+                        <RadzenText TextStyle="TextStyle.Body1" Class="rz-display-flex rz-align-items-center rz-mt-2">
+                            @if(role.Name.ToLower()!="administrator")
+                            {
+                                <RadzenIcon Icon="account_box" class="rz-mr-1" />
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="admin_panel_settings" class="rz-mr-1" />
+                            }
+                            <b>@role.Name</b>
+                        </RadzenText>
+                        
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.End" Gap="0.25rem">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Dark" Visible="@(role.Name.ToLower()!="administrator")"
+                                Click="@(args=>UpdateRole(role))"/>
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Visible="@(role.Name.ToLower()!="administrator")" 
+                                Click="@(args=>DeleteRole(role))"/>
+                        </RadzenStack>
+                    </RadzenStack>
+                </HeaderTemplate>
+                <ChildContent>
+                    <RadzenStack Orientation="Orientation.Horizontal" class="rz-mt-4" Gap="2rem">
+                        
+                        <RadzenDataGrid @ref="grid" AllowFiltering="false" AllowSorting="false" AllowColumnResize="false" GridLines="DataGridGridLines.None"
+                            Data="@role.FeatureAccess" RowRender="@RowRender" LoadChildData="@LoadChildData" TItem="FeatureAccessResponse"
+                            RowCollapse="@(args => grid.ColumnsCollection.ToList().ForEach(c => c.ClearFilters()))" Density="Density.Compact" 
+                            AllowAlternatingRows="false" class="rz-p-3">
+                            <HeaderTemplate>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0" AlignItems="AlignItems.Start">
+                                    <RadzenIcon Icon="verified_user" class="rz-gravatar me-1" />
+                                    <RadzenText class="rz-mt-3" Style="font-size:small; font-weight:300" Text="Permissions" />
+                                </RadzenStack>
+                            </HeaderTemplate>
+                            <Columns>
+                                <RadzenDataGridColumn Sortable="false" Filterable="false" Width="300px">
+                                    <Template Context="data">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0" AlignItems="AlignItems.Start">
+                                            <RadzenIcon Icon="@data.Icon" class="rz-gravatar me-1" />
+                                        <RadzenText class="rz-mt-3" Style="font-size:small" Text="@data.Name" />
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn >
+                                    <Template Context="data">
+                                        <RadzenCheckBox Value="@data.CanView" TValue="bool" Visible="@(data.ChildrenFeatures.Count==0)" 
+                                            Disabled="@(role.Name.ToLower().Equals("administrator")||
+                                            data.Name.ToLower().Equals("user management")||data.Name.ToLower().Equals("system configuration"))"
+                                                        Change="@(args => SetFeatureAccessRequest(data))" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+
+                    <RadzenDataGrid AllowFiltering="false" AllowSorting="false" AllowColumnResize="false" GridLines="DataGridGridLines.None"
+                                    Data="@role.ApplicationUsers"  TItem="ApplicationUserResponse"
+                                    RowCollapse="@(args => grid.ColumnsCollection.ToList().ForEach(c => c.ClearFilters()))" Density="Density.Compact"
+                                    AllowAlternatingRows="false" class="rz-p-3" ShowColumnTitleAsTooltip="true">
+                        <HeaderTemplate>
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceAround">
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0" AlignItems="AlignItems.Start">
+                                    <RadzenIcon Icon="people" class="rz-gravatar me-1" />
+                                    <RadzenText class="rz-mt-3" Style="font-size:small; font-weight:300" Text="Users in Role" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.End">
+                                    <RadzenButton Icon="person_add_alt" ButtonStyle="ButtonStyle.Dark" Click="@(args=>CreateNewUser(role))"/>
+                                </RadzenStack>
+                            </RadzenStack>
+                        </HeaderTemplate>
+                        <Columns>
+                            <RadzenDataGridColumn Sortable="false" Filterable="false" Width="35px">
+                                <Template Context="data">
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Warning" Variant="Variant.Flat" Size="ButtonSize.ExtraSmall" 
+                                            Click="@(args=>UpdateUser(data))" Visible="@(!data.Name.ToLower().Equals("admin"))" />
+                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.ExtraSmall"
+                                                      Click="@(args=>DeleteUser(data))" Visible="@(!data.Name.ToLower().Equals("admin"))" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Sortable="false" Filterable="true" Width="200px">
+                                <Template Context="data">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0" AlignItems="AlignItems.Start">
+                                        <RadzenText Style="font-size:small" Text="@data.Name" />
+                                    </RadzenStack>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            
+                        </Columns>
+                    </RadzenDataGrid>
+
+
+
+                    <RadzenStack Orientation="Orientation.Vertical">
+
+                    </RadzenStack>
+                    </RadzenStack>
+                </ChildContent>
+            </RadzenPanel>
+        </Template>
+    </RadzenDataList>
+</RadzenCard>
+
+@code 
+{
+    List<ApplicationUserRoleResponse> appRoles = [];
+    RadzenDataGrid<FeatureAccessResponse> grid = new();
+    List<ApplicationUserRoleResponse> expandedItems = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshData();
+        await base.OnInitializedAsync();
+    }   
+
+    async Task RefreshData()
+    {
+        var result = await service.GetApplicationUserRolesAsync();
+        appRoles = result.ToList();
+    }
+
+    void ExpandItem(ApplicationUserRoleResponse role)
+    {
+        if (!expandedItems.Contains(role))
+        {
+            expandedItems.Add(role);
+        }
+    }
+
+    void CollapseItem(ApplicationUserRoleResponse role)
+    {
+        if (expandedItems.Contains(role))
+        {
+            expandedItems.Remove(role);
+            
+        }
+    }
+
+    bool NotInExpandedItems(ApplicationUserRoleResponse role)
+    {
+        return !expandedItems.Contains(role);
+    }
+
+    void LoadChildData(DataGridLoadChildDataEventArgs<FeatureAccessResponse> args)
+    {
+        args.Data = args.Item.ChildrenFeatures;
+    }
+
+    void RowRender(RowRenderEventArgs<FeatureAccessResponse> args)
+    {
+        args.Expandable = args.Data.ChildrenFeatures.Count > 0;
+       
+    }
+
+    async Task SetFeatureAccessRequest(FeatureAccessResponse feature)
+    {
+        feature.CanView = !feature.CanView;
+        var request = new SetFeatureAccessRequest
+        {
+            FeatureId = feature.Id,
+            CanView = feature.CanView,
+            UserTypeId = feature.RoleId
+        };
+     
+        var result = await service.SetFeatureAccessAsync(request);
+    }
+
+    async Task CreateNewUser(ApplicationUserRoleResponse role)
+    {
+        var id = 
+            await dialogService.OpenAsync<NewUser>("Create New User", 
+                new Dictionary<string, object>() { { "Id", role.Id } }, 
+                new DialogOptions { CloseDialogOnEsc = true, ShowClose = true, Width = "350px", Height = "400px" });
+
+        if(id!=Guid.Empty) await RefreshData();
+    }
+
+    async Task UpdateUser(ApplicationUserResponse user)
+    {
+        var id = 
+            await dialogService.OpenAsync<UpdateUser>("Update User", 
+                new Dictionary<string, object>() { { "User", user } }, 
+                new DialogOptions { CloseDialogOnEsc = true, ShowClose = true, Width = "350px", Height = "350px" });
+
+        if(id!=Guid.Empty) await RefreshData();
+    }
+
+    async Task DeleteUser(ApplicationUserResponse user)
+    {
+        var dialogResult = await dialogService.Confirm("Are you sure you want to delete this user?") ?? false;
+        if(dialogResult)
+        {
+            var result = await service.DeleteUserAsync(user.Id);
+            if (result) await RefreshData();
+        }
+        //}
+    }
+
+    async Task CreateNewRole()
+    {
+        var id =
+            await dialogService.OpenAsync<RoleMod>("Create New Role", 
+                new Dictionary<string, object>() { { "role", new NewOrUpdateRoleRequest() } }, 
+                new DialogOptions { CloseDialogOnEsc = true, ShowClose = true, Width = "350px", Height = "200px" });
+
+        if (id != Guid.Empty) await RefreshData();
+    }
+
+     async Task UpdateRole(ApplicationUserRoleResponse role)
+    {
+        var request = new NewOrUpdateRoleRequest
+        {
+            Id = role.Id,
+            Name = role.Name
+        };
+        var id = 
+            await dialogService.OpenAsync<RoleMod>("Update Role", 
+                new Dictionary<string, object>() { { "role", request} }, 
+                new DialogOptions { CloseDialogOnEsc = true, ShowClose = true, Width = "350px", Height = "200px" });
+
+        if(id!=Guid.Empty) await RefreshData();
+    }
+
+    async Task DeleteRole(ApplicationUserRoleResponse role)
+    {
+        var dialogResult = await dialogService.Confirm("Are you sure you want to delete this role?") ?? false;
+        if (dialogResult)
+        {
+            var result = await service.DeleteRoleAsync (role.Id);
+            if (result) await RefreshData();
+        }
+        //}
+    }
+
+
+
 }

@@ -1,0 +1,61 @@
+﻿@using IntrManApp.Shared.Contract
+@using System.Diagnostics
+@using System.Text.Json
+@using IntrManHybridApp.UI.Services
+@using IntrManApp.Shared.Common
+@using Mapster
+
+@inject NotificationService NotificationService
+@inject IAuthService AuthService
+@inject NavigationManager navigationManager
+@inject DialogService dialogService
+
+
+<RadzenTemplateForm Data=@request Submit=@Save TItem="UpdateUserRequest">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <RadzenFormField Text="Role" AllowFloatingLabel="true">
+            <RadzenDropDown @bind-Value="request.TypeId" Data=@roles TextProperty="Name" ValueProperty="Id" Name="typeId" />
+            <RadzenRequiredValidator Component="typeId" Text="Select role" Style="position: absolute" />
+        </RadzenFormField>
+        <RadzenFormField Text="Username" AllowFloatingLabel="true">
+            <RadzenTextBox @bind-Value="request.Name" Placeholder="Username" Name="name" />
+            <RadzenRequiredValidator Component="name" Text="Enter a unique username" Style="position: absolute" />
+        </RadzenFormField>
+       
+        <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Save" ButtonType="ButtonType.Submit" />
+
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code
+{
+    [Parameter]
+    public ApplicationUserResponse User { get; set; }
+
+    IEnumerable<UserRoleResponse> roles = [];
+    UpdateUserRequest request = new();
+
+
+
+    async Task Save()
+    {
+        Guid result = await AuthService.UpdateUserAsync(request);
+        if (result != Guid.Empty)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "User has been updated successfully");
+            dialogService.Close(result);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Updating user failed", "Please provide the unique username");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        request = User.Adapt<UpdateUserRequest>();
+
+        roles = await AuthService.GetUserRolesAsync();
+        base.OnInitialized();
+    }
+}

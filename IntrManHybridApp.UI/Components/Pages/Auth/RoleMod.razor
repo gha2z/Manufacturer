@@ -1,0 +1,54 @@
+﻿@using IntrManApp.Shared.Contract
+@using System.Diagnostics
+@using System.Text.Json
+@using IntrManHybridApp.UI.Services
+@using IntrManApp.Shared.Common
+@using Mapster
+
+@inject NotificationService NotificationService
+@inject IAuthService AuthService
+@inject NavigationManager navigationManager
+@inject DialogService dialogService
+
+
+<RadzenTemplateForm Data=@role Submit=@Save TItem="NewOrUpdateRoleRequest">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        
+        <RadzenFormField Text="Role Name" AllowFloatingLabel="true">
+            <RadzenTextBox @bind-Value="role.Name" Placeholder="Role Name" Name="name" />
+            <RadzenRequiredValidator Component="name" Text="Enter a role name" Style="position: absolute" />
+        </RadzenFormField>
+
+        <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Save" ButtonType="ButtonType.Submit" />
+
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code
+{
+    [Parameter]
+    public NewOrUpdateRoleRequest? role { get; set; }
+
+    protected async Task OnInitializeAsync()
+    {
+        await base.OnInitializedAsync();
+        if (role == null)
+        {
+            role = new NewOrUpdateRoleRequest();
+        }
+    }
+
+    async Task Save()
+    {
+        Guid result = await AuthService.NewOrUpdateRoleAsync(role);
+        if (result != Guid.Empty)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "User role has been updated successfully");
+            dialogService.Close(result);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Updating user role failed", "Please provide the unique role name");
+        }
+    }
+}

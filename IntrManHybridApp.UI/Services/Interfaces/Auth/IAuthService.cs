@@ -1,16 +1,20 @@
 ﻿using IntrManApp.Shared.Contract;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IntrManHybridApp.UI.Services
 {
     public interface IAuthService
     {
-        Task Login(string username, string password);
-        Task <List<FeatureAccess>> GetFeatures();
+        Task LoginAsync(string username, string password);
+        Task<List<FeatureAccessResponse>> GetFeaturesAsync();
+        Task<bool> ChangePasswordAsync(ChangePasswordRequest request);
+        Task<IEnumerable<ApplicationUserRoleResponse>> GetApplicationUserRolesAsync();
+        Task<IEnumerable<UserRoleResponse>> GetUserRolesAsync();
+        Task<bool> SetFeatureAccessAsync(SetFeatureAccessRequest request);
+        Task<Guid> NewUserAsync(NewUserRequest request);
+        Task<Guid> UpdateUserAsync(UpdateUserRequest request);
+        Task<bool> DeleteUserAsync(Guid id);
+        Task<Guid> NewOrUpdateRoleAsync(NewOrUpdateRoleRequest request);
+        Task<bool> DeleteRoleAsync(Guid id);
 
     }
 }

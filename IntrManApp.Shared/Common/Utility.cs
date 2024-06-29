@@ -10,7 +10,7 @@ namespace IntrManApp.Shared.Common
 {
     public class Utility
     {
-        public static string Encrypt(string password, string salt= "ED79C0BA-3E92-4151-8269-746E715CD339")
+        public static string Encrypt(string password, string salt = "ED79C0BA-3E92-4151-8269-746E715CD339")
         {
             var provider = MD5.Create();
             byte[] bytes = provider.ComputeHash(Encoding.UTF32.GetBytes(salt + password));
@@ -24,9 +24,9 @@ namespace IntrManApp.Shared.Common
         public static Guid UserId { get; set; } = Guid.Empty;
         public static string Username { get; set; } = string.Empty;
         public static string Role { get; set; } = string.Empty;
-        public static List<FeatureAccess> FeatureAccesses { get; set; } = [];
+        public static List<FeatureAccessResponse> FeatureAccesses { get; set; } = [];
 
-        public static void Init(Guid token, Guid userId, string username, string role, List<FeatureAccess> featureAccesses)
+        public static void Init(Guid token, Guid userId, string username, string role, List<FeatureAccessResponse> featureAccesses)
         {
             Token = token;
             UserId = userId;

@@ -12,6 +12,6 @@ namespace IntrManApp.Shared.Contract
         public Guid UserId { get; set; } = Guid.Empty;
         public string Username { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
-        public List<FeatureAccess> FeatureAccesses { get; set; } = [];
+        public List<FeatureAccessResponse> FeatureAccesses { get; set; } = [];
     }
 }

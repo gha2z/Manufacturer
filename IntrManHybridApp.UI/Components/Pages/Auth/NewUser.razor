@@ -1,0 +1,70 @@
+﻿@using IntrManApp.Shared.Contract
+@using System.Diagnostics
+@using System.Text.Json
+@using IntrManHybridApp.UI.Services
+@using IntrManApp.Shared.Common
+
+@inject NotificationService NotificationService
+@inject IAuthService AuthService
+@inject NavigationManager navigationManager
+@inject DialogService dialogService
+
+
+<RadzenTemplateForm Data=@request Submit=@Save TItem="NewUserRequest">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <RadzenFormField Text="Role" AllowFloatingLabel="true">
+            <RadzenDropDown @bind-Value="request.TypeId" Data=@roles TextProperty="Name" ValueProperty="Id" Name="typeId" />
+            <RadzenRequiredValidator Component="typeId" Text="Select role" Style="position: absolute" />
+        </RadzenFormField>
+        <RadzenFormField Text="Username" AllowFloatingLabel="true">
+            <RadzenTextBox @bind-Value="request.Name" Placeholder="Username" Name="name" />
+            <RadzenRequiredValidator Component="name" Text="Enter a unique username" Style="position: absolute" />
+        </RadzenFormField>
+        <RadzenFormField Text="Password" AllowFloatingLabel="true">
+            <RadzenPassword @bind-Value="request.Password" Placeholder="New Password" Name="newPassword" />
+            <RadzenRequiredValidator Component="newPassword" Text="Enter password" Style="position: absolute" />
+        </RadzenFormField>
+        <RadzenFormField Text="Confirm Password" AllowFloatingLabel="true">
+            <RadzenPassword @bind-Value="request.ConfirmPassword" Placeholder="Confirm Password" Name="confirmPassword" />
+            <RadzenRequiredValidator Component="confirmPassword" Text="Enter confirmation password" Style="position: absolute" />
+            <RadzenCompareValidator Visible=@(!string.IsNullOrEmpty(request.ConfirmPassword)) Style="position: absolute"
+                                    Value=@request.Password Component="confirmPassword" Text="New and confirmation passwords must be the same" />
+        </RadzenFormField>
+        <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Save" ButtonType="ButtonType.Submit" />
+
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code
+{
+    [Parameter]
+    public Guid Id { get; set; }
+
+    IEnumerable<UserRoleResponse> roles = [];
+    NewUserRequest request = new();
+
+
+
+    async Task Save()
+    {
+        request.Password = Utility.Encrypt(request.Password);
+        request.ConfirmPassword = Utility.Encrypt(request.ConfirmPassword);
+        Guid result = await AuthService.NewUserAsync(request);
+        if (result!=Guid.Empty)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "User created successfully");
+            dialogService.Close(result);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Creating user failed", "Please provide the unique username");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        request.TypeId = Id;
+        roles = await AuthService.GetUserRolesAsync();
+        base.OnInitialized();
+    }
+}

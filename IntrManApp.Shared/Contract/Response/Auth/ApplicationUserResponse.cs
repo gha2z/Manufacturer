@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 
 namespace IntrManApp.Shared.Contract;
 
-public class FeatureAccess
+public class ApplicationUserResponse
 {
     public Guid Id { get; set; } = Guid.Empty;
     public string Name { get; set; } = string.Empty;
-    public bool CanView { get; set; } = false;
-    public Guid ParentId { get; set; } = Guid.Empty;
-    public string Path { get; set; } = string.Empty;
-    public string Icon { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public Guid TypeId { get; set; } = Guid.Empty;
 }

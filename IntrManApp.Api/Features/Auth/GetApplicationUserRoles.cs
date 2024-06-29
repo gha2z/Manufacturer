@@ -8,43 +8,58 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IntrManApp.Api.Features.Auth;
 
-public static class UserRoles
+public static class GetApplicationUserRoles
 {
-    public class Query : IRequest<Result<List<UserRole>>>
+    public class Query : IRequest<Result<List<ApplicationUserRoleResponse>>>
     {
     }
 
-    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<List<UserRole>>>
+    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<List<ApplicationUserRoleResponse>>>
     {
 
 
-        public async Task<Result<List<UserRole>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<List<ApplicationUserRoleResponse>>> Handle(Query request, CancellationToken cancellationToken)
         {
             var result = await dbContext.UserTypes
                 .Include(x => x.Users)
                 .ToListAsync(cancellationToken);
 
-            List<UserRole> roles = [];
+            List<ApplicationUserRoleResponse> roles = [];
             foreach (var userType in result)
             {
-                UserRole role = new()
+                ApplicationUserRoleResponse role = new()
                 {
                     Id = userType.Id,
                     Name = userType.Name?? string.Empty,
-                    ApplicationUsers = userType.Users.Adapt<List<ApplicationUser>>()
+                    ApplicationUsers = userType.Users.Adapt<List<ApplicationUserResponse>>()
                 };
                 role.FeatureAccess = await dbContext.UserTypeFeatures
                     .Include(x => x.Feature)
-                    .Where(x => x.UserTypeId == role.Id)
-                    .Select(x => new FeatureAccess
+                    .Where(x => x.UserTypeId == role.Id && (x.Feature.ParentId == null || x.Feature.ParentId == Guid.Empty))
+                    .Select(x => new FeatureAccessResponse
                     {
                         Id = x.FeatureId,
                         Name = x.Feature.Name ?? string.Empty,
                         CanView = x.Accessible ?? false,
                         Icon = x.Feature.Icon ?? string.Empty,
                         Path = x.Feature.Path ?? string.Empty,
-                        ParentId = x.Feature.ParentId ?? Guid.Empty
+                        RoleId = role.Id
                     }).ToListAsync();
+                foreach (var feature in role.FeatureAccess)
+                {
+                    feature.ChildrenFeatures = await dbContext.UserTypeFeatures
+                       .Include(x => x.Feature)
+                       .Where(y => y.UserTypeId == role.Id && y.Feature.ParentId == feature.Id)
+                       .Select(x => new FeatureAccessResponse
+                       {
+                           Id = x.FeatureId,
+                           Name = x.Feature.Name ?? string.Empty,
+                           CanView = x.Accessible ?? false,
+                           Icon = x.Feature.Icon ?? string.Empty,
+                           Path = x.Feature.Path ?? string.Empty,
+                           RoleId = role.Id
+                       }).ToListAsync();
+                }
                 roles.Add(role);
             }
             
@@ -55,13 +70,13 @@ public static class UserRoles
     }
 }
 
-public class UserRolesEndPoint : ICarterModule
+public class GetApplicationUserRolesEndPoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/userRoles", async (ISender sender) =>
+        app.MapGet("api/ApplicationUserRoles", async (ISender sender) =>
         {
-            var query = new UserRoles.Query();
+            var query = new GetApplicationUserRoles.Query();
 
             var result = await sender.Send(query);
 

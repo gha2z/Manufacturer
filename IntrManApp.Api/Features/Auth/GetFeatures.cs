@@ -10,20 +10,20 @@ using System.Data;
 
 namespace IntrManApp.Api.Features.Auth;
 
-public static class Features
+public static class GetFeatures
 {
-    public class Query : IRequest<Result<List<FeatureAccess>>>
+    public class Query : IRequest<Result<List<FeatureAccessResponse>>>
     {
     }
 
-    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<List<FeatureAccess>>>
+    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<List<FeatureAccessResponse>>>
     {
 
 
-        public async Task<Result<List<FeatureAccess>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<List<FeatureAccessResponse>>> Handle(Query request, CancellationToken cancellationToken)
         {
             var result = await dbContext.Features.ToListAsync(cancellationToken);
-            List<FeatureAccess> features = result.Adapt<List<FeatureAccess>>();
+            List<FeatureAccessResponse> features = result.Adapt<List<FeatureAccessResponse>>();
            
             return Result.Success(features);
 
@@ -31,13 +31,13 @@ public static class Features
     }
 }
 
-public class FeaturesEndPoint : ICarterModule
+public class GetFeaturesEndPoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapGet("api/features", async (ISender sender) =>
         {
-            var query = new Features.Query();
+            var query = new GetFeatures.Query();
 
             var result = await sender.Send(query);
 

@@ -14,8 +14,8 @@ public static class Login
 {
     public class Query : IRequest<Result<LoginResponse>>
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 
     internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<LoginResponse>>
@@ -38,20 +38,34 @@ public static class Login
                 ret.Role = result.Type?.Name ?? string.Empty;
                 ret.FeatureAccesses = await dbContext.UserTypeFeatures
                     .Include(x => x.Feature)
-                    .Where(x => x.UserTypeId == result.TypeId)
-                    .Select(x => new FeatureAccess
+                    .Where(y => y.UserTypeId == result.TypeId && (y.Feature.ParentId==null || y.Feature.ParentId==Guid.Empty))
+                    .Select(x => new FeatureAccessResponse
                     {
                          Id = x.FeatureId,
                          Name = x.Feature.Name ?? string.Empty,
                          CanView = x.Accessible ?? false,
                          Icon = x.Feature.Icon ?? string.Empty,
-                         Path = x.Feature.Path ?? string.Empty,
-                         ParentId = x.Feature.ParentId ?? Guid.Empty
+                         Path = x.Feature.Path ?? string.Empty
                     }).ToListAsync();
+                
+                foreach(var feature in ret.FeatureAccesses)
+                {
+                    feature.ChildrenFeatures = await dbContext.UserTypeFeatures
+                        .Include(x => x.Feature)
+                        .Where(y => y.UserTypeId == result.TypeId && y.Feature.ParentId == feature.Id)
+                        .Select(x => new FeatureAccessResponse
+                        {
+                            Id = x.FeatureId,
+                            Name = x.Feature.Name ?? string.Empty,
+                            CanView = x.Accessible ?? false,
+                            Icon = x.Feature.Icon ?? string.Empty,
+                            Path = x.Feature.Path ?? string.Empty
+                        }).ToListAsync();
+                }
             } else
             {
                 var allFeatures = await dbContext.Features.ToListAsync(cancellationToken);
-                ret.FeatureAccesses = allFeatures.Adapt<List<FeatureAccess>>();
+                ret.FeatureAccesses = allFeatures.Adapt<List<FeatureAccessResponse>>();
             }
             return Result.Success(ret);
            
