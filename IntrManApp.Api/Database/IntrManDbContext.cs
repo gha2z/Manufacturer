@@ -14,6 +14,7 @@ public partial class IntrManDbContext : DbContext
     public IntrManDbContext(DbContextOptions<IntrManDbContext> options)
         : base(options)
     {
+        
     }
 
     public virtual DbSet<BillOfMaterial> BillOfMaterials { get; set; }

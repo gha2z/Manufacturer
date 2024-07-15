@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using IntrManApp.Shared.Common;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 using System.Data;
 
@@ -7,16 +8,20 @@ namespace IntrManApp.Api.Database
     public interface IDbConnectionFactory
     {
         IDbConnection CreateOpenConnection();
+        Task<IDbConnection> CreateOpenConnectionAsync();
+        void SetConnectionString(string connectionString);
     }
 
-    public class SqlConnectionFactory : IDbConnectionFactory
+    public interface IDbConfigConnectionFactory
     {
-        private readonly string _connectionString;
+        IDbConnection CreateOpenConnection();
+        Task<IDbConnection> CreateOpenConnectionAsync();
+        void SetConnectionString(string connectionString);
+    }
 
-        public SqlConnectionFactory(IOptions<ConnectionStrings> options)
-        {
-            _connectionString = options.Value.Database;
-        }
+    public class SqlConnectionFactory(IOptions<ConnectionStrings> options) : IDbConnectionFactory
+    {
+        private string _connectionString = options.Value.Database;
 
         public IDbConnection CreateOpenConnection()
         {
@@ -27,13 +32,66 @@ namespace IntrManApp.Api.Database
             }
             catch 
             {
-                // Log the exception and rethrow, or handle it as appropriate for your application.   
+                 
             }
             return connection;
         }
+
+        public async Task<IDbConnection> CreateOpenConnectionAsync()
+        {
+            var connection = new SqlConnection(_connectionString);
+            try
+            {
+                await connection.OpenAsync();
+            }
+            catch
+            {
+
+            }
+            return connection;
+        }
+
+        public void SetConnectionString(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
     }
-    public class ConnectionStrings
+
+    public class SqlConfigConnectionFactory(IOptions<ConnectionStrings> options) : IDbConfigConnectionFactory
     {
-        public string Database { get; set; } = string.Empty;
+        private  string _connectionString = options.Value.DbConfig;
+
+        public IDbConnection CreateOpenConnection()
+        {
+            var connection = new SqlConnection(_connectionString);
+            try
+            {
+                connection.Open();
+            }
+            catch
+            {
+                
+            }
+            return connection;
+        }
+
+        public async Task<IDbConnection> CreateOpenConnectionAsync()
+        {
+            var connection = new SqlConnection(_connectionString);
+            try
+            {
+                await connection.OpenAsync();
+            }
+            catch
+            {
+
+            }
+            return connection;
+        }
+
+        public void SetConnectionString(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
     }
 }

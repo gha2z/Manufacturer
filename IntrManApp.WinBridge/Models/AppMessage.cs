@@ -34,6 +34,10 @@ namespace IntrManApp.WinBridge
         GetInstalledPrinterList = 1,
         InstalledPrinterList = 2,
         PrintLabel = 3,
-        PrintLabelResult = 4
+        PrintLabelResult = 4,
+        GetFolderPath = 5,
+        UserSelectedFolderPath = 6,
+        GetFilePath = 7,
+        UserSelectedFilePath = 8
     }
 }

@@ -1,6 +1,6 @@
 ﻿using IntrManApp.Shared.Contract;
 using IntrManApp.Shared.Contract.Request.Tools;
-using IntrManAppHybridApp.Tools.Bartender;
+using IntrManHybridApp.Tools.Bartender;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 using System.Net.Http.Json;

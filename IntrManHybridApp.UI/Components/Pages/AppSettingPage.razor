@@ -1,0 +1,375 @@
+﻿@page "/AppSettingPage"
+
+
+@using IntrManApp.Shared.Contract
+@using IntrManApp.Shared.Contract.Tools
+@using IntrManHybridApp.UI.Services
+@using Microsoft.AspNetCore.SignalR.Client
+@using System.Text.Json
+@using IntrManApp.Shared.Common
+
+@inject ILogger<AppSettingPage> logger
+@implements IAsyncDisposable
+@inject NotificationService NotificationService
+@inject IAppCustomConfig config
+@inject DialogService dialogService
+
+<RadzenCard Class="rz-my-0 rz-mx-auto rz-p-0">
+    <RadzenCard class="rz-background-color-primary-light rz-shadow-0 rz-border-radius-0 rz-p-2" Variant="Variant.Flat" >
+        <RadzenText TextStyle="TextStyle.Body1" class="rz-color-on-primary-light"><strong>Client Configuration</strong></RadzenText>
+    </RadzenCard>
+    <RadzenCard Class="rz-my-12 rz-my-auto rz-mx-0">
+        <RadzenStack Gap="0.75rem" Orientation="Orientation.Horizontal">
+                <RadzenFormField Text="Server IP Address">
+                    <RadzenTextBox @bind-Value=@AppSettings.ApiBaseUrl></RadzenTextBox>
+                </RadzenFormField>
+            <RadzenFormField Text="Port" class="rz-mb-3">
+                <RadzenNumeric Min="50001" Max="65532" @bind-Value=@AppSettings.ApiBasePort></RadzenNumeric>
+            </RadzenFormField>
+            <RadzenButton Text="Apply" Click="@SetServerEndPoint" Style="height:40px; margin-top:9px"
+                          BusyText="Wait ..." IsBusy="@isBusy" class="rz-background-color-primary-light" />
+        </RadzenStack>   
+    </RadzenCard>
+
+    <RadzenCard class="rz-background-color-primary-light rz-shadow-0 rz-border-radius-0 rz-p-2" Variant="Variant.Flat" Visible="@IsServer()">
+        <RadzenText TextStyle="TextStyle.Body2" class="rz-color-on-primary-light"><strong>Server Configuration</strong></RadzenText>
+    </RadzenCard>
+    <RadzenCard Class="rz-my-12 rz-my-auto rz-mx-0" Visible="@IsServer()">
+        <RadzenStack Gap="0.75rem">
+            <RadzenStack Gap="1rem" Orientation="Orientation.Horizontal">
+               <RadzenFormField Text="Server Port" >
+                    <RadzenNumeric Min="50001" Max="65532" @bind-Value=@DatabaseSettings.Port></RadzenNumeric>
+                </RadzenFormField>
+                <RadzenFormField Text="SQL Server Instance" >
+                    <RadzenTextBox @bind-Value=@DatabaseSettings.DatabaseServer></RadzenTextBox>
+                </RadzenFormField>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem">
+                <RadzenCheckBox @bind-Value=@DatabaseSettings.UseIntegratedSecurity Name="UseIntegratedSecurity" Style="width:20px; margin-top:24px" />
+                <RadzenLabel Text="Use integrated security" Component="UseIntegratedSecurity" 
+                    Style="margin-top: 18px; font-size:smaller vertical-align: middle;" />
+            </RadzenStack>
+            <RadzenStack Gap="0.75rem" Orientation="Orientation.Horizontal">
+                
+                <RadzenFormField Text="User Id">
+                    <RadzenTextBox @bind-Value=@DatabaseSettings.UserId Disabled="@DatabaseSettings.UseIntegratedSecurity"></RadzenTextBox>
+                </RadzenFormField>
+                <RadzenFormField Text="Password">
+                    <RadzenPassword @bind-Value=@DatabaseSettings.Password Disabled="@DatabaseSettings.UseIntegratedSecurity"></RadzenPassword>
+                </RadzenFormField>
+            </RadzenStack>
+            <RadzenStack Gap="0.75rem" Orientation="Orientation.Horizontal">
+                <RadzenButton Text="Apply" Click="@SetDatabaseServer" Style="height:40px; margin-top:9px"
+                              BusyText="Wait ..." IsBusy="@isBusy" class="rz-background-color-primary-light" />
+                <RadzenButton Text="Re-create database" Click="@CreateDatabase" Style="height:40px; margin-top:9px"
+                              BusyText="Wait ..." IsBusy="@isBusy" ButtonStyle="ButtonStyle.Danger" />
+            </RadzenStack>
+        </RadzenStack>
+       
+    </RadzenCard>
+    <RadzenCard class="rz-background-color-primary-light rz-shadow-0 rz-border-radius-0 rz-p-2" Variant="Variant.Flat" Visible="@IsServer()">
+        <RadzenText TextStyle="TextStyle.Body2" class="rz-color-on-primary-light"><strong>Database Backup</strong></RadzenText>
+    </RadzenCard>
+    <RadzenCard Class="rz-my-12 rz-my-auto rz-mx-0" Visible="@IsServer()">
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+            <RadzenFormField Text="Backup Directory" >
+                <ChildContent>
+                    <RadzenTextBox @bind-Value=@DatabaseSettings.BackupPath Style="width:340px"></RadzenTextBox>
+                </ChildContent>
+                <End>
+                    <RadzenButton Icon="folder" Click="@ChooseFolder" Style="width:20px; margin-right:0px"
+                                  BusyText="Wait ..." IsBusy="@isBusy" class="rz-background-color-primary-light"></RadzenButton>
+                </End>
+            </RadzenFormField>
+            <RadzenFormField Text="Backup Filename">
+                <RadzenTextBox @bind-Value=@DatabaseSettings.BackupFileName Style="width:200px"></RadzenTextBox>
+            </RadzenFormField>
+            <RadzenCheckBox @bind-Value=@DatabaseSettings.AppendDateTime Name="AppendDateTime" Style="width:20px; margin-top:24px" />
+            <RadzenLabel Text="Append date & time" Component="AppendDateTime" 
+                Style="margin-top: 18px; font-size:smaller vertical-align: middle;" />
+            <RadzenButton Text="Apply" Click="@SetBackupFolder" Style="height:40px; margin-top:9px"
+                          BusyText="Wait ..." IsBusy="@isBusy" class="rz-background-color-primary-light" />
+            <RadzenButton Text="Backup Database ..." Click="@BackupDatabase" Style="height:40px; margin-top:9px;"
+                          BusyText="Wait ..." IsBusy="@isBusy" ButtonStyle="ButtonStyle.Success" />
+        </RadzenStack>
+    </RadzenCard>
+    <RadzenCard class="rz-background-color-primary-light rz-shadow-0 rz-border-radius-0 rz-p-2" Variant="Variant.Flat" Visible="@IsServer()">
+        <RadzenText TextStyle="TextStyle.Body2" class="rz-color-on-primary-light"><strong>Restore Database</strong></RadzenText>
+    </RadzenCard>
+    <RadzenCard Class="rz-my-12 rz-my-auto rz-mx-0" Visible="@IsServer()">
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+            <RadzenFormField Text="Restoration Source File" Style="padding-right:0;">
+                <ChildContent>
+                    <RadzenTextBox @bind-Value=@backupFile  Style="width:400px"></RadzenTextBox>
+                </ChildContent>
+                <End>
+                  @*   <RadzenFileInput @bind-FileName=@backupFile @bind-bind-Value=@backupPath ChooseText="Choose a backup file" 
+                    TValue="string" class="w-100" Change=@(args => OnChange(args, "FileInput")) 
+                    InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "select file" }})" /> *@
+                         
+                    <RadzenButton Icon="file_upload" Click="@ChooseFile" Style="width:20px; margin-right:0px"
+                                  class="rz-background-color-primary-light" BusyText="Wait ..." IsBusy="@isBusy"></RadzenButton>
+                
+                </End>
+            </RadzenFormField>
+           
+            <RadzenButton Text="Restore Database ..." Click="@RestoreDatabase" Style="height:40px; margin-top:9px" 
+                ButtonStyle="ButtonStyle.Danger" BusyText="Wait ..." IsBusy="@isBusy"/>
+        </RadzenStack>
+    </RadzenCard>
+
+</RadzenCard>
+
+
+@code {
+    HubConnection? hubConnection;
+    string signalrMessage = string.Empty;
+    string backupFile = string.Empty;
+    bool isBusy = false;
+
+    bool IsServer()
+    {
+        return (AppSettings.ApiBaseUrl.Trim().ToLower().Equals("localhost") ||
+            AppSettings.ApiBaseUrl.Trim().ToLower().Equals(".") || 
+            AppSettings.ApiBaseUrl.Trim().ToLower().Equals(Environment.MachineName));
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await config.GetDatabaseSettingsAsync();
+
+    }
+
+    async Task SetServerEndPoint()
+    {
+        var confirmed = await dialogService.Confirm("This configuration will be applied on next application start. Application will now be closed. Continue?", 
+            "Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (confirmed.Value)
+        {
+            var settings = new ClientAppSettingLoader()
+                {
+                    ApiBaseUrl = AppSettings.ApiBaseUrl,
+                    ApiBasePort = AppSettings.ApiBasePort,
+                    AppDataPath = AppSettings.AppDataPath
+                };
+            File.WriteAllText(Path.Combine(AppSettings.AppDataPath,"AppSettings.json"), JsonSerializer.Serialize(settings));
+            App.Current?.Quit();
+        }
+    }
+
+    async void SetDatabaseServer()
+    {
+        isBusy = true;
+        var request = new SetDatabaseServerRequest()
+            {
+                Server = DatabaseSettings.DatabaseServer,
+                UserId = DatabaseSettings.UserId,
+                Password = DatabaseSettings.Password,
+                UseIntegratedSecurity = DatabaseSettings.UseIntegratedSecurity
+            };
+        var result = await config.SetDatabaseServerAsync(request);
+        if(result)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Configuration applied.",
+                 $"SQL Server instance has been successfully configured.");
+            isBusy = false;
+            await InvokeAsync(StateHasChanged);
+        } else
+        {
+            isBusy = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    async void SetBackupFolder()
+    {
+        isBusy = true;
+        var request = new SetBackupDiskPathRequest()
+        {
+             Path = DatabaseSettings.BackupPath,
+             FileName = DatabaseSettings.BackupFileName,
+             AppendDateTime = DatabaseSettings.AppendDateTime
+        };
+        var result = await config.SetBackupDiskPathAsync(request);
+        if (result)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Configuration completed",
+                 $"Database backup configuration has been successfully set.");
+            isBusy = false;
+        }
+        else
+        {
+            isBusy = false;
+        }
+       
+    }
+
+    void OnChange(string value, string name)
+    {
+
+    }
+
+    async Task ChooseFolder()
+    {
+        isBusy = true;
+        var request = System.Text.Json.JsonSerializer.Serialize(
+                    new AppMessage(AppMessageType.GetFolderPath, DatabaseSettings.BackupPath));
+
+        if (hubConnection == null || hubConnection.State != HubConnectionState.Connected)
+            await CreateHubConnection();
+
+        if(hubConnection!=null) 
+            await hubConnection.SendAsync("SendMessage", "AppSetting", request);
+        isBusy = false;
+    }
+
+    async Task ChooseFile()
+    {
+        isBusy = true;
+        var request = System.Text.Json.JsonSerializer.Serialize(
+                    new AppMessage(AppMessageType.GetFilePath, DatabaseSettings.BackupPath));
+
+        if (hubConnection == null || hubConnection.State != HubConnectionState.Connected)
+            await CreateHubConnection();
+
+        if (hubConnection != null)
+            await hubConnection.SendAsync("SendMessage", "AppSetting", request);
+        isBusy = false;
+    }
+
+    async Task CreateDatabase()
+    {
+        isBusy = true;
+        var confirmed = await dialogService.Confirm("Any existing database will be replaced with a new one. Continue?", "Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (confirmed!= null && confirmed.Value)
+        {
+           
+            var result = await config.CreateDatabaseAsync();
+            if (result)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Database creation completed",
+                    $"Database has been successfully created");
+                isBusy = false;
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Database restore failed");
+                isBusy = false;
+            }
+            
+        }
+    }
+
+    async Task BackupDatabase()
+    {
+        isBusy = true;
+        var result = await config.BackupDatabaseAsync();
+        if (result.IsSucceeded)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Database backup completed",
+                $"Database has been successfully backed up to \"{result.Path}\"");
+            isBusy = false;
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Database restore failed");
+            isBusy = false;
+        }
+      
+    }
+
+    async Task RestoreDatabase()
+    {
+        isBusy = true;
+        var confirmed = await dialogService.Confirm("Are you sure to restore the database?", "Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (confirmed!=null && confirmed.Value)
+        {
+            var request = new RestoreDatabaseRequest()
+            {
+                Path = backupFile
+            };
+            var result = await config.RestoreDatabaseAsync(request);
+            if (result.IsSucceeded)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Database restored successfully",
+                    $"Database has been successfully restored from \"{result.Path}\"");
+                isBusy = false;
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Database restore failed");
+                isBusy = false;
+            }
+        }
+      
+    }
+
+    async Task CreateHubConnection()
+    {
+        try
+        {
+            logger.LogInformation($"ProductionLabelPrinting.CreateHubConnection - create connection to SignalR hub");
+            hubConnection = new HubConnectionBuilder()
+               .WithUrl("http://localhost:50000/chathub")
+               .WithAutomaticReconnect()
+               .Build();
+
+            hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+            {
+                signalrMessage = message;
+                try
+                {
+                    AppMessage? msg = Newtonsoft.Json.JsonConvert.DeserializeObject<AppMessage>(message);
+
+                    switch (msg?.MessageType)
+                    {
+                        case AppMessageType.UserSelectedFolderPath:
+                            string folderPath = msg.Data?.ToString() ?? string.Empty;
+                            if(folderPath != string.Empty)
+                            {
+                                DatabaseSettings.BackupPath = folderPath;
+                                InvokeAsync(StateHasChanged);
+                            } 
+                            logger.LogInformation($"AppSettingPage.CreateHubConnection - receiving user selected folder path => {folderPath}");
+                            break;
+                        case AppMessageType.UserSelectedFilePath:
+                            string filePath = msg.Data?.ToString() ?? string.Empty;
+                            if (filePath != string.Empty)
+                            {
+                                backupFile = filePath;
+                                InvokeAsync(StateHasChanged);
+                            }
+                            logger.LogInformation($"AppSettingPage.CreateHubConnection - receiving user selected folder path => {filePath}");
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, $"AppSettingPage.CreateHubConnection - error: {ex.Message}{Environment.NewLine}{ex}");
+                }
+            });
+
+            if (hubConnection is not null)
+            {
+                await hubConnection.StartAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, $"ProductionLabelPrinting.OnInitializedAsync - error: {ex.Message}{Environment.NewLine}{ex}");
+        }
+    }
+
+    public bool IsConnected =>
+        hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+}

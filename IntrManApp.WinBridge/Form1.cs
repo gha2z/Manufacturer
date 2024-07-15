@@ -4,6 +4,7 @@ using System;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Windows.Forms;
@@ -79,35 +80,35 @@ namespace IntrManApp.WinBridge
                             {
                                 try
                                 {
-                               
-                                        textBox1.Clear();
-                                        this.Visible = true;
-                                        this.Show();
-                                        this.BringToFront();
-                                        textBox1.Text = $"Processing label printing \"{arguments.LabelFilePath}\"";
-                                
-                                        var labelFormat = engine.Documents.Open(arguments.LabelFilePath);
-                                        labelFormat.PrintSetup.PrinterName = arguments.PrinterName;
-                                        labelFormat.PrintSetup.IdenticalCopiesOfLabel = 1;
-                                        labelFormat.PrintSetup.NumberOfSerializedLabels = 1;
 
-                                        Messages btMessages;
-                                        Result result = labelFormat.Print(appName, 10000, out btMessages);
-                                        string btMessageString = string.Empty;
+                                    textBox1.Clear();
+                                    this.Visible = true;
+                                    this.Show();
+                                    this.BringToFront();
+                                    textBox1.Text = $"Processing label printing \"{arguments.LabelFilePath}\"";
 
-                                        foreach (Seagull.BarTender.Print.Message msg in btMessages)
-                                        {
-                                            btMessageString += "\n\n" + msg.Text;
-                                        }
+                                    var labelFormat = engine.Documents.Open(arguments.LabelFilePath);
+                                    labelFormat.PrintSetup.PrinterName = arguments.PrinterName;
+                                    labelFormat.PrintSetup.IdenticalCopiesOfLabel = 1;
+                                    labelFormat.PrintSetup.NumberOfSerializedLabels = 1;
 
-                                    
-                                        if (result == Result.Failure)
-                                            resultString = "Print Failed" + btMessageString;
-                                        else
-                                            resultString = "Label was successfully sent to printer." + btMessageString;
-                                        textBox1.AppendText($"\n\nReceiving Bartender result messages:\n{result}\n\n{resultString}\n\nClosing label file ...");
-                                        labelFormat.Close(SaveOptions.DoNotSaveChanges);
-                              
+                                    Messages btMessages;
+                                    Result result = labelFormat.Print(appName, 10000, out btMessages);
+                                    string btMessageString = string.Empty;
+
+                                    foreach (Seagull.BarTender.Print.Message msg in btMessages)
+                                    {
+                                        btMessageString += "\n\n" + msg.Text;
+                                    }
+
+
+                                    if (result == Result.Failure)
+                                        resultString = "Print Failed" + btMessageString;
+                                    else
+                                        resultString = "Label was successfully sent to printer." + btMessageString;
+                                    textBox1.AppendText($"\n\nReceiving Bartender result messages:\n{result}\n\n{resultString}\n\nClosing label file ...");
+                                    labelFormat.Close(SaveOptions.DoNotSaveChanges);
+
                                 }
                                 catch (Exception ex)
                                 {
@@ -124,12 +125,46 @@ namespace IntrManApp.WinBridge
                           new AppMessage(AppMessageType.PrintLabelResult, resultString));
                         await hubConnection.SendMessage("Wintools", response);
                         break;
+                    case AppMessageType.GetFolderPath:
+                        string path = jsonMessage.Data.ToString();
+                        this.Invoke(new MethodInvoker(delegate ()
+                        {
+                            folderBrowser.SelectedPath = path;
+                            if (folderBrowser.ShowDialog() == DialogResult.OK) {
+                                path = folderBrowser.SelectedPath;
+                            }
+                        }));
+                        if (Directory.Exists(path)) 
+                        { 
+                            response = JsonSerializer.Serialize(
+                                new AppMessage(AppMessageType.UserSelectedFolderPath, path));
+                            await hubConnection.SendMessage("Wintools", response);
+                        }
+                        break;
+                    case AppMessageType.GetFilePath:
+                        string filePath = jsonMessage.Data.ToString();
+                        this.Invoke(new MethodInvoker(delegate ()
+                        {
+                            openFile.InitialDirectory = filePath;
+                            if (openFile.ShowDialog() == DialogResult.OK)
+                            {
+                                filePath = openFile.FileName;
+                            }
+                        }));
+                        if (File.Exists(filePath))
+                        {
+                            response = JsonSerializer.Serialize(
+                                new AppMessage(AppMessageType.UserSelectedFilePath, filePath));
+                            await hubConnection.SendMessage("Wintools", response);
+                        }
+                        break;
                 }
             }
             catch (Exception ex)
             {
                 this.Invoke((Action)(() =>
                 {
+                    this.Show();
                     textBox1.AppendText($"{Environment.NewLine}{ex.Message}");
                 }));
             }

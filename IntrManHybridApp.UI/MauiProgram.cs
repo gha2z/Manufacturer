@@ -5,8 +5,8 @@ using Serilog.Extensions.Logging;
 using Serilog.Core;
 using Serilog;
 using IntrManHybridApp.UI.Services;
-using Polly;
-using Polly.Extensions.Http;
+using IntrManApp.Shared.Common;
+using System.Text.Json;
 
 namespace IntrManHybridApp.UI;
 
@@ -30,24 +30,119 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
+        string appDataPath = string.Empty;
+
+#if WINDOWS
+        appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), AppInfo.Name);
+#endif
+#if ANDROID
+        appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ".local/share");
+#endif
 
 
+
+        if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
+
+        appDataPath = Path.Combine(appDataPath, "Client App");
+        if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
+
+        var logPath = Path.Combine(appDataPath, "logs");
+        if (!Directory.Exists(logPath)) Directory.CreateDirectory(logPath);
+        logPath += "\\";
+        var levelSwitch = new LoggingLevelSwitch();
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.ControlledBy(levelSwitch)
+            .WriteTo.Debug()
+            .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
+            .CreateLogger();
+
+
+        builder.Logging.AddSerilog();
+
+        var appSettingJsonFile = Path.Combine(appDataPath, "AppSettings.json");
+
+        var settings = new ClientAppSettingLoader();
+
+        if (!File.Exists(appSettingJsonFile))
+        {
+            settings.ApiBaseUrl = "localhost";
+            settings.ApiBasePort = 50001;
+            settings.AppDataPath = appDataPath;
+            settings.ApiUrlVerb = "http";
+            File.WriteAllText(appSettingJsonFile, JsonSerializer.Serialize(settings));
+        }
+        if (File.Exists(appSettingJsonFile))
+        {
+            //builder.Configuration.Sources.Add(new JsonConfigurationSource { Path = appSettingJsonFile, Optional = false, ReloadOnChange = true });
+            settings = new ClientAppSettingLoader();
+            settings = JsonSerializer.Deserialize<ClientAppSettingLoader>(File.ReadAllText(appSettingJsonFile));
+            AppSettings.ApiBaseUrl = settings?.ApiBaseUrl ?? "localhost";
+            AppSettings.ApiBasePort = settings?.ApiBasePort ?? 50001;
+            AppSettings.AppDataPath = settings?.AppDataPath ?? string.Empty;
+            AppSettings.ApiUrlVerb = settings?.ApiUrlVerb ?? "http";
+        }
+
+        //builder.Services.AddSingleton<IFolderPicker>(FolderPicker.Default);
+        //builder.Services.AddTransient<PickFolder, FolderPickerViewModel>();
+
+        var uri = new Uri($"{AppSettings.ApiUrlVerb}://{AppSettings.ApiBaseUrl}:{AppSettings.ApiBasePort}/api/");
+
+        var bartenderUri = new Uri("http://localhost:5159/api/");
+        builder.Services.AddHttpClient<ISupplierService, SupplierService>(client => { client.BaseAddress = uri; })
+            .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+            });
+        builder.Services.AddHttpClient<ILocationService, LocationService>(client => { client.BaseAddress = uri; })
+            .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+            });
+        builder.Services.AddHttpClient<ICustomerService, CustomerService>(client => { client.BaseAddress = uri; })
+             .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+             {
+                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+             });
+        builder.Services.AddHttpClient<IProductService, ProductService>(client => { client.BaseAddress = uri; })
+             .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+             {
+                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+             });
+        builder.Services.AddHttpClient<ICheckinService, CheckinService>(client => { client.BaseAddress = uri; })
+             .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+             {
+                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+             });
+        builder.Services.AddHttpClient<IProductionService, ProductionService>(client => { client.BaseAddress = uri; })
+             .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+             {
+                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+             });
+        builder.Services.AddHttpClient<ILabelPrintingService, LabelPrintingService>(client => { client.BaseAddress = bartenderUri; });
+        builder.Services.AddHttpClient<ISaleService, SaleService>(client => { client.BaseAddress = uri; })
+             .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+             {
+                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+             });
+        builder.Services.AddHttpClient<IInventoryService, InventoryService>(client => { client.BaseAddress = uri; })
+             .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+             {
+                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+             });
+        builder.Services.AddHttpClient<IAuthService, AuthService>(client => { client.BaseAddress = uri; })
+             .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+             {
+                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+             });
+        builder.Services.AddHttpClient<IAppCustomConfig, AppCustomConfig>(client => { client.BaseAddress = uri; })
+             .ConfigurePrimaryHttpMessageHandler(_ => new HttpClientHandler
+             {
+                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; }
+             });
 
 
 #if WINDOWS
-    var logPath = Path.Combine(Environment.GetFolderPath(
-            Environment.SpecialFolder.CommonApplicationData),  $"{AppInfo.Name}");
-    if (!Directory.Exists(logPath)) Directory.CreateDirectory(logPath);
-    logPath = Path.Combine(logPath, "logs");
-    if (!Directory.Exists(logPath)) Directory.CreateDirectory(logPath);
-    logPath += "\\";
-    var levelSwitch = new LoggingLevelSwitch();
-    Log.Logger = new LoggerConfiguration()
-        .MinimumLevel.ControlledBy(levelSwitch)
-        .WriteTo.Debug()
-        .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
-        .CreateLogger();
-
+   
     builder.ConfigureLifecycleEvents(events =>
     {
         events.AddWindows(wndLifeCycleBuilder =>
@@ -69,31 +164,7 @@ public static class MauiProgram
         });
     });
 #endif
-        builder.Logging.AddSerilog();
-
-        var uri = new Uri("https://localhost:7274/api/");
-        var bartenderUri = new Uri("http://localhost:5159/api/");
-        builder.Services.AddHttpClient<ISupplierService, SupplierService>(client => { client.BaseAddress = uri; });
-        builder.Services.AddHttpClient<ILocationService, LocationService>(client => { client.BaseAddress = uri; });
-        builder.Services.AddHttpClient<ICustomerService, CustomerService>(client => { client.BaseAddress = uri; });
-        builder.Services.AddHttpClient<IProductService, ProductService>(client => { client.BaseAddress = uri; });
-        builder.Services.AddHttpClient<ICheckinService, CheckinService>(client => { client.BaseAddress = uri; });
-        builder.Services.AddHttpClient<IProductionService, ProductionService>(client => { client.BaseAddress = uri; });
-        builder.Services.AddHttpClient<ILabelPrintingService, LabelPrintingService>(client => { client.BaseAddress = bartenderUri; });
-        builder.Services.AddHttpClient<ISaleService, SaleService>(client => { client.BaseAddress = uri; });
-        builder.Services.AddHttpClient<IInventoryService, InventoryService>(client => { client.BaseAddress = uri; });
-        builder.Services.AddHttpClient<IAuthService, AuthService>(client => { client.BaseAddress = uri; });
-        //builder.Services.AddTransient<ISupplierService, SupplierService>();
-        //builder.Services.AddTransient<ILocationService, LocationService>();
 
         return builder.Build();
-    }
-
-    static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-    {
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-            .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
     }
 }

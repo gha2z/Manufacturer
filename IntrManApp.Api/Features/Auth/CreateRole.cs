@@ -54,7 +54,7 @@ public static class CreateRole
                 dbContext.Database.CommitTransaction();
                 ret = role.Id;
             }
-            catch (Exception ex)
+            catch 
             {
                 dbContext.Database.RollbackTransaction();
             }

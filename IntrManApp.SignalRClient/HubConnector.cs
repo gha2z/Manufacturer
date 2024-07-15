@@ -22,7 +22,7 @@ namespace IntrManApp.SignalRClient
         {
 
             connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:3108/chathub")
+                .WithUrl("http://localhost:50000/chathub")
                 .WithAutomaticReconnect()
                 .Build();
 

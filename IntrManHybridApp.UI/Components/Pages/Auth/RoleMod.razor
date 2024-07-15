@@ -15,7 +15,7 @@
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
         
         <RadzenFormField Text="Role Name" AllowFloatingLabel="true">
-            <RadzenTextBox @bind-Value="role.Name" Placeholder="Role Name" Name="name" />
+            <RadzenTextBox @bind-Value=@role.Name Placeholder="Role Name" Name="name" />
             <RadzenRequiredValidator Component="name" Text="Enter a role name" Style="position: absolute" />
         </RadzenFormField>
 
@@ -31,11 +31,12 @@
 
     protected async Task OnInitializeAsync()
     {
-        await base.OnInitializedAsync();
         if (role == null)
         {
             role = new NewOrUpdateRoleRequest();
         }
+        await base.OnInitializedAsync();
+       
     }
 
     async Task Save()

@@ -1,6 +1,8 @@
 using IntrManApp.SignalR.Components;
 using Microsoft.AspNetCore.ResponseCompression;
 using BlazorSignalRApp.Hubs;
+using Serilog;
+using IntrManApp.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,46 @@ builder.Services.AddResponseCompression(opts =>
     opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
           new[] { "application/octet-stream" });
 });
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        });
+});
+
+builder.Services.AddWindowsService(options =>
+{
+    options.ServiceName = "IntrMan Signalr Service";
+});
+builder.Services.AddHostedService<SignalrService>();
+
+
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(50000); // http
+});
+
+string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Intrepid Manufacture App");
+if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
+
+var logPath = Path.Combine(appDataPath, "SignalR Service");
+if (!Directory.Exists(logPath)) Directory.CreateDirectory(logPath);
+logPath = Path.Combine(logPath, "logs");
+if (!Directory.Exists(logPath)) Directory.CreateDirectory(logPath);
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.File(Path.Combine(logPath, "log.txt"), rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Logging.AddSerilog();
+
+
 
 var app = builder.Build();
 
@@ -28,7 +70,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
-app.Urls.Add("http://localhost:3108");
+//app.Urls.Add("http://localhost:3108");
 
 app.UseStaticFiles();
 app.UseAntiforgery();

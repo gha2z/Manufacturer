@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace IntrManAppHybridApp.Tools.Bartender
+namespace IntrManHybridApp.Tools.Bartender
 {
     public class PrintBTWAction
     {
