@@ -7,6 +7,7 @@ using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace IntrManApp.WinBridge
@@ -23,22 +24,6 @@ namespace IntrManApp.WinBridge
         {
             this.SuspendLayout();
             this.Location = new Point(Screen.PrimaryScreen.WorkingArea.Width - this.Width, Screen.PrimaryScreen.WorkingArea.Height - this.Height);
-
-            hubConnection = new HubConnector();
-            hubConnection.StartingConnection += HubConnection_StartingConnection;
-            hubConnection.ReceiveMessage += HubConnection_ReceiveMessage;
-            hubConnection.EventMessage += HubConnection_EventMessage;
-
-            try
-            {
-                await hubConnection.Start();
-            }
-            catch (Exception ex)
-            {
-                textBox1.AppendText($"{Environment.NewLine}{ex.Message}");
-            }
-            this.ResumeLayout();
-            this.Hide();
         }
 
         private void HubConnection_EventMessage(object sender, string e)
@@ -91,7 +76,7 @@ namespace IntrManApp.WinBridge
                                     labelFormat.PrintSetup.PrinterName = arguments.PrinterName;
                                     labelFormat.PrintSetup.IdenticalCopiesOfLabel = 1;
                                     labelFormat.PrintSetup.NumberOfSerializedLabels = 1;
-
+                                    //labelFormat.DatabaseConnections[0].FileName 
                                     Messages btMessages;
                                     Result result = labelFormat.Print(appName, 10000, out btMessages);
                                     string btMessageString = string.Empty;
@@ -188,6 +173,34 @@ namespace IntrManApp.WinBridge
                 return;
             }
 
+        }
+
+        private async void Form1_Shown(object sender, EventArgs e)
+        {
+            hubConnection = new HubConnector();
+            hubConnection.StartingConnection += HubConnection_StartingConnection;
+            hubConnection.ReceiveMessage += HubConnection_ReceiveMessage;
+            hubConnection.EventMessage += HubConnection_EventMessage;
+            while (!hubConnection.isConnected())
+            {
+                try
+                {
+                    await hubConnection.Start();
+                }
+                catch (Exception ex)
+                {
+                    textBox1.AppendText($"{Environment.NewLine}{ex.Message}");
+                    Thread.Sleep(1000);
+                }
+            }
+            this.ResumeLayout();
+            this.Hide();
+        }
+
+        private void showMeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Show();
+            this.BringToFront();
         }
     }
 }

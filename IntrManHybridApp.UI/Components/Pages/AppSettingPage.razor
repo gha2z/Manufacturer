@@ -197,10 +197,12 @@
             NotificationService.Notify(NotificationSeverity.Success, "Configuration completed",
                  $"Database backup configuration has been successfully set.");
             isBusy = false;
+            await InvokeAsync(StateHasChanged);
         }
         else
         {
             isBusy = false;
+            await InvokeAsync(StateHasChanged);
         }
        
     }
@@ -251,11 +253,13 @@
                 NotificationService.Notify(NotificationSeverity.Success, "Database creation completed",
                     $"Database has been successfully created");
                 isBusy = false;
+                await InvokeAsync(StateHasChanged);
             }
             else
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Database restore failed");
                 isBusy = false;
+                await InvokeAsync(StateHasChanged);
             }
             
         }
@@ -270,11 +274,13 @@
             NotificationService.Notify(NotificationSeverity.Success, "Database backup completed",
                 $"Database has been successfully backed up to \"{result.Path}\"");
             isBusy = false;
+            await InvokeAsync(StateHasChanged);
         }
         else
         {
             NotificationService.Notify(NotificationSeverity.Error, "Database restore failed");
             isBusy = false;
+            await InvokeAsync(StateHasChanged);
         }
       
     }
@@ -295,11 +301,13 @@
                 NotificationService.Notify(NotificationSeverity.Success, "Database restored successfully",
                     $"Database has been successfully restored from \"{result.Path}\"");
                 isBusy = false;
+                await InvokeAsync(StateHasChanged);
             }
             else
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Database restore failed");
                 isBusy = false;
+                await InvokeAsync(StateHasChanged);
             }
         }
       
