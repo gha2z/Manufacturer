@@ -1,0 +1,60 @@
+﻿@using IntrManApp.Shared.Contract
+@using IntrManHybridApp.UI.Services
+@using Mapster
+
+@inject IProductService service
+@inject Radzen.DialogService dialogService
+@inject Radzen.NotificationService notificationService
+
+<RadzenTemplateForm TItem="ProductVariantRequest" Data=@variant Submit=@Save>
+    <RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenCard>
+            <RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenStack>
+                    <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenFormField Text="Measurement Unit">
+                            <RadzenDropDown Data="@measurementUnits" @bind-Value="@variant.MeasurementUnitId" ValueProperty="Id" TextProperty="Name"
+                                            Name="MeasurementUnit" />
+                        </RadzenFormField>
+                        <RadzenFormField Text="Weight">
+                            <RadzenNumeric @bind-Value="@variant.Weight" Name="Weight" Min="1" />
+                        </RadzenFormField>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton ButtonType="ButtonType.Submit" Variant="Variant.Flat" Text="Save" Style="width: 120px" />
+            <RadzenButton Click="@((args) => dialogService.Close(null))" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
+
+
+@code
+{
+    [Parameter]
+    public ProductVariantRequest variant { get; set; }
+
+    List<MeasurementUnitRequest> measurementUnits = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        measurementUnits = await service.GetMeasurementUnitAsync();
+    }
+
+    void Save()
+    {
+        try
+        {
+            variant.MeasurementUnit = measurementUnits.First(m => m.Id.Equals(variant.MeasurementUnitId));
+            dialogService.Close(variant);
+            notificationService.Notify(NotificationSeverity.Info, "Ok", "Great!");
+        } catch(Exception ex)
+        {
+             notificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+        
+    }
+
+}

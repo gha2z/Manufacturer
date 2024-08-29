@@ -17,9 +17,9 @@ public partial class Location
 
     public virtual ICollection<ProductCheckOutLine> ProductCheckOutLineSourceLocations { get; set; } = new List<ProductCheckOutLine>();
 
-    public virtual ICollection<ProductInternalCheckInLine> ProductInternalCheckInLineLocations { get; set; } = new List<ProductInternalCheckInLine>();
+    public virtual ICollection<ProductInternalCheckInLinePackaging> ProductInternalCheckInLinePackagingLocations { get; set; } = new List<ProductInternalCheckInLinePackaging>();
 
-    public virtual ICollection<ProductInternalCheckInLine> ProductInternalCheckInLineSourceLocations { get; set; } = new List<ProductInternalCheckInLine>();
+    public virtual ICollection<ProductInternalCheckInLinePackaging> ProductInternalCheckInLinePackagingSourceLocations { get; set; } = new List<ProductInternalCheckInLinePackaging>();
 
     public virtual ICollection<ProductInternalCheckOutLine> ProductInternalCheckOutLineLocations { get; set; } = new List<ProductInternalCheckOutLine>();
 

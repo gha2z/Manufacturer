@@ -19,9 +19,9 @@ public partial class RackingPallet
 
     public virtual ICollection<ProductCheckOutLine> ProductCheckOutLineSourceRackingPallets { get; set; } = new List<ProductCheckOutLine>();
 
-    public virtual ICollection<ProductInternalCheckInLine> ProductInternalCheckInLineRackingPallets { get; set; } = new List<ProductInternalCheckInLine>();
+    public virtual ICollection<ProductInternalCheckInLinePackaging> ProductInternalCheckInLinePackagingRackingPallets { get; set; } = new List<ProductInternalCheckInLinePackaging>();
 
-    public virtual ICollection<ProductInternalCheckInLine> ProductInternalCheckInLineSourceRackingPallets { get; set; } = new List<ProductInternalCheckInLine>();
+    public virtual ICollection<ProductInternalCheckInLinePackaging> ProductInternalCheckInLinePackagingSourceRackingPallets { get; set; } = new List<ProductInternalCheckInLinePackaging>();
 
     public virtual ICollection<ProductInternalCheckOutLine> ProductInternalCheckOutLineRackingPallets { get; set; } = new List<ProductInternalCheckOutLine>();
 

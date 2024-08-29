@@ -381,10 +381,12 @@ public class ProductionService(HttpClient httpClient, ILogger<ProductionService>
     {
         try
         {
-            logger.LogInformation($"Creating Finished Product Internal Checkin: Post {httpClient.BaseAddress}/CompleteProduction");
+            var json = JsonSerializer.Serialize(request);
+            logger.LogInformation($"Creating Finished Product Internal Checkin: Post {httpClient.BaseAddress}/CompleteProduction/\n" +
+                $"---------------------------------------------------------------------------------------------------------------\n" +
+                $"{json}\n");
             var response = await httpClient.PostAsJsonAsync("CompleteProduction", request);
             return response.Content.ReadFromJsonAsync<Guid>().Result;
-
         }
         catch (Exception ex)
         {

@@ -242,10 +242,10 @@
         logger.LogInformation($"ProductionList.UpdateItem {item.Id} - Opening ProductMod dialog service");
 
         var title = item.IsFinishedGood ? "Update End Product" : "Update Raw Material";
-
+        var height = item.IsFinishedGood ? "740px" : "670px";
         var res = await DialogService.OpenAsync<ProductMod>(title,
             new Dictionary<string, object>() { { "Id", item.Id } },
-            new DialogOptions() { Width = "640px", Height = "570px", Resizable = true, Draggable = true });
+            new DialogOptions() { Width = "640px", Height = height, Resizable = true, Draggable = true });
 
         if(res!=null&&res) await InitData();
     }
@@ -255,7 +255,7 @@
         logger.LogInformation($"ProductList.CreateOrUpdateBom - open BOM dialog for product {item.Id}");
         var res = await DialogService.OpenAsync<BomSpecMod>($"Bill of Material for 1kg of {item.Names}",
             new Dictionary<string, object>() { { "Id", item.Id } },
-            new DialogOptions() { Width = "670px", Height = "570px", Resizable = true, Draggable = true });
+            new DialogOptions() { Width = "670px", Height = "670px", Resizable = true, Draggable = true });
 
         if (res != null && res) await InitData();
     }

@@ -7,6 +7,7 @@ using IntrManApp.Api.Entities;
 using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
@@ -52,6 +53,7 @@ namespace IntrManApp.Api.Features.BasicModules
             public Guid OutRackingPalletId { get; set; } = Guid.Empty;
 
             public string? AdditionalInfo { get; set; }
+            public List<ProductVariantRequest> productVariants { get; set; } = [];
 
         }
 
@@ -77,8 +79,12 @@ namespace IntrManApp.Api.Features.BasicModules
                     return Result.Failure<Guid>(new Error(
                         "UpdateProduct.Validation", validationResult.ToString()));
                 }
+
+                _context.Database.BeginTransaction();
+
                 var product = _context.Products
                     .Include(p=>p.ProductNameAndDescriptionCultures)
+                    .Include(p=>p.ProductVariants)
                     .FirstOrDefault(p => p.Id.Equals(request.Id));
 
                 if (product == null)
@@ -177,7 +183,22 @@ namespace IntrManApp.Api.Features.BasicModules
                         existingCulture.Description = culture.Description ?? string.Empty;
                     };
                 }
+
+                product.ProductVariants.Clear();
+                Debug.WriteLine("Product Variants: " + request.productVariants.Count);
+                foreach (var variant in request.productVariants)
+                {
+
+                    _context.ProductVariants.Add(new ProductVariant()
+                    {
+                        ProductId = product.Id,
+                        MeasurementUnitId = variant.MeasurementUnitId,
+                        Weight = variant.Weight
+                    });
+                    Debug.WriteLine($"Adding Product Variant: {variant.Weight}{variant.MeasurementUnit.Name} ({variant.MeasurementUnitId})");
+                }
                 await _context.SaveChangesAsync(cancellationToken);
+                _context.Database.CommitTransaction();
 
                 return product.Id;
             }
@@ -191,6 +212,7 @@ namespace IntrManApp.Api.Features.BasicModules
             app.MapPut("api/products", async (ProductRequest request, ISender sender) =>
             {
                 var command = request.Adapt<UpdateProduct.Command>();
+                command.productVariants = request.ProductVariants.Adapt<List<ProductVariantRequest>>();
                 var result = await sender.Send(command);
 
                 if (result.IsFailure)

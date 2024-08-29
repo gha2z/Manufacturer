@@ -5,9 +5,9 @@ namespace IntrManApp.Api.Entities;
 
 public partial class ProductionOrderLineDetailResource
 {
-    public Guid? RawMaterialId { get; set; }
-
     public Guid ResourceId { get; set; }
+
+    public Guid? RawMaterialId { get; set; }
 
     public decimal Quantity { get; set; }
 

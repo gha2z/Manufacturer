@@ -96,11 +96,7 @@ namespace IntrManApp.Api.Features.Inventory
                           {
                               InventoryId = item.InventoryId,
                               MeasurementUnitId = item.UnitMeasurementId,
-                              Quantity = inventory.Quantity,
-                              LocationId = item.LocationId,
-                              RackingPalletId = item.RackingPalletId,
-                              SourceLocationId = inventory.LocationId,
-                              SourceRackingPalletId = inventory.RackingPalletId
+                              Quantity = inventory.Quantity
                           });
 
                         inventory.LocationId = item.LocationId;

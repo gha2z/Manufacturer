@@ -41,8 +41,10 @@
             </RadzenStack>
 
             <RadzenStack>
-                <RadzenDataGrid @ref="rawMaterialsGrid" Data="@checkout.ProductCheckoutDetail" TItem="ProductCheckOutDetailRequest"
-                                RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single" RowEdit="@OnRowEdit">
+                <RadzenDataGrid @ref="rawMaterialsGrid" Data="@checkout.ProductCheckoutDetail" 
+                TItem="ProductCheckOutDetailRequest" RowUpdate="@OnUpdateRow" 
+                RowCreate="@OnRowCreate" ColumnWidth="200px" 
+                EditMode="DataGridEditMode.Single" RowEdit="@OnRowEdit">
                     <Columns>
 
                         <RadzenDataGridColumn Property="BatchNumber" Title="Carton ID" Width="100px" Frozen="true" TextAlign="TextAlign.Center">

@@ -5,9 +5,9 @@ namespace IntrManApp.Api.Entities;
 
 public partial class ProductionOrderLine
 {
-    public Guid? ProductionOrderId { get; set; }
-
     public Guid LineId { get; set; }
+
+    public Guid? ProductionOrderId { get; set; }
 
     public Guid? ProductId { get; set; }
 

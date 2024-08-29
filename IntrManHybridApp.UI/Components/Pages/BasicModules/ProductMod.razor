@@ -8,7 +8,7 @@
 @inject Radzen.NotificationService notificationService
 @inject IProductService service
 @inject ILocationService locationService
-@inject ILogger<RackingPalletMod> logger
+@inject ILogger<ProductMod> logger
 
 
 <RadzenTemplateForm TItem="ProductRequest" Data=@item Submit=@Save>
@@ -70,18 +70,9 @@
                         </RadzenFormField>
                         <RadzenButton Icon="add" Click="@NewLocation"
                                       ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
-                        @* <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.End">
-                            <RadzenButton Icon="add" Click="@NewLocation"
-                                ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
-                            <RadzenButton Icon="edit" Click="@(args => EditLocation(item.LocationId))" 
-                                ButtonStyle="ButtonStyle.Warning" Style="width:20px; height:20px; margin-top:10px" />
-                            <RadzenButton Icon="delete" Click="@(args => DeleteLocation(item.LocationId))"
-                                ButtonStyle="ButtonStyle.Danger" Style="width:20px; height:20px; margin-top:10px" />
-                        </RadzenStack> *@
                     </RadzenStack>
                     <RadzenRequiredValidator Component="Location" Text="Location is required" />
                 </RadzenStack>
-
            
                 <RadzenStack>
                     <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
@@ -95,15 +86,44 @@
                         </RadzenFormField>
                         <RadzenButton Icon="add" Click="@NewRackingPallet"
                                       ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px; margin-top:10px" />
-                       @*  <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" AlignItems="AlignItems.End">
-                          
-                            <RadzenButton Icon="edit" Click="@(args => EditRackingPallet(item.RackingPalletId))" 
-                                ButtonStyle="ButtonStyle.Warning" Style="width:20px; height:20px; margin-top:10px" />
-                            <RadzenButton Icon="delete" Click="@((args) => DeleteRackingPallet(item.RackingPalletId))" 
-                                ButtonStyle="ButtonStyle.Danger" Style="width:20px; height:20px; margin-top:10px" />
-                        </RadzenStack> *@
                     </RadzenStack>
                     <RadzenRequiredValidator Component="RackingPallet" Text="Racking Pallet is required" />
+                </RadzenStack>
+
+                <RadzenStack Visible="@IsFinishedGood">
+                    <RadzenFormField Text="Packaging">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.15rem" class="rz-p-4" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.Start" Style="border:thin">
+                            
+                            <RadzenButton Icon="add" Click=@(args => OnClick(true, new ProductVariantRequest())) 
+                                ButtonStyle="ButtonStyle.Primary" Style="width:20px; height:20px;" class="rz-m-auto" />
+
+                            
+                            <RadzenStack AlignItems="AlignItems.Start" Gap="0.25rem" Wrap="FlexWrap.Wrap"
+                                Orientation="Orientation.Horizontal">
+                             
+                                @foreach(var variant in item.ProductVariants)
+                                {
+                                  @*   <RadzenSplitButton Variant="Variant.Filled" class="rz-m-auto" Click=@(args => OnClick(args, "SplitButton with text"))
+                                    ButtonStyle="ButtonStyle.Info"    Text=@($"{variant.Weight:N2} {variant.MeasurementUnit.Name}")>
+                                   
+                                        <ChildContent >
+
+                                            <RadzenSplitButtonItem Text="Edit" Value=@($"edit;{variant.Weight};{variant.MeasurementUnitId}") />
+                                            <RadzenSplitButtonItem Text="Remove" Value=@($"remove;{variant.Weight};{variant.MeasurementUnitId}") />
+                                        </ChildContent>
+                                    </RadzenSplitButton> *@
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0">
+                                        <RadzenButton ButtonStyle="ButtonStyle.Info" Text=@($"{variant.Weight:N2} {variant.MeasurementUnit.Initial}") 
+                                            Click=@(args => OnClick(true, variant)) Variant="Variant.Flat" Size="ButtonSize.Small" />
+                                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Info" Variant="Variant.Flat" Click=@(args => OnClick(false, variant))
+                                            Size="ButtonSize.Small" Style="margin-left: -3px;"/>
+                                    </RadzenStack>
+                                }
+                            </RadzenStack>
+
+                        </RadzenStack>
+
+                    </RadzenFormField>
                 </RadzenStack>
             </RadzenStack>
         </RadzenCard>
@@ -126,6 +146,48 @@
     string englishName = "";
     string chineseName = "";
 
+    async void OnClick(bool edit, ProductVariantRequest variant)
+    {
+        if (edit)
+        {
+            //notificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Info, Summary = "Edit Variant", Detail = $"{variant.ProductId}, item with value {variant.Weight}" });
+            var result = await dialogService.OpenAsync<ProductVariantMod>("Edit Variant",
+                new Dictionary<string, object>() { { "variant", variant } },
+                new DialogOptions() { Width = "430px", Height = "250px", Resizable = true, Draggable = true });
+
+            try
+            {
+                if (result != null)
+                {
+                    var existingVariant = item.ProductVariants.FirstOrDefault(
+                        x => x.Weight == result.Weight && x.MeasurementUnitId.Equals(result.MeasurementUnitId));
+                    if (existingVariant != null)
+                    {
+                        existingVariant.MeasurementUnitId = result.MeasurementUnitId;
+                        existingVariant.MeasurementUnit = result.MeasurementUnit;
+                        existingVariant.Weight = result.Weight;
+                        await InvokeAsync(StateHasChanged);
+                    } else
+                    {
+                        item.ProductVariants.Add(result);
+                        await InvokeAsync(StateHasChanged);
+                    }
+                }
+            } catch(Exception ex)
+            {
+                notificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Error", Detail = ex.Message });
+            }
+        }
+        else
+        {
+            // notificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Info, Summary = "Remove Variant", Detail = $"{variant.ProductId}, item with value {variant.Weight}" });
+            var result = await dialogService.Confirm("Are you sure?", "Confirmation",
+            new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+            item.ProductVariants.Remove(variant);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         logger.LogInformation($"ProductMod.OnInitializedAsync(Id:\"{Id})\"");
@@ -141,6 +203,7 @@
                 response.Adapt(item);
                 englishName = response.ProductNameAndDescriptionCultures.First(x => x.CultureId.Trim() == "en-US").Name;
                 chineseName = response.ProductNameAndDescriptionCultures.First(x => x.CultureId.Trim() == "zh-CN").Name;
+                IsFinishedGood = item.IsFinishedGood;
             }
             else
             {

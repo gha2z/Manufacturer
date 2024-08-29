@@ -1,0 +1,183 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000000",
+  "CheckInDate": "2024-08-29T21:58:03.8043726+07:00",
+  "CheckInType": null,
+  "RevisionNumber": null,
+  "ModifierDate": null,
+  "ProductInternalCheckinLines": [
+    {
+      "BatchNumber": "220820242",
+      "InventoryId": "fecd2059-7060-ef11-9254-04ea564d4841",
+      "MeasurementUnitId": "357ea483-c64d-ef11-9251-04ea564d4841",
+      "Quantity": 1.00,
+      "ExpiryDate": "2025-02-25T21:59:15.4204441+07:00",
+      "FinishedProduct": {
+        "ProductId": "b87bb7d4-6e60-ef11-9254-04ea564d4841",
+        "InventoryId": "fecd2059-7060-ef11-9254-04ea564d4841",
+        "BatchNumber": "220820242",
+        "Names": "Pasta Rendang / ----",
+        "Quantity": 1.00,
+        "MeasurementUnitId": "357ea483-c64d-ef11-9251-04ea564d4841",
+        "MeasurementUnitName": "kilogram",
+        "LocationId": "5470b86f-c64d-ef11-9251-04ea564d4841",
+        "LocationName": "Production 1",
+        "RackingPalletId": "db3c4a7c-c64d-ef11-9251-04ea564d4841",
+        "RackingPalletColRow": "A-1",
+        "DaysToExpire": 180,
+        "DaysToManufacture": 2,
+        "ExpiryDate": "0001-01-01T00:00:00",
+        "ProductionDate": "0001-01-01T00:00:00",
+        "OutLocationId": "00000000-0000-0000-0000-000000000000",
+        "OutLocationName": "",
+        "OutRackingPalletId": "00000000-0000-0000-0000-000000000000",
+        "OutRackingPalletColRow": "",
+        "CurrentLocationId": "00000000-0000-0000-0000-000000000000",
+        "CurrentLocationName": "",
+        "CurrentRackingPalletId": "00000000-0000-0000-0000-000000000000",
+        "CurrentRackingPalletColRow": "",
+        "IsFinishedGood": false
+      },
+      "FinishedPackagedProducts": [
+        {
+          "BatchNumber": "220820242",
+          "ProductVariantId": "bb7bb7d4-6e60-ef11-9254-04ea564d4841",
+          "Quantity": 2,
+          "LocationId": "5470b86f-c64d-ef11-9251-04ea564d4841",
+          "RackingPalletId": "db3c4a7c-c64d-ef11-9251-04ea564d4841",
+          "FinishedProduct": {
+            "ProductId": "b87bb7d4-6e60-ef11-9254-04ea564d4841",
+            "InventoryId": "fecd2059-7060-ef11-9254-04ea564d4841",
+            "BatchNumber": "220820242",
+            "Names": "Pasta Rendang / ----",
+            "Quantity": 1.00,
+            "MeasurementUnitId": "357ea483-c64d-ef11-9251-04ea564d4841",
+            "MeasurementUnitName": "kilogram",
+            "LocationId": "5470b86f-c64d-ef11-9251-04ea564d4841",
+            "LocationName": "Production 1",
+            "RackingPalletId": "db3c4a7c-c64d-ef11-9251-04ea564d4841",
+            "RackingPalletColRow": "A-1",
+            "DaysToExpire": 180,
+            "DaysToManufacture": 2,
+            "ExpiryDate": "0001-01-01T00:00:00",
+            "ProductionDate": "0001-01-01T00:00:00",
+            "OutLocationId": "00000000-0000-0000-0000-000000000000",
+            "OutLocationName": "",
+            "OutRackingPalletId": "00000000-0000-0000-0000-000000000000",
+            "OutRackingPalletColRow": "",
+            "CurrentLocationId": "00000000-0000-0000-0000-000000000000",
+            "CurrentLocationName": "",
+            "CurrentRackingPalletId": "00000000-0000-0000-0000-000000000000",
+            "CurrentRackingPalletColRow": "",
+            "IsFinishedGood": false
+          },
+          "Location": {
+            "Id": "5470b86f-c64d-ef11-9251-04ea564d4841",
+            "Name": "Production 1"
+          },
+          "RackingPallet": {
+            "Id": "db3c4a7c-c64d-ef11-9251-04ea564d4841",
+            "Col": "A",
+            "Row": 1,
+            "Description": "",
+            "ColRow": "A-1"
+          },
+          "ProductVariant": {
+            "Id": "bb7bb7d4-6e60-ef11-9254-04ea564d4841",
+            "ProductId": "b87bb7d4-6e60-ef11-9254-04ea564d4841",
+            "Weight": 500.00,
+            "MeasurementUnitId": "347ea483-c64d-ef11-9251-04ea564d4841",
+            "MeasurementUnit": {
+              "Id": "347ea483-c64d-ef11-9251-04ea564d4841",
+              "Name": "gram",
+              "ChildId": null,
+              "Quantity": 1.00,
+              "GroupId": "337ea483-c64d-ef11-9251-04ea564d4841",
+              "Initial": "g"
+            }
+          }
+        }
+      ],
+      "IsNotFromExistingProduction": false,
+      "Product": {
+        "Id": "b87bb7d4-6e60-ef11-9254-04ea564d4841",
+        "CategoryId": "d805ab5a-c64d-ef11-9251-04ea564d4841",
+        "ProductNumber": "123123",
+        "ProductNameAndDescriptionCultures": [
+          {
+            "CultureId": "en-US ",
+            "Name": "Pasta Rendang",
+            "Description": ""
+          },
+          {
+            "CultureId": "zh-CN ",
+            "Name": "----",
+            "Description": ""
+          }
+        ],
+        "IsFinishedGood": true,
+        "IsSalable": false,
+        "IsUniqueBatchPerOrder": true,
+        "SafetyStockLevel": 0.00,
+        "ReorderPoint": 0.00,
+        "StandardCost": 0.0000,
+        "ListPrice": 0.0000,
+        "MeasurementUnitGroupId": "337ea483-c64d-ef11-9251-04ea564d4841",
+        "MeasurementUnitOrderId": "357ea483-c64d-ef11-9251-04ea564d4841",
+        "OrderQuantity": 1.00,
+        "DaysToManufacture": 2,
+        "DaysToExpire": 180,
+        "LocationId": "5470b86f-c64d-ef11-9251-04ea564d4841",
+        "RackingPalletId": "db3c4a7c-c64d-ef11-9251-04ea564d4841",
+        "OutLocationId": "5370b86f-c64d-ef11-9251-04ea564d4841",
+        "OutRackingPalletId": "dc3c4a7c-c64d-ef11-9251-04ea564d4841",
+        "AdditionalInfo": null,
+        "ProductVariants": [
+          {
+            "Id": "b97bb7d4-6e60-ef11-9254-04ea564d4841",
+            "ProductId": "b87bb7d4-6e60-ef11-9254-04ea564d4841",
+            "Weight": 2.00,
+            "MeasurementUnitId": "357ea483-c64d-ef11-9251-04ea564d4841",
+            "MeasurementUnit": {
+              "Id": "357ea483-c64d-ef11-9251-04ea564d4841",
+              "Name": "kilogram",
+              "ChildId": "347ea483-c64d-ef11-9251-04ea564d4841",
+              "Quantity": 1000.00,
+              "GroupId": "337ea483-c64d-ef11-9251-04ea564d4841",
+              "Initial": "kg"
+            }
+          },
+          {
+            "Id": "ba7bb7d4-6e60-ef11-9254-04ea564d4841",
+            "ProductId": "b87bb7d4-6e60-ef11-9254-04ea564d4841",
+            "Weight": 1.00,
+            "MeasurementUnitId": "357ea483-c64d-ef11-9251-04ea564d4841",
+            "MeasurementUnit": {
+              "Id": "357ea483-c64d-ef11-9251-04ea564d4841",
+              "Name": "kilogram",
+              "ChildId": "347ea483-c64d-ef11-9251-04ea564d4841",
+              "Quantity": 1000.00,
+              "GroupId": "337ea483-c64d-ef11-9251-04ea564d4841",
+              "Initial": "kg"
+            }
+          },
+          {
+            "Id": "bb7bb7d4-6e60-ef11-9254-04ea564d4841",
+            "ProductId": "b87bb7d4-6e60-ef11-9254-04ea564d4841",
+            "Weight": 500.00,
+            "MeasurementUnitId": "347ea483-c64d-ef11-9251-04ea564d4841",
+            "MeasurementUnit": {
+              "Id": "347ea483-c64d-ef11-9251-04ea564d4841",
+              "Name": "gram",
+              "ChildId": null,
+              "Quantity": 1.00,
+              "GroupId": "337ea483-c64d-ef11-9251-04ea564d4841",
+              "Initial": "g"
+            }
+          }
+        ],
+        "Names": "Pasta Rendang/----"
+      },
+      "ProductId": "b87bb7d4-6e60-ef11-9254-04ea564d4841"
+    }
+  ]
+}

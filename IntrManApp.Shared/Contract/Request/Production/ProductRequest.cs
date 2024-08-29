@@ -7,9 +7,39 @@ public class ProductNameRequest
     public string? Description { get; set; } = string.Empty;
 }
 
+public class MeasurementUnitRequest
+{
+    public Guid Id { get; set; }
 
+    public string Name { get; set; } = null!;
 
-public class ProductRequest
+    public Guid? ChildId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public Guid? GroupId { get; set; }
+    public string Initial { get; set; } = string.Empty;
+}
+
+    public class ProductVariantRequest
+{
+    public Guid Id { get; set; } = Guid.Empty;
+    public Guid ProductId { get; set; }
+
+    public decimal Weight { get; set; }
+
+    public Guid MeasurementUnitId { get; set; }
+
+    public virtual MeasurementUnitRequest MeasurementUnit { get; set; } = null!;
+
+    public override string ToString()
+    {
+        return $"{Weight:N2} {MeasurementUnit.Initial}";
+    }
+
+}
+
+    public class ProductRequest
 {
     public Guid Id { get; set; }
     public Guid? CategoryId { get; set; } = Guid.Empty;
@@ -49,4 +79,8 @@ public class ProductRequest
     public Guid OutRackingPalletId { get; set; } = Guid.Empty;
 
     public string? AdditionalInfo { get; set; }
+
+    public virtual ICollection<ProductVariantRequest> ProductVariants { get; set; } = new List<ProductVariantRequest>();
+
+    public string Names => string.Join("/", ProductNameAndDescriptionCultures.Select(x => x.Name));
 }

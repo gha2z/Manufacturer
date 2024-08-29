@@ -18,7 +18,7 @@ public interface IProductService
     Task<List<BomSpecificationResponse>> GetBomSpecificationAsync(Guid ProductId);
     List<BomSpecificationResponse> GetBomSpecification(Guid id);
     Task<bool> CreateBillOfMaterialAsync(BomRequest request);
-
+    Task<List<MeasurementUnitRequest>> GetMeasurementUnitAsync();
 
 
 }

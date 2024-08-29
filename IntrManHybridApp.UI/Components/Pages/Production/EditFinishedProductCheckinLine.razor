@@ -1,0 +1,393 @@
+﻿@using IntrManApp.Shared.Contract
+@using System.Diagnostics
+@using System.Text.Json
+@using IntrManHybridApp.UI.Services
+@using Mapster
+
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject IProductionService service
+@inject IProductService productService
+@inject ILocationService locationService
+@inject ILogger<ProductionOrder> logger
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+    <RadzenCard Variant="Variant.Outlined">
+        <RadzenStack Orientation="Orientation.Horizontal">
+            <RadzenFormField Text="Batch Number">
+                <RadzenTextBox @bind-Value="@Line.BatchNumber" Change="@CheckBatchNumber" Placeholder="Scan Batch Number"
+                               Style="width:100%;font-size:small" @ref=@BatchNumTextBox TabIndex="0" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Product">
+                <RadzenDropDown Data="@products" TextProperty="Names"  ValueProperty="Id" @bind-Value=@Line.ProductId Change="@OnProductChanged"
+                    Disabled="@(Line!=null && !Line.IsNotFromExistingProduction)" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Weight (kg)">
+                <RadzenNumeric @bind-Value=@Line.Quantity Disabled="@(!Line.IsNotFromExistingProduction)"></RadzenNumeric>
+            </RadzenFormField>
+        </RadzenStack>
+    </RadzenCard>
+    <RadzenDataGrid @ref=packGrid EditMode="DataGridEditMode.Single" 
+    Data="Line.FinishedPackagedProducts" TItem="FinishedPackagedProductRequest" 
+    RowCreate="@OnPackRowCreate" RowUpdate="@OnUpdatePackRow" RowEdit="@OnPackRowEdit"  
+    >
+        <Columns>
+            <RadzenDataGridColumn Title="Packaging" Width="150px" Property="ProductVariant">
+                <EditTemplate Context="data">
+                    <RadzenDropDown Data="@variants" ValueProperty="Id" @bind-Value=data.ProductVariantId Change="@(args=>PackValidated(data))" Style="width:147px"/>
+                </EditTemplate>
+                
+            </RadzenDataGridColumn>
+        
+            <RadzenDataGridColumn Title="Quantity" Property="Quantity" Width="90px">
+                <EditTemplate Context="data">
+                    <RadzenNumeric @bind-Value=@data.Quantity Style="width:87px" Min="1" Step="1"></RadzenNumeric>
+                </EditTemplate>
+                <Template Context="data">
+                    @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", data.Quantity)
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn Property="Location.Name" Title="Location" Width="130px">
+                <EditTemplate Context="pack">
+                    <RadzenDropDown @bind-Value="pack.LocationId" Data="@locations" TextProperty="Name" ValueProperty="Id"
+                                    @ref=@locationDropDown Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn Property="RackingPallet.ColRow" Title="Rack" Width="100px">
+                <EditTemplate Context="pack">
+                    <RadzenDropDown @bind-Value="pack.RackingPalletId" Data="@rackingPallets" TextProperty="ColRow"
+                                    @ref=@rackingPalletDropDown ValueProperty="Id" Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn Context="product" Filterable="false" Sortable="false" TextAlign="TextAlign.Right"
+                                  Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Width="100px">
+
+                <Template Context="pack">
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium"
+                                  Click="@(args => EditPackRow(pack))" @onclick:stopPropagation="true" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat"
+                                  Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1"
+                                  Click="@(args => DeletePackRow(pack))" @onclick:stopPropagation="true" />
+                </Template>
+
+                <EditTemplate Context="pack">
+                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat"
+                                  Size="ButtonSize.Medium" Click="@((args) => SavePackRow(pack))" />
+                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
+                                  Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelPackEdit(pack))" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat"
+                                  Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1"
+                                  Click="@(args => DeletePackRow(pack))" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+        </Columns>
+
+
+    </RadzenDataGrid>
+    <RadzenButton Text="Insert Item" Click="@Save"/>
+</RadzenStack>
+
+@code {
+    [Parameter]
+    public FinishedProductInternalCheckinLineRequest Line { get; set; }
+
+    IEnumerable<InventoryItemDetail> endProducts = [];
+    IEnumerable<ProductVariantRequest> variants = [];
+    IEnumerable<LocationResponse> locations = [];
+    IEnumerable<RackingPalletResponse> rackingPallets = [];
+    IEnumerable<ProductResponse> products = [];
+    List<MeasurementUnitRequest> measurementUnits = [];
+
+    RadzenDropDown<Guid>? locationDropDown;
+    RadzenDropDown<Guid>? rackingPalletDropDown;
+    RadzenDropDown<Guid>? productDropDown;
+    RadzenDataGrid<FinishedPackagedProductRequest> packGrid = new();
+
+    RadzenTextBox? BatchNumTextBox;
+
+    bool isAddNewPack = false;
+    FinishedPackagedProductRequest? tmpPackItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+
+        if (Line == null)
+        {
+            Line = new FinishedProductInternalCheckinLineRequest();
+        }
+        endProducts = await service.GetRunningProductionItemsAsync() ?? [];
+        locations = await locationService.GetLocationsAsync();
+        rackingPallets = await locationService.GetRackingPalletsAsync();
+        IEnumerable<ProductResponse> allProducts = await productService.GetAllProductsAsync();
+        products = allProducts.Where(p => p.IsFinishedGood == true);
+        measurementUnits = await productService.GetMeasurementUnitAsync();
+        await base.OnInitializedAsync();
+    }
+
+    async Task OnProductChanged()
+    {
+        ProductRequest selectedProduct = await productService.GetProductAsync(Line.ProductId);
+        Line.Product = selectedProduct;
+        if (Line.IsNotFromExistingProduction)
+        {
+            Line.FinishedProduct = new()
+            {
+                ProductId = selectedProduct.Id,
+                Names = selectedProduct.Names,
+                LocationId = selectedProduct.LocationId,
+                RackingPalletId = selectedProduct.RackingPalletId,
+                ProductionDate = DateTime.Now
+            };
+            Line.ProductId = selectedProduct.Id;
+            Line.MeasurementUnitId = selectedProduct.MeasurementUnitOrderId;
+            Line.ExpiryDate = DateTime.Now.AddDays((int)selectedProduct.DaysToExpire);
+        }
+        variants = selectedProduct.ProductVariants.AsEnumerable();
+        await InsertPackRow();
+    }
+
+    async void CheckBatchNumber()
+    {
+        if(!string.IsNullOrEmpty(Line?.BatchNumber))
+        {
+            var item = endProducts.FirstOrDefault(p => p.BatchNumber == Line.BatchNumber);
+
+            if (item != null)
+            {
+                Line.InventoryId = item.InventoryId;
+                Line.Quantity = item.Quantity;
+                Line.FinishedProduct = item;
+                Line.MeasurementUnitId = item.MeasurementUnitId;
+                Line.ExpiryDate = DateTime.Now.AddDays(item.DaysToExpire);
+                Line.IsNotFromExistingProduction = false;
+                Line.ProductId = item.ProductId;
+
+                await OnProductChanged();
+            }
+            else
+            {
+                Line.InventoryId = Guid.NewGuid();
+                Line.Quantity = 0;
+                Line.IsNotFromExistingProduction = true;
+                productDropDown?.Element.FocusAsync();
+            }
+        }
+    }
+
+
+    bool PackValidated(FinishedPackagedProductRequest item)
+    {
+        logger.LogInformation($"PackChanged Raised ...");
+        ProductVariantRequest? pack = null;
+
+        if (item.ProductVariantId != Guid.Empty)
+        {
+            if (Line == null) return false;
+            //var Line = checkin.ProductInternalCheckinLines.FirstOrDefault(c => c.BatchNumber.Equals(item.BatchNumber));
+            if (Line.FinishedPackagedProducts.Any(p => p.ProductVariantId == item.ProductVariantId && p != item))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Product packaging already exists");
+                if (!isAddNewPack && tmpPackItem != null)
+                {
+                    item.BatchNumber = tmpPackItem.BatchNumber;
+                    item.ProductVariantId = tmpPackItem.ProductVariantId;
+                }
+                return false;
+            };
+            pack = variants.FirstOrDefault(p => p.Id == item.ProductVariantId);
+            if (pack != null)
+            {
+                item.ProductVariant = pack;
+                item.BatchNumber = Line.BatchNumber;
+                item.ProductVariantId = pack.Id;
+                item.FinishedProduct = Line.FinishedProduct;
+                if (item.Quantity == 0) item.Quantity = 1;
+                if (item.LocationId == Guid.Empty) item.LocationId = Line.FinishedProduct.LocationId;
+                if (item.RackingPalletId == Guid.Empty) item.RackingPalletId = Line.FinishedProduct.RackingPalletId;
+                //item.ExpiryDate = checkin.CheckInDate.Value.AddDays(product.DaysToExpire);
+                if (item.LocationId == Guid.Empty)
+                {
+                    locationDropDown?.Element.FocusAsync();
+                }
+                else
+                {
+                    item.Location = locations.FirstOrDefault(l => l.Id == item.LocationId);
+                }
+                if (item.RackingPalletId == Guid.Empty)
+                {
+                    rackingPalletDropDown?.Element.FocusAsync();
+                }
+                else
+                {
+                    item.RackingPallet = rackingPallets.FirstOrDefault(r => r.Id == item.RackingPalletId);
+                }
+            }
+        }
+        bool validated = pack != null && item.LocationId != Guid.Empty && item.RackingPalletId != Guid.Empty;
+        //if (validated && isAddNewPack) SavePackRow(item);
+        return (validated);
+    }
+
+    async Task InsertPackRow()
+    {
+        logger.LogInformation("Inserting new row");
+        var newItem = new FinishedPackagedProductRequest();
+        isAddNewPack = true;
+        await packGrid.InsertRow(newItem);
+    }
+
+    void OnPackRowCreate(FinishedPackagedProductRequest item)
+    {
+        logger.LogInformation($"OnPackRowCreate");
+        if (item.ProductVariantId != Guid.Empty)
+        {
+            logger.LogInformation($"Items Validated ... Adding row to collection '{item.FinishedProduct?.Names ?? string.Empty}'");
+            if(PackValidated(item)) Line.FinishedPackagedProducts.Add(item);
+        }
+        else
+        {
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.FinishedProduct?.Names ?? string.Empty}'");
+            packGrid.CancelEditRow(item);
+        }
+    }
+
+    async Task EditPackRow(FinishedPackagedProductRequest item)
+    {
+        isAddNewPack = false;
+        tmpPackItem = item.Adapt<FinishedPackagedProductRequest>();
+        await packGrid.EditRow(item);
+        await packGrid.Reload();
+        await packGrid.EditRow(item);
+    }
+
+    void OnPackRowEdit(FinishedPackagedProductRequest item)
+    {
+        logger.LogInformation($"OnPackRowEdit '{item.FinishedProduct?.Names ?? string.Empty}'");
+        BatchNumTextBox?.Element.FocusAsync();
+    }
+
+    void OnUpdatePackRow(FinishedPackagedProductRequest item)
+    {
+        logger.LogInformation($"OnRowUpdate - finding end product, location and racking data");
+
+        if (this.PackValidated(item))
+        {
+            logger.LogInformation($"Items Validated ...  '{item.FinishedProduct?.Names ?? string.Empty}'");
+        }
+        else
+        {
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit and re-enter edit mode '{item.FinishedProduct?.Names ?? string.Empty}'");
+            packGrid.CancelEditRow(item);
+            if (tmpPackItem != null) item = this.tmpPackItem.Adapt<FinishedPackagedProductRequest>();
+            packGrid.EditRow(item);
+        }
+        logger.LogInformation($"Adding pack row to collection '{item.FinishedProduct?.Names ?? string.Empty}'");
+    }
+
+    async Task DeletePackRow(FinishedPackagedProductRequest item)
+    {
+        logger.LogInformation($"delete pack row - checking if the row exists '{item.FinishedProduct?.Names ?? string.Empty}'");
+
+        if (Line != null)
+        {
+            var pack = Line.FinishedPackagedProducts.FirstOrDefault(p => p.ProductVariantId == item.ProductVariantId);
+            if (pack != null)
+            {
+                logger.LogInformation("deleting pack row");
+                Line.FinishedPackagedProducts.Remove(pack);
+                await packGrid.Reload();
+                //captionExt = $"({Line.FinishedPackagedProducts.Count})";
+                await InsertPackRow();
+            }
+        }
+    }
+
+    async void CancelPackEdit(FinishedPackagedProductRequest item)
+    {
+        logger.LogInformation($"Cancelling Edit '{item.FinishedProduct?.Names ?? string.Empty}'");
+        packGrid.CancelEditRow(item);
+        await InsertPackRow();
+    }
+
+    async void SavePackRow(FinishedPackagedProductRequest item)
+    {
+        logger.LogInformation($"Save Row '{item.FinishedProduct?.Names ?? string.Empty}'");
+        if (item.ProductVariantId == Guid.Empty || item.LocationId == Guid.Empty || item.RackingPalletId == Guid.Empty) return;
+        await packGrid.UpdateRow(item);
+        await InsertPackRow();
+    }
+
+    void Save()
+    {
+        if(Line == null) return;
+        var lineWeight = Line.Quantity * measurementUnits.Where(m => m.Id == Line.MeasurementUnitId).FirstOrDefault().Quantity;
+       
+        var totalWeight = Line.FinishedPackagedProducts.Sum(
+           v => v.ProductVariant.Weight * measurementUnits.Where(
+               m=>m.Id==v.ProductVariant.MeasurementUnitId).FirstOrDefault().Quantity * v.Quantity);
+        // foreach(var v in Line.FinishedPackagedProducts)
+        // {
+        //     var weight = v.ProductVariant.Weight * measurementUnits.Where(
+        //         m=>m.Id==v.ProductVariant.MeasurementUnitId).FirstOrDefault().Quantity * v.Quantity;
+        //     totalWeight += weight;
+        // }
+
+        // NotificationService.Notify(NotificationSeverity.Info, $"Line Weight: {lineWeight}, total packaging weight: {totalWeight}");
+
+        if (Line.InventoryId == Guid.Empty)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a product");
+            return;
+        }
+        if (Line.Quantity == 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Please enter a quantity");
+            return;
+        }
+        if (Line.FinishedPackagedProducts.Count == 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Please add at least one packaging");
+            return;
+        }
+        if (Line.FinishedPackagedProducts.Any(p => p.ProductVariantId == Guid.Empty))
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a packaging for all items");
+            return;
+        }
+        if (Line.FinishedPackagedProducts.Any(p => p.LocationId == Guid.Empty))
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a location for all items");
+            return;
+        }
+        if (Line.FinishedPackagedProducts.Any(p => p.RackingPalletId == Guid.Empty))
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Please select a racking for all items");
+            return;
+        }
+        if (Line.FinishedPackagedProducts.Any(p => p.Quantity == 0))
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Please enter a quantity for all items");
+            return;
+        }
+        if (totalWeight!=lineWeight)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Total Packaging weight must be equal to Production Weight");
+            return;
+        }
+        // if (Line.FinishedPackagedProducts.Any(p => p.Quantity > p.ProductVariant.Weight Quantity))
+        // {
+        //     NotificationService.Notify(NotificationSeverity.Error, "Error", "Packaging quantity cannot be greater than the product variant quantity");
+        //     return;
+        // }
+        DialogService.Close(Line);
+    }
+
+
+
+}

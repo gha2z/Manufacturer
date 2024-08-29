@@ -7,6 +7,7 @@ using MediatR;
 using Mapster;
 using IntrManApp.Api.Entities;
 using System.Globalization;
+using Azure.Core;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
@@ -52,6 +53,8 @@ namespace IntrManApp.Api.Features.BasicModules
             public Guid OutRackingPalletId { get; set; } = Guid.Empty;
 
             public string? AdditionalInfo { get; set; }
+
+            public List<ProductVariantRequest> productVariants { get; set; } = [];
 
         }
 
@@ -141,6 +144,7 @@ namespace IntrManApp.Api.Features.BasicModules
                             {
                                 Name = "gram",
                                 Quantity = 1,
+                                Initial = "g",
                                 Group = measurementUnitGroup
                             };
 
@@ -149,6 +153,7 @@ namespace IntrManApp.Api.Features.BasicModules
                                 Name = "kilogram",
                                 Quantity = 1000,
                                 Child = childUnit,
+                                Initial = "kg",
                                 Group  = measurementUnitGroup
                             };
                             _context.Add(measurementUnitGroup);
@@ -289,6 +294,17 @@ namespace IntrManApp.Api.Features.BasicModules
                         product.ProductNameAndDescriptionCultures.Add(newCulture);
                     }
 
+                    product.ProductVariants.Clear();
+                    foreach (var variant in request.productVariants)
+                    {
+                        product.ProductVariants.Add(new ProductVariant()
+                        {
+                            ProductId = product.Id,
+                            MeasurementUnitId = variant.MeasurementUnitId,
+                            Weight = variant.Weight
+                        });
+                    }
+
                     _context.Add(product);
                     await _context.SaveChangesAsync(cancellationToken);
 
@@ -309,6 +325,8 @@ namespace IntrManApp.Api.Features.BasicModules
             app.MapPost("api/products", async (ProductRequest request, ISender sender) =>
             {
                 var command = request.Adapt<CreateProduct.Command>();
+                command.productVariants = request.ProductVariants.Adapt<List<ProductVariantRequest>>();
+
                 var result = await sender.Send(command);
 
                 if (result.IsFailure)

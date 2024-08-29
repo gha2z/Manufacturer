@@ -6,6 +6,8 @@ using System.Text.Json;
 
 namespace IntrManHybridApp.UI.Services;
 
+
+
 public class ProductService(HttpClient httpClient, ILogger<ProductService> logger) : IProductService
 {
     #region Product
@@ -14,7 +16,7 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
 
         try
         {
-            string message = $"Creating Product: Post {httpClient.BaseAddress}/products";
+            string message = $"Creating Product: Post {httpClient.BaseAddress}/products/{JsonSerializer.Serialize(request)}";
             logger.LogInformation(message: message);
 
             var response = await httpClient.PostAsJsonAsync("products", request);
@@ -82,7 +84,7 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
         try
         {
             var json = JsonSerializer.Serialize(request);
-            logger.LogInformation($"Updating Product: Put {httpClient.BaseAddress}/products/" +
+            logger.LogInformation($"Updating Product: Put {httpClient.BaseAddress}/products/{JsonSerializer.Serialize(request)}" +
                 $"{Environment.NewLine}{json}");
             var response = await httpClient.PutAsJsonAsync("products", request);
             logger.LogInformation($"response: {response}");
@@ -254,6 +256,20 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
         catch (Exception ex)
         {
             logger.LogError(ex, "Error getting List of Id and Names of Raw Materials");
+            return [];
+        }
+    }
+
+    public async Task<List<MeasurementUnitRequest>> GetMeasurementUnitAsync()
+    {
+        try
+        {
+            logger.LogInformation("Getting Measurement Units");
+            return await httpClient.GetFromJsonAsync<List<MeasurementUnitRequest>>("measurementUnits") ?? [];
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting Measurement Units");
             return [];
         }
     }

@@ -17,6 +17,8 @@ public partial class MeasurementUnit
 
     public DateTime? ModifiedDate { get; set; }
 
+    public string? Initial { get; set; }
+
     public virtual ICollection<BillOfMaterial> BillOfMaterials { get; set; } = new List<BillOfMaterial>();
 
     public virtual MeasurementUnit? Child { get; set; }
@@ -29,11 +31,15 @@ public partial class MeasurementUnit
 
     public virtual ICollection<ProductCheckOutLine> ProductCheckOutLines { get; set; } = new List<ProductCheckOutLine>();
 
+    public virtual ICollection<ProductInternalCheckInLinePackaging> ProductInternalCheckInLinePackagings { get; set; } = new List<ProductInternalCheckInLinePackaging>();
+
     public virtual ICollection<ProductInternalCheckInLine> ProductInternalCheckInLines { get; set; } = new List<ProductInternalCheckInLine>();
 
     public virtual ICollection<ProductInternalCheckOutLine> ProductInternalCheckOutLines { get; set; } = new List<ProductInternalCheckOutLine>();
 
     public virtual ICollection<ProductInventory> ProductInventories { get; set; } = new List<ProductInventory>();
+
+    public virtual ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
 
     public virtual ICollection<ProductionOrderLineDetailResource> ProductionOrderLineDetailResources { get; set; } = new List<ProductionOrderLineDetailResource>();
 

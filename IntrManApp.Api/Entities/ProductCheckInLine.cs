@@ -5,9 +5,9 @@ namespace IntrManApp.Api.Entities;
 
 public partial class ProductCheckInLine
 {
-    public Guid? CheckInId { get; set; }
-
     public Guid LineId { get; set; }
+
+    public Guid? CheckInId { get; set; }
 
     public short? LineIndex { get; set; }
 

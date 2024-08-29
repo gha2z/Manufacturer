@@ -213,7 +213,7 @@ namespace IntrManApp.SetupConfigurator
                         proc?.WaitForExit();
 
                         Notify("Configuring Intrman Backend Windows Service recovery options");
-                        pi = new ProcessStartInfo("sc.exe", $"failure  \"{svcName}\" reset=0 actions=restart/10000/restart/10000/run/1000");
+                        pi = new ProcessStartInfo("sc.exe", $"failure  \"{svcName}\" reset=0 actions=restart/5000/restart/5000/restart/5000");
                         proc = Process.Start(pi);
                         proc?.WaitForExit();
 

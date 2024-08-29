@@ -14,7 +14,6 @@ public partial class IntrManDbContext : DbContext
     public IntrManDbContext(DbContextOptions<IntrManDbContext> options)
         : base(options)
     {
-        
     }
 
     public virtual DbSet<BillOfMaterial> BillOfMaterials { get; set; }
@@ -63,6 +62,8 @@ public partial class IntrManDbContext : DbContext
 
     public virtual DbSet<ProductInternalCheckInLine> ProductInternalCheckInLines { get; set; }
 
+    public virtual DbSet<ProductInternalCheckInLinePackaging> ProductInternalCheckInLinePackagings { get; set; }
+
     public virtual DbSet<ProductInternalCheckOutLine> ProductInternalCheckOutLines { get; set; }
 
     public virtual DbSet<ProductInternalCheckout> ProductInternalCheckouts { get; set; }
@@ -74,6 +75,8 @@ public partial class IntrManDbContext : DbContext
     public virtual DbSet<ProductPhoto> ProductPhotos { get; set; }
 
     public virtual DbSet<ProductProductPhoto> ProductProductPhotos { get; set; }
+
+    public virtual DbSet<ProductVariant> ProductVariants { get; set; }
 
     public virtual DbSet<ProductionOrder> ProductionOrders { get; set; }
 
@@ -104,7 +107,8 @@ public partial class IntrManDbContext : DbContext
     public virtual DbSet<UserTypeFeature> UserTypeFeatures { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:Database");
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=.;Database=IntrManDb;TrustServerCertificate=True;Integrated Security=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -114,12 +118,14 @@ public partial class IntrManDbContext : DbContext
         {
             entity.ToTable("BillOfMaterials", "Production");
 
+            entity.HasIndex(e => e.RawMaterialMeasurementUnitId, "IX_BillOfMaterials_RawMaterialMeasurementUnitId");
+
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.ModifiedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.RawMaterialQuantity)
-                .HasDefaultValue(1m)
+                .HasDefaultValue(1.0m)
                 .HasColumnType("decimal(8, 2)");
 
             entity.HasOne(d => d.RawMaterialMeasurementUnit).WithMany(p => p.BillOfMaterials)
@@ -143,6 +149,10 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.BusinessEntityId, e.PersonId, e.ContactTypeId });
 
             entity.ToTable("BusinessEntityContact", "Person");
+
+            entity.HasIndex(e => e.ContactTypeId, "IX_BusinessEntityContact_ContactTypeId");
+
+            entity.HasIndex(e => e.PersonId, "IX_BusinessEntityContact_PersonId");
 
             entity.Property(e => e.ModifiedDate)
                 .HasDefaultValueSql("(getdate())")
@@ -259,15 +269,22 @@ public partial class IntrManDbContext : DbContext
         {
             entity.ToTable("MeasurementUnit", "Production");
 
-            entity.HasIndex(e => new { e.Name, e.GroupId }, "IX_MeasurementUnit").IsUnique();
+            entity.HasIndex(e => new { e.Name, e.GroupId }, "IX_MeasurementUnit")
+                .IsUnique()
+                .HasFilter("([GroupId] IS NOT NULL)");
+
+            entity.HasIndex(e => e.ChildId, "IX_MeasurementUnit_ChildId");
+
+            entity.HasIndex(e => e.GroupId, "IX_MeasurementUnit_GroupId");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Initial).HasMaxLength(50);
             entity.Property(e => e.ModifiedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.Quantity)
-                .HasDefaultValue(1m)
+                .HasDefaultValue(1.0m)
                 .HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Child).WithMany(p => p.InverseChild)
@@ -297,6 +314,8 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => e.BusinessEntityId);
 
             entity.ToTable("Person", "Person");
+
+            entity.HasIndex(e => e.PersonTypeId, "IX_Person_PersonTypeId");
 
             entity.Property(e => e.BusinessEntityId).ValueGeneratedNever();
             entity.Property(e => e.AdditionalContactInfo).HasColumnType("xml");
@@ -338,6 +357,16 @@ public partial class IntrManDbContext : DbContext
 
             entity.HasIndex(e => e.ProductNumber, "IX_Product").IsUnique();
 
+            entity.HasIndex(e => e.CategoryId, "IX_Product_CategoryId");
+
+            entity.HasIndex(e => e.LocationId, "IX_Product_LocationId");
+
+            entity.HasIndex(e => e.MeasurementUnitGroupId, "IX_Product_MeasurementUnitGroupId");
+
+            entity.HasIndex(e => e.MeasurementUnitOrderId, "IX_Product_MeasurementUnitOrderId");
+
+            entity.HasIndex(e => e.RackingPalletId, "IX_Product_RackingPalletId");
+
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.AdditionalInfo).HasColumnType("xml");
             entity.Property(e => e.DaysToExpire).HasDefaultValue(30);
@@ -345,23 +374,23 @@ public partial class IntrManDbContext : DbContext
             entity.Property(e => e.IsSalable).HasDefaultValue(false);
             entity.Property(e => e.IsUniqueBatchPerOrder).HasDefaultValue(true);
             entity.Property(e => e.ListPrice)
-                .HasDefaultValue(0m)
+                .HasDefaultValue(0.0m)
                 .HasColumnType("money");
             entity.Property(e => e.ModifiedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.OrderQuantity)
-                .HasDefaultValue(0m)
+                .HasDefaultValue(0.0m)
                 .HasColumnType("decimal(8, 2)");
             entity.Property(e => e.ProductNumber).HasMaxLength(25);
             entity.Property(e => e.ReorderPoint)
-                .HasDefaultValue(0m)
+                .HasDefaultValue(0.0m)
                 .HasColumnType("decimal(18, 2)");
             entity.Property(e => e.SafetyStockLevel)
-                .HasDefaultValue(0m)
+                .HasDefaultValue(0.0m)
                 .HasColumnType("decimal(18, 2)");
             entity.Property(e => e.StandardCost)
-                .HasDefaultValue(0m)
+                .HasDefaultValue(0.0m)
                 .HasColumnType("money");
 
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
@@ -406,6 +435,8 @@ public partial class IntrManDbContext : DbContext
         {
             entity.ToTable("ProductCheckIn", "Purchasing");
 
+            entity.HasIndex(e => e.SupplierId, "IX_ProductCheckIn_SupplierId");
+
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.CheckInDate)
                 .HasDefaultValueSql("(getdate())")
@@ -425,6 +456,16 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => e.LineId).HasName("PK_ProductCheckInLine_1");
 
             entity.ToTable("ProductCheckInLine", "Purchasing");
+
+            entity.HasIndex(e => e.CheckInId, "IX_ProductCheckInLine_CheckInId");
+
+            entity.HasIndex(e => e.LocationId, "IX_ProductCheckInLine_LocationId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductCheckInLine_MeasurementUnitId");
+
+            entity.HasIndex(e => e.ProductId, "IX_ProductCheckInLine_ProductId");
+
+            entity.HasIndex(e => e.RackingPalletId, "IX_ProductCheckInLine_RackingPalletId");
 
             entity.Property(e => e.LineId).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
@@ -461,6 +502,8 @@ public partial class IntrManDbContext : DbContext
 
             entity.HasIndex(e => e.BatchNumber, "IX_ProductCheckInLineDetail").IsUnique();
 
+            entity.HasIndex(e => e.LineId, "IX_ProductCheckInLineDetail_LineId");
+
             entity.Property(e => e.InventoryId).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.BatchNumber).HasMaxLength(15);
 
@@ -475,6 +518,18 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.CheckOutId, e.InventoryId });
 
             entity.ToTable("ProductCheckOutLine", "Production");
+
+            entity.HasIndex(e => e.InventoryId, "IX_ProductCheckOutLine_InventoryId");
+
+            entity.HasIndex(e => e.LocationId, "IX_ProductCheckOutLine_LocationId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductCheckOutLine_MeasurementUnitId");
+
+            entity.HasIndex(e => e.RackingPalletId, "IX_ProductCheckOutLine_RackingPalletId");
+
+            entity.HasIndex(e => e.SourceLocationId, "IX_ProductCheckOutLine_SourceLocationId");
+
+            entity.HasIndex(e => e.SourceRackingPalletId, "IX_ProductCheckOutLine_SourceRackingPalletId");
 
             entity.Property(e => e.InventoryId).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.ModifiedDate)
@@ -532,6 +587,8 @@ public partial class IntrManDbContext : DbContext
 
             entity.ToTable("ProductInternalCheckIn", "Production");
 
+            entity.HasIndex(e => e.CheckInType, "IX_ProductInternalCheckIn_CheckInType");
+
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.CheckInDate).HasColumnType("datetime");
             entity.Property(e => e.ModifierDate)
@@ -548,10 +605,17 @@ public partial class IntrManDbContext : DbContext
 
         modelBuilder.Entity<ProductInternalCheckInLine>(entity =>
         {
-            entity.HasKey(e => new { e.CheckInId, e.InventoryId }).HasName("PK_ProductReadyCheckInLine");
+            entity.HasKey(e => new { e.CheckInId, e.InventoryId });
 
             entity.ToTable("ProductInternalCheckInLine", "Production");
 
+            entity.HasIndex(e => e.LineId, "IX_ProductInternalCheckInLine").IsUnique();
+
+            entity.HasIndex(e => e.InventoryId, "IX_ProductInternalCheckInLine_InventoryId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductInternalCheckInLine_MeasurementUnitId");
+
+            entity.Property(e => e.LineId).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.ModifiedDate)
                 .HasComment("Finished Product CheckIn-Type: 0: New finished product 1: Move between locations (e.g from production to warehouse facilitiy)")
                 .HasColumnType("datetime");
@@ -566,25 +630,44 @@ public partial class IntrManDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProductReadyCheckInLine_ProductInventory");
 
-            entity.HasOne(d => d.Location).WithMany(p => p.ProductInternalCheckInLineLocations)
-                .HasForeignKey(d => d.LocationId)
-                .HasConstraintName("FK_ProductInternalCheckInLine_Location");
-
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductInternalCheckInLines)
                 .HasForeignKey(d => d.MeasurementUnitId)
                 .HasConstraintName("FK_ProductReadyCheckInLine_MeasurementUnit");
+        });
 
-            entity.HasOne(d => d.RackingPallet).WithMany(p => p.ProductInternalCheckInLineRackingPallets)
+        modelBuilder.Entity<ProductInternalCheckInLinePackaging>(entity =>
+        {
+            entity.HasKey(e => new { e.LineId, e.InventoryId });
+
+            entity.ToTable("ProductInternalCheckInLinePackaging", "Production");
+
+            entity.Property(e => e.InventoryId).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.Line).WithMany(p => p.ProductInternalCheckInLinePackagings)
+                .HasPrincipalKey(p => p.LineId)
+                .HasForeignKey(d => d.LineId)
+                .HasConstraintName("FK_ProductInternalCheckInLinePackaging_ProductInternalCheckInLine");
+
+            entity.HasOne(d => d.Location).WithMany(p => p.ProductInternalCheckInLinePackagingLocations)
+                .HasForeignKey(d => d.LocationId)
+                .HasConstraintName("FK_ProductInternalCheckInLinePackaging_Location");
+
+            entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductInternalCheckInLinePackagings)
+                .HasForeignKey(d => d.MeasurementUnitId)
+                .HasConstraintName("FK_ProductInternalCheckInLinePackaging_MeasurementUnit");
+
+            entity.HasOne(d => d.RackingPallet).WithMany(p => p.ProductInternalCheckInLinePackagingRackingPallets)
                 .HasForeignKey(d => d.RackingPalletId)
-                .HasConstraintName("FK_ProductInternalCheckInLine_RackingPallet");
+                .HasConstraintName("FK_ProductInternalCheckInLinePackaging_RackingPallet");
 
-            entity.HasOne(d => d.SourceLocation).WithMany(p => p.ProductInternalCheckInLineSourceLocations)
+            entity.HasOne(d => d.SourceLocation).WithMany(p => p.ProductInternalCheckInLinePackagingSourceLocations)
                 .HasForeignKey(d => d.SourceLocationId)
-                .HasConstraintName("FK_ProductInternalCheckInLine_SourceLocation");
+                .HasConstraintName("FK_ProductInternalCheckInLinePackaging_Location1");
 
-            entity.HasOne(d => d.SourceRackingPallet).WithMany(p => p.ProductInternalCheckInLineSourceRackingPallets)
+            entity.HasOne(d => d.SourceRackingPallet).WithMany(p => p.ProductInternalCheckInLinePackagingSourceRackingPallets)
                 .HasForeignKey(d => d.SourceRackingPalletId)
-                .HasConstraintName("FK_ProductInternalCheckInLine_SourceRackingPallet");
+                .HasConstraintName("FK_ProductInternalCheckInLinePackaging_RackingPallet1");
         });
 
         modelBuilder.Entity<ProductInternalCheckOutLine>(entity =>
@@ -592,6 +675,18 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.CheckOutId, e.InventoryId });
 
             entity.ToTable("ProductInternalCheckOutLine", "Production");
+
+            entity.HasIndex(e => e.InventoryId, "IX_ProductInternalCheckOutLine_InventoryId");
+
+            entity.HasIndex(e => e.LocationId, "IX_ProductInternalCheckOutLine_LocationId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductInternalCheckOutLine_MeasurementUnitId");
+
+            entity.HasIndex(e => e.RackingPalletId, "IX_ProductInternalCheckOutLine_RackingPalletId");
+
+            entity.HasIndex(e => e.SourceLocationId, "IX_ProductInternalCheckOutLine_SourceLocationId");
+
+            entity.HasIndex(e => e.SourceRackingPalletId, "IX_ProductInternalCheckOutLine_SourceRackingPalletId");
 
             entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
             entity.Property(e => e.ModifiedDate)
@@ -634,6 +729,8 @@ public partial class IntrManDbContext : DbContext
         {
             entity.ToTable("ProductInternalCheckout", "Production");
 
+            entity.HasIndex(e => e.CheckOutType, "IX_ProductInternalCheckout_CheckOutType");
+
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.CheckOutDate)
                 .HasDefaultValueSql("(getdate())")
@@ -657,6 +754,16 @@ public partial class IntrManDbContext : DbContext
             entity.HasIndex(e => e.InventoryId, "IX_ProductInventory");
 
             entity.HasIndex(e => e.BatchNumber, "IX_ProductInventory_2");
+
+            entity.HasIndex(e => e.Flag, "IX_ProductInventory_Flag");
+
+            entity.HasIndex(e => e.LocationId, "IX_ProductInventory_LocationId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductInventory_MeasurementUnitId");
+
+            entity.HasIndex(e => e.ProductId, "IX_ProductInventory_ProductId");
+
+            entity.HasIndex(e => e.RackingPalletId, "IX_ProductInventory_RackingPalletId");
 
             entity.Property(e => e.InventoryId).ValueGeneratedNever();
             entity.Property(e => e.BatchNumber).HasMaxLength(15);
@@ -698,6 +805,8 @@ public partial class IntrManDbContext : DbContext
 
             entity.ToTable("ProductNameAndDescriptionCulture", "Production");
 
+            entity.HasIndex(e => e.CultureId, "IX_ProductNameAndDescriptionCulture_CultureId");
+
             entity.Property(e => e.CultureId)
                 .HasMaxLength(6)
                 .IsFixedLength();
@@ -730,6 +839,10 @@ public partial class IntrManDbContext : DbContext
                 .HasNoKey()
                 .ToTable("ProductProductPhoto", "Production");
 
+            entity.HasIndex(e => e.ProductId, "IX_ProductProductPhoto_ProductId");
+
+            entity.HasIndex(e => e.ProductPhoto, "IX_ProductProductPhoto_ProductPhoto");
+
             entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
 
             entity.HasOne(d => d.Product).WithMany()
@@ -740,6 +853,25 @@ public partial class IntrManDbContext : DbContext
             entity.HasOne(d => d.ProductPhotoNavigation).WithMany()
                 .HasForeignKey(d => d.ProductPhoto)
                 .HasConstraintName("FK_ProductProductPhoto_ProductPhoto");
+        });
+
+        modelBuilder.Entity<ProductVariant>(entity =>
+        {
+            entity.ToTable("ProductVariant", "Production");
+
+            entity.HasIndex(e => new { e.ProductId, e.MeasurementUnitId, e.Weight }, "IX_ProductVariant").IsUnique();
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductVariants)
+                .HasForeignKey(d => d.MeasurementUnitId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ProductVariant_MeasurementUnit");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.ProductVariants)
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK_ProductVariant_Product");
         });
 
         modelBuilder.Entity<ProductionOrder>(entity =>
@@ -763,6 +895,12 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => e.LineId);
 
             entity.ToTable("ProductionOrderLine", "Production");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductionOrderLine_MeasurementUnitId");
+
+            entity.HasIndex(e => e.ProductId, "IX_ProductionOrderLine_ProductId");
+
+            entity.HasIndex(e => e.ProductionOrderId, "IX_ProductionOrderLine_ProductionOrderId");
 
             entity.Property(e => e.LineId).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.ModifiedDate)
@@ -790,6 +928,8 @@ public partial class IntrManDbContext : DbContext
 
             entity.ToTable("ProductionOrderLineDetail", "Production");
 
+            entity.HasIndex(e => e.LineId, "IX_ProductionOrderLineDetail_LineId");
+
             entity.Property(e => e.InventoryId).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.BatchNumber).HasMaxLength(15);
             entity.Property(e => e.EndDate).HasColumnType("datetime");
@@ -808,6 +948,12 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => e.ResourceId);
 
             entity.ToTable("ProductionOrderLineDetailResource", "Production");
+
+            entity.HasIndex(e => e.InventoryId, "IX_ProductionOrderLineDetailResource_InventoryId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductionOrderLineDetailResource_MeasurementUnitId");
+
+            entity.HasIndex(e => e.RawMaterialId, "IX_ProductionOrderLineDetailResource_RawMaterialId");
 
             entity.Property(e => e.ResourceId).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.ModifierDate)
@@ -835,6 +981,12 @@ public partial class IntrManDbContext : DbContext
                 .HasNoKey()
                 .ToTable("ProductionOrderLineDetailResourceAllocation", "Production");
 
+            entity.HasIndex(e => e.InventoryId, "IX_ProductionOrderLineDetailResourceAllocation_InventoryId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductionOrderLineDetailResourceAllocation_MeasurementUnitId");
+
+            entity.HasIndex(e => e.ResourceId, "IX_ProductionOrderLineDetailResourceAllocation_ResourceId");
+
             entity.Property(e => e.ModifierDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -858,7 +1010,9 @@ public partial class IntrManDbContext : DbContext
         {
             entity.ToTable("RackingPallet", "Production");
 
-            entity.HasIndex(e => new { e.Col, e.Row }, "IX_RackingPallet").IsUnique();
+            entity.HasIndex(e => new { e.Col, e.Row }, "IX_RackingPallet")
+                .IsUnique()
+                .HasFilter("([Col] IS NOT NULL AND [Row] IS NOT NULL)");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.Col).HasMaxLength(35);
@@ -868,6 +1022,8 @@ public partial class IntrManDbContext : DbContext
         modelBuilder.Entity<SalesOrder>(entity =>
         {
             entity.ToTable("SalesOrder", "Sales");
+
+            entity.HasIndex(e => e.CustomerId, "IX_SalesOrder_CustomerId");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.ModifiedDate)
@@ -891,6 +1047,10 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.OrderId, e.InventoryId });
 
             entity.ToTable("SalesOrderLine", "Sales");
+
+            entity.HasIndex(e => e.InventoryId, "IX_SalesOrderLine_InventoryId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_SalesOrderLine_MeasurementUnitId");
 
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
 
@@ -928,6 +1088,12 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.AdjustmentId, e.InventoryId });
 
             entity.ToTable("StockAdjustmentLine", "Production");
+
+            entity.HasIndex(e => e.InventoryId, "IX_StockAdjustmentLine_InventoryId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_StockAdjustmentLine_MeasurementUnitId");
+
+            entity.HasIndex(e => e.ReasonId, "IX_StockAdjustmentLine_ReasonId");
 
             entity.Property(e => e.Adjustment).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
@@ -981,6 +1147,8 @@ public partial class IntrManDbContext : DbContext
         {
             entity.HasIndex(e => e.Name, "IX_Users").IsUnique();
 
+            entity.HasIndex(e => e.TypeId, "IX_Users_TypeId");
+
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.Name).HasMaxLength(35);
             entity.Property(e => e.Password).HasMaxLength(50);
@@ -996,7 +1164,9 @@ public partial class IntrManDbContext : DbContext
 
             entity.ToTable("UserType");
 
-            entity.HasIndex(e => e.Name, "IX_Table_1").IsUnique();
+            entity.HasIndex(e => e.Name, "IX_Table_1")
+                .IsUnique()
+                .HasFilter("([Name] IS NOT NULL)");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.Name).HasMaxLength(50);
@@ -1007,6 +1177,8 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.FeatureId, e.UserTypeId });
 
             entity.ToTable("UserTypeFeature");
+
+            entity.HasIndex(e => e.UserTypeId, "IX_UserTypeFeature_UserTypeId");
 
             entity.Property(e => e.Accessible).HasDefaultValue(false);
 
