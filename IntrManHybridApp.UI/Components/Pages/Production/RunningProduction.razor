@@ -1,0 +1,90 @@
+﻿@page "/RunningProduction"
+
+@using IntrManApp.Shared.Contract
+@using IntrManApp.Shared.Contract.Tools
+@using IntrManHybridApp.UI.Services
+@using System.Diagnostics
+@using System.Text.Json
+@using Radzen.Blazor
+@using System.Text
+@using Newtonsoft.Json
+
+
+@inject IProductionService service
+@inject ILogger<CustomeProductionStatus> logger
+@inject NavigationManager Navigation
+@inject NotificationService NotificationService
+@inject DialogService dialogService
+
+<RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="20" AllowPaging="true"
+                PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
+                SelectionMode="DataGridSelectionMode.Single" AllowRowSelectOnRowClick="true" HideGroupedColumn="true"
+                TItem="InventoryItemDetail" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite">
+
+    <HeaderTemplate>
+        <RadzenStack Orientation="Orientation.Horizontal" Style="padding:5px;border:thin" AlignItems="AlignItems.Stretch">
+
+            <RadzenCard Variant="Variant.Filled">
+                <RadzenStack JustifyContent="JustifyContent.End">
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Shade="Shade.Light" Icon="playlist_add" Text="Add selected items"
+                                  Click="@ProcessSelectedItems" />
+                </RadzenStack>
+
+            </RadzenCard>
+        </RadzenStack>
+    </HeaderTemplate>
+
+    <Columns>
+        <RadzenDataGridColumn Width="60px" Sortable="false" Filterable="false">
+           @*  <HeaderTemplate>
+                <RadzenCheckBox TabIndex="-1" TriState="false" TValue="bool?"
+                                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select all items" }})"
+                                Value="@(selectedItems == null || selectedItems?.Any() != true ? false :
+                        !items.All(i => selectedItems.Contains(i)) ? null : items.Any(i => selectedItems.Contains(i)))"
+                                Change="@(args => selectedItems = args == true ? items.ToList() : null)" />
+            </HeaderTemplate> *@
+            <Template Context="data">
+                <RadzenCheckBox TabIndex="-1" TriState="false" TValue="bool"
+                                Value="@(selectedItems != null && selectedItems.Contains(data))"
+                                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select item" }})" />
+            </Template>
+        </RadzenDataGridColumn>
+   
+        <RadzenDataGridColumn Property="BatchNumber" Title="Batch Number" />
+        <RadzenDataGridColumn Property="Names" Title="End Product Name" />
+        <RadzenDataGridColumn Property="Quantity" Title="Weight (kgs)">
+            <Template Context="data">
+                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", data.Quantity)
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="ProductionDate" Title="Production Date"/>
+    </Columns>
+
+</RadzenDataGrid>
+
+@code {
+  
+    IEnumerable<InventoryItemDetail> items = [];
+    IList<InventoryItemDetail> selectedItems = [];
+
+    DateTime selectedDate;
+
+    void ProcessSelectedItems()
+    {
+        this.dialogService.CloseSide(selectedItems);
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await base.OnInitializedAsync();
+    }
+
+    async Task LoadData()
+    {
+        logger.LogInformation($"RunningProductionList.OnInitializedAsync ");
+        items = await service.GetRunningProductionItemsAsync();
+    }
+}
