@@ -14,33 +14,48 @@
 <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
     <RadzenCard Variant="Variant.Outlined">
         <RadzenStack Orientation="Orientation.Horizontal">
-            <RadzenFormField Text="Batch Number">
-                <RadzenTextBox @bind-Value="@Line.BatchNumber" Change="@CheckBatchNumber" Placeholder="Scan Batch Number"
-                               Style="width:100%;font-size:small" @ref=@BatchNumTextBox TabIndex="0" />
+            <RadzenFormField Text="Batch Number" Style="width:130px">
+
+                <ChildContent>
+                    <RadzenTextBox @bind-Value="@Line.BatchNumber" Change="@CheckBatchNumber" Placeholder="Scan Batch Number"
+                                   Style="width:100%;font-size:small" @ref=@BatchNumTextBox TabIndex="0" />
+                </ChildContent>
+                <End>
+                    <RadzenButton Icon="manage_search" Click="@ChooseItems" Style="width:20px; margin-right:0px"
+                                  BusyText="Wait ..." IsBusy="@isBusy" class="rz-background-color-primary-light"></RadzenButton>
+                </End>
             </RadzenFormField>
 
             <RadzenFormField Text="Product">
-                <RadzenDropDown Data="@products" TextProperty="Names"  ValueProperty="Id" @bind-Value=@Line.ProductId Change="@OnProductChanged"
-                    Disabled="@(Line!=null && !Line.IsNotFromExistingProduction)" />
+                <RadzenDropDown Data="@products" TextProperty="Names" ValueProperty="Id" @bind-Value=@Line.ProductId Change="@OnProductChanged"
+                                Disabled="@(Line!=null && !Line.IsNotFromExistingProduction)" />
             </RadzenFormField>
 
             <RadzenFormField Text="Weight (kg)">
                 <RadzenNumeric @bind-Value=@Line.Quantity Disabled="@(!Line.IsNotFromExistingProduction)"></RadzenNumeric>
             </RadzenFormField>
+
+            <RadzenFormField Text="Production Date">
+                <RadzenDatePicker @bind-Value=@Line.ProductionDate Disabled="@(!Line.IsNotFromExistingProduction)"
+                                  DateFormat="MM/dd/yyyy HH:mm" Change="@UpdateExpireDate" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Expiry Date">
+                <RadzenDatePicker @bind-Value=@Line.ExpiryDate />
+            </RadzenFormField>
         </RadzenStack>
     </RadzenCard>
-    <RadzenDataGrid @ref=packGrid EditMode="DataGridEditMode.Single" 
-    Data="Line.FinishedPackagedProducts" TItem="FinishedPackagedProductRequest" 
-    RowCreate="@OnPackRowCreate" RowUpdate="@OnUpdatePackRow" RowEdit="@OnPackRowEdit"  
-    >
+    <RadzenDataGrid @ref=packGrid EditMode="DataGridEditMode.Single"
+                    Data="Line.FinishedPackagedProducts" TItem="FinishedPackagedProductRequest"
+                    RowCreate="@OnPackRowCreate" RowUpdate="@OnUpdatePackRow" RowEdit="@OnPackRowEdit">
         <Columns>
             <RadzenDataGridColumn Title="Packaging" Width="150px" Property="ProductVariant">
                 <EditTemplate Context="data">
-                    <RadzenDropDown Data="@variants" ValueProperty="Id" @bind-Value=data.ProductVariantId Change="@(args=>PackValidated(data))" Style="width:147px"/>
+                    <RadzenDropDown Data="@variants" ValueProperty="Id" @bind-Value=data.ProductVariantId Change="@(args=>PackValidated(data))" Style="width:147px" />
                 </EditTemplate>
-                
+
             </RadzenDataGridColumn>
-        
+
             <RadzenDataGridColumn Title="Quantity" Property="Quantity" Width="90px">
                 <EditTemplate Context="data">
                     <RadzenNumeric @bind-Value=@data.Quantity Style="width:87px" Min="1" Step="1"></RadzenNumeric>
@@ -89,7 +104,7 @@
 
 
     </RadzenDataGrid>
-    <RadzenButton Text="Insert Item" Click="@Save"/>
+    <RadzenButton Text="Insert Item" Click="@Save" />
 </RadzenStack>
 
 @code {
@@ -111,12 +126,12 @@
     RadzenTextBox? BatchNumTextBox;
 
     bool isAddNewPack = false;
+    bool isBusy = false;
     FinishedPackagedProductRequest? tmpPackItem;
 
     protected override async Task OnInitializedAsync()
     {
-
-
+        bool isNew = Line == null;
         if (Line == null)
         {
             Line = new FinishedProductInternalCheckinLineRequest();
@@ -128,6 +143,47 @@
         products = allProducts.Where(p => p.IsFinishedGood == true);
         measurementUnits = await productService.GetMeasurementUnitAsync();
         await base.OnInitializedAsync();
+        if (!isNew) CheckBatchNumber();
+    }
+
+    async Task ChooseItems()
+    {
+        isBusy = true;
+        try
+        {
+            var dialogResult = await DialogService.OpenSideAsync<RunningProduction>("Choose Items",
+                options: new SideDialogOptions()
+                    {
+                        Width = "600px",
+                        ShowClose = true,
+                        ShowMask = true
+                    });
+            if (dialogResult != null)
+            {
+                var selectedItems = dialogResult as IEnumerable<InventoryItemDetail>;
+                if (selectedItems != null)
+                {
+                    Line.BatchNumber = selectedItems.FirstOrDefault().BatchNumber;
+                    CheckBatchNumber();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    void UpdateExpireDate(DateTime? value)
+    {
+        if (Line?.ProductionDate != null && Line?.Product != null)
+        {
+            Line.ExpiryDate = Line.ProductionDate.Value.AddDays((int)Line.Product.DaysToExpire);
+        }
     }
 
     async Task OnProductChanged()
@@ -137,13 +193,13 @@
         if (Line.IsNotFromExistingProduction)
         {
             Line.FinishedProduct = new()
-            {
-                ProductId = selectedProduct.Id,
-                Names = selectedProduct.Names,
-                LocationId = selectedProduct.LocationId,
-                RackingPalletId = selectedProduct.RackingPalletId,
-                ProductionDate = DateTime.Now
-            };
+                {
+                    ProductId = selectedProduct.Id,
+                    Names = selectedProduct.Names,
+                    LocationId = selectedProduct.LocationId,
+                    RackingPalletId = selectedProduct.RackingPalletId,
+                    ProductionDate = DateTime.Now
+                };
             Line.ProductId = selectedProduct.Id;
             Line.MeasurementUnitId = selectedProduct.MeasurementUnitOrderId;
             Line.ExpiryDate = DateTime.Now.AddDays((int)selectedProduct.DaysToExpire);
@@ -154,7 +210,7 @@
 
     async void CheckBatchNumber()
     {
-        if(!string.IsNullOrEmpty(Line?.BatchNumber))
+        if (!string.IsNullOrEmpty(Line?.BatchNumber))
         {
             var item = endProducts.FirstOrDefault(p => p.BatchNumber == Line.BatchNumber);
 
@@ -248,7 +304,7 @@
         if (item.ProductVariantId != Guid.Empty)
         {
             logger.LogInformation($"Items Validated ... Adding row to collection '{item.FinishedProduct?.Names ?? string.Empty}'");
-            if(PackValidated(item)) Line.FinishedPackagedProducts.Add(item);
+            if (PackValidated(item)) Line.FinishedPackagedProducts.Add(item);
         }
         else
         {
@@ -325,12 +381,12 @@
 
     void Save()
     {
-        if(Line == null) return;
+        if (Line == null) return;
         var lineWeight = Line.Quantity * measurementUnits.Where(m => m.Id == Line.MeasurementUnitId).FirstOrDefault().Quantity;
-       
+
         var totalWeight = Line.FinishedPackagedProducts.Sum(
            v => v.ProductVariant.Weight * measurementUnits.Where(
-               m=>m.Id==v.ProductVariant.MeasurementUnitId).FirstOrDefault().Quantity * v.Quantity);
+               m => m.Id == v.ProductVariant.MeasurementUnitId).FirstOrDefault().Quantity * v.Quantity);
         // foreach(var v in Line.FinishedPackagedProducts)
         // {
         //     var weight = v.ProductVariant.Weight * measurementUnits.Where(
@@ -375,7 +431,7 @@
             NotificationService.Notify(NotificationSeverity.Error, "Error", "Please enter a quantity for all items");
             return;
         }
-        if (totalWeight!=lineWeight)
+        if (totalWeight != lineWeight)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Error", "Total Packaging weight must be equal to Production Weight");
             return;

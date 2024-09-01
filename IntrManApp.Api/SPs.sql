@@ -94,10 +94,61 @@ GO
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ResetTransactions]') AND type in (N'P', N'PC'))
 DROP PROCEDURE [dbo].[ResetTransactions]
 GO
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[Production].[GetBomAllocation]') AND type in (N'P', N'PC'))
+DROP PROCEDURE [Production].[GetBomAllocation] 
+GO
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+CREATE PROC Production.GetBomAllocation
+(
+	@InventoryId uniqueidentifier
+)
+AS
+SELECT  
+	rss.RawMaterialId,
+	production.GetProductNames(rss.RawMaterialId) as RawMaterialNames,
+	rss.Quantity as WeightRequired,
+	rss.MeasurementUnitId as BomMeasurementUnitId,
+	muRss.Initial as BomMeasurementUnitInitial,
+	muRss.Name as BomMeasurementUnitName,
+	rsAl.InventoryId,
+	inv.BatchNumber,
+	rsal.Quantity as WeightAllocated,
+	rsal.MeasurementUnitId as WeightAllocatedMeasurementUnitId,
+	mu.Initial as WeightAllocatedMeasurementUnitInitial,
+	mu.Name as WeightAllocatedMeasurementUnitName,
+	inv.ProductionDate,
+	inv.ExpirationDate,
+	ck.CheckOutDate
+
+FROM 
+	Production.ProductionOrderLineDetailResource rss 
+LEFT OUTER JOIN 
+	Production.ProductionOrderLineDetailResourceAllocation rsAl 	
+	ON
+		rsAl.ResourceId = rss.ResourceId 
+LEFT OUTER JOIN
+	Production.ProductInventory inv 
+	ON 
+		rsAl.InventoryId = inv.InventoryId 
+LEFT OUTER JOIN 
+	Production.MeasurementUnit mu 
+	ON
+		rsal.MeasurementUnitId = mu.id 
+LEFT OUTER JOIN 
+	Production.MeasurementUnit muRss 
+	ON
+		rss.MeasurementUnitId = muRss.Id 
+LEFT OUTER JOIN 
+	Production.ProductCheckout ck 
+	ON 
+		rsal.ProductCheckoutId = ck.Id 
+WHERE
+	rss.InventoryId= @InventoryId 
+GO
+
 CREATE Proc [dbo].[ResetTransactions]
 as
 delete from sales.SalesOrder
@@ -296,13 +347,13 @@ SELECT
 	p.ProductNumber,
 	production.GetProductNames(p.Id) as ProductName,
 	isnull(i.Quantity,0)  as Weight,
-	mu.Name as MeasurementUnitName,
+	mu.Initial as MeasurementUnitName,
 	i.LocationId,
 	isnull(l.Name,'-') as Location,
 	isnull(r.Col+'-'+cast(r.Row as nvarchar(5)),'-') as ColRow,
 	isnull(i.Flag,0) as Flag,
 	isnull(f.Name,'Unavailable') as Status,
-	count(i.InventoryId) as Quantity
+	sum(i.TotalBatches) as Quantity
 FROM
 	Production.Product p 
 LEFT OUTER JOIN 
@@ -312,7 +363,7 @@ LEFT OUTER JOIN
 LEFT OUTER JOIN 
 	Production.MeasurementUnit mu 
 	ON
-		p.MeasurementUnitOrderId = mu.Id 
+		i.MeasurementUnitId = mu.Id 
 LEFT OUTER JOIN 
 	Production.ProductInventory i 
 	ON
@@ -334,7 +385,7 @@ WHERE
 	AND
 	p.IsFinishedGood = 1
 GROUP BY
-	p.CategoryId, c.Name, p.Id, p.ProductNumber, production.GetProductNames(p.Id), i.Quantity, mu.Name, 
+	p.CategoryId, c.Name, p.Id, p.ProductNumber, production.GetProductNames(p.Id), i.Quantity, mu.Initial, 
 	i.LocationId, l.Name, r.Col+'-'+cast(r.Row as nvarchar(5)), i.Flag, f.Name  
 GO
 SET ANSI_NULLS ON
@@ -370,11 +421,15 @@ INSERT @stockFlow
 			when c.CheckInType=1 then 7 
 			when c.CheckInType=2 then 13 end 
 	FROM 
-		Production.ProductInternalCheckInLine cl
+		Production.ProductInternalCheckInLine l
 	INNER JOIN 
 		Production.ProductInternalCheckIn c 
 		ON
-			cl.CheckInId = c.Id 
+			l.CheckInId = c.Id 
+	INNER JOIN 
+		Production.ProductInternalCheckInLinePackaging cl 
+		ON
+			l.LineId = cl.LineId 
 	INNER JOIN 
 		Production.ProductInventory i 
 		ON
@@ -1634,6 +1689,8 @@ begin
 	return @ret
 end
 GO
+delete from Production.InventoryFlag
+go
 INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (1, N'Checkin (Purchased)')
 GO
 INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (2, N'Checkout for Production')
@@ -1664,13 +1721,18 @@ INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (14, N'Excessive Raw M
 GO
 INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (15, N'Unused for any productions')
 GO
+delete from dbo.Users
+go
+delete from dbo.UserType
+go
 INSERT dbo.userType(name) values ('Administrator')
 GO
 declare @adminId uniqueidentifier=(select id from UserType where name='Administrator');
 insert into dbo.Users(name,password,TypeId) values
 	('Admin','7bebdf35690402ed85c461464de7c27b',@adminId)
 GO
-
+delete from dbo.Feature
+go
 declare @parentId uniqueidentifier
 
 insert into dbo.Feature(Name, Icon) values ('Basic Data','dataset')

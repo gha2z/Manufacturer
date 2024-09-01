@@ -113,44 +113,57 @@
 
 @code 
 {
-        FinishedProductInternalCheckinRequest checkin = new() { CheckInDate = DateTime.Now };
-        RadzenDataGrid<FinishedProductInternalCheckinLineRequest> dataGrid;
+    FinishedProductInternalCheckinRequest checkin = new() { CheckInDate = DateTime.Now };
+    RadzenDataGrid<FinishedProductInternalCheckinLineRequest> dataGrid;
 
-        string caption = "End Products Checkin";
-        string captionExt = "0";
-        bool isSaving = false;
-        bool isAddNew = false;
+    string caption = "End Products Checkin";
+    string captionExt = "0";
+    bool isSaving = false;
+    bool isAddNew = false;
 
-        async Task Save()
+    async Task Save()
+    {
+        isSaving = true;
+        try {
+            await service.CreateFinishedProductCheckin(checkin);
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "End Product Checkin saved successfully");
+            Clear();
+        } catch (Exception ex) {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        } finally {
+            isSaving = false;
+        }
+    }
+
+    void Clear()
+    {
+        checkin = new() { CheckInDate = DateTime.Now };
+    }
+
+    async Task EditRow(FinishedProductInternalCheckinLineRequest product)
+    {
+        var dialogResult =
+            await DialogService.OpenAsync<EditFinishedProductCheckinLine>(
+                "Edit End Product Checkin Item",
+                options:
+                    new DialogOptions()
+                        {
+                            Width = "1096px",
+                            Height = "640px"
+                        },
+                parameters:
+                    new Dictionary<string, object>
+                        {
+                            { "Line", product }
+                        }
+            );
+
+        if (dialogResult != null && dialogResult is FinishedProductInternalCheckinLineRequest)
         {
-            isSaving = true;
-            try {
-                await service.CreateFinishedProductCheckin(checkin);
-                NotificationService.Notify(NotificationSeverity.Success, "Success", "End Product Checkin saved successfully");
-                Clear();
-            } catch (Exception ex) {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
-            } finally {
-                isSaving = false;
-            }
+            product = dialogResult;
+            await dataGrid.Reload();
         }
-
-        void Clear()
-        {
-            checkin = new() { CheckInDate = DateTime.Now };
-        }
-
-        async Task EditRow(FinishedProductInternalCheckinLineRequest product) {
-
-            // var dialogResult = await DialogService.OpenAsync<EditFinishedProductCheckinLine>("Edit Finished Product Checkin Line", parameters);
-            // if (!dialogResult.Cancelled) {
-            //     var editedProduct = dialogResult.Data as FinishedProductInternalCheckinLineRequest;
-            //     product.Quantity = editedProduct.Quantity;
-            //     product.ExpiryDate = editedProduct.ExpiryDate;
-            //     product.Location = editedProduct.Location;
-            //     product.RackingPallet = editedProduct.RackingPallet;
-        // }
-        }
+    }
 
         async Task DeleteRow(FinishedProductInternalCheckinLineRequest product) {
             var dialogResult = await DialogService.Confirm("Are you sure you want to delete this item?", "Delete Item");
@@ -159,27 +172,26 @@
             }
         }
 
-        async Task NewItem()
-        {
-            var dialogResult =
-                await DialogService.OpenAsync<EditFinishedProductCheckinLine>(
-                    "New End Product Checkin Item", options: new DialogOptions() 
-                        {
-                            Width="1024px",
-                            Height="640px"
-                        });
+    async Task NewItem()
+    {
+        var dialogResult =
+            await DialogService.OpenAsync<EditFinishedProductCheckinLine>(
+                "New End Product Checkin Item", options: new DialogOptions()
+                    {
+                        Width = "1096px",
+                        Height = "640px"
+                    });
 
-            // NotificationService.Notify(NotificationSeverity.Info, $"dialogResult==null => {dialogResult==null}\n" + 
-            // $"dialogResult is Finshed... => {dialogResult is FinishedProductInternalCheckinLineRequest}");
-            if (dialogResult!=null && dialogResult is FinishedProductInternalCheckinLineRequest)
-            {
-                var result = dialogResult;
-                checkin.ProductInternalCheckinLines.Add(result);
-                await dataGrid.Reload();
-                // StateHasChanged();
-                // NotificationService.Notify(NotificationSeverity.Info, $"Lines count: {checkin.ProductInternalCheckinLines.Count}");
-            }
+        // NotificationService.Notify(NotificationSeverity.Info, $"dialogResult==null => {dialogResult==null}\n" +
+        // $"dialogResult is Finshed... => {dialogResult is FinishedProductInternalCheckinLineRequest}");
+        if (dialogResult != null && dialogResult is FinishedProductInternalCheckinLineRequest)
+        {
+            checkin.ProductInternalCheckinLines.Add(dialogResult);
+            await dataGrid.Reload();
+            // StateHasChanged();
+            // NotificationService.Notify(NotificationSeverity.Info, $"Lines count: {checkin.ProductInternalCheckinLines.Count}");
         }
+    }
 
     void RowRender(RowRenderEventArgs<FinishedProductInternalCheckinLineRequest> args)
     {

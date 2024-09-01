@@ -9,7 +9,6 @@
 @using System.Text
 @using Newtonsoft.Json
 
-
 @inject IProductionService service
 @inject ILogger<CustomeProductionStatus> logger
 @inject NavigationManager Navigation
@@ -20,11 +19,59 @@
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="20" AllowPaging="true"
                 PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
                 SelectionMode="DataGridSelectionMode.Multiple" AllowRowSelectOnRowClick="true" HideGroupedColumn="true"
-                TItem="ProductionItem" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite">
+                TItem="ProductionItem" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite"
+                RowRender="@RowRender" RowExpand="RowExpand">
+
+    <Template Context="item">
+        <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="true" FilterMode="FilterMode.Advanced"
+            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="20" AllowPaging="true" 
+            PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
+            SelectionMode="DataGridSelectionMode.Multiple" AllowRowSelectOnRowClick="true" HideGroupedColumn="true"
+            Data="item.BomAllocations" Density="Density.Compact" TItem="BomAllocationResponse"
+            Render="@OnRender" >
+
+            <HeaderTemplate>
+                <RadzenStack Orientation="Orientation.Horizontal">
+                    <RadzenLabel Style=@GetBomStyle(item) Text=@($"Bill of Materials Allocation ({item.ResourceAllocated}%)") />
+                </RadzenStack>
+            </HeaderTemplate>
+
+            <GroupHeaderTemplate>
+                <b>@(context.Data.Items.Cast<BomAllocationResponse>().First().RawMaterialNames)</b>, 
+                Required:  
+                <b>@($"{context.Data.Items.Cast<BomAllocationResponse>().First().WeightRequired:N2} "+
+                  $"{(context.Data.Items.Cast<BomAllocationResponse>().First().BomMeasurementUnitInitial)}")</b>
+            </GroupHeaderTemplate>
+
+            <Columns>
+                <RadzenDataGridColumn Property="BatchNumber" Title="Carton Id"/>
+                <RadzenDataGridColumn Property="RawMaterialNames" Title="Raw Material"/>
+                <RadzenDataGridColumn Property="ProductionDate" Title="ProductionDate" FormatString="{0:d}"/>
+                <RadzenDataGridColumn Property="ExpirationDate" Title="Expiry Date" FormatString="{0:d}" />
+                <RadzenDataGridColumn Property="CheckOutDate" Title="Checkout Date" FormatString="{0:d}" />
+                <RadzenDataGridColumn Property="WeightAllocated" Title="Weight Allocated" TextAlign="TextAlign.Right">
+                    <Template Context="data">
+                        @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2} {1}", 
+                        data.WeightAllocated, data.WeightAllocatedMeasurementUnitInitial)
+                    </Template>
+                    <GroupFooterTemplate>
+                        Total: <b><small>@String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2} {1}", 
+                        context.Data.Items.Cast<BomAllocationResponse>().Sum(o => o.WeightAllocated),
+                                         context.Data.Items.Cast<BomAllocationResponse>().First().WeightAllocatedMeasurementUnitInitial)
+                            </small>
+                        </b>
+                    </GroupFooterTemplate>
+                </RadzenDataGridColumn>
+
+
+            </Columns>
+
+        </RadzenDataGrid>
+    </Template>
 
     <HeaderTemplate>
         <RadzenStack Orientation="Orientation.Horizontal" Style="padding:5px;border:thin" AlignItems="AlignItems.Stretch">
-           
+
             <RadzenCard Variant="Variant.Filled">
                 <RadzenStack JustifyContent="JustifyContent.End">
                     <RadzenButton ButtonStyle="ButtonStyle.Primary" Shade="Shade.Light" Icon="print" Text="Print Labels"
@@ -35,13 +82,16 @@
         </RadzenStack>
     </HeaderTemplate>
 
+
+
     <Columns>
         <RadzenDataGridColumn Width="60px" Sortable="false" Filterable="false">
             <HeaderTemplate>
                 <RadzenCheckBox TabIndex="-1" TriState="false" TValue="bool?"
                                 InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select all items" }})"
                                 Value="@(selectedItems == null || selectedItems?.Any() != true ? false :
-                        !items.All(i => selectedItems.Contains(i)) ? null : items.Any(i => selectedItems.Contains(i)))"
+                        !items.All(i => selectedItems.Contains(i)) ? null : items.Any(i => selectedItems.Contains(i))
+                )"
                                 Change="@(args => selectedItems = args == true ? items.ToList() : null)" />
             </HeaderTemplate>
             <Template Context="data">
@@ -57,19 +107,19 @@
                 @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", data.QuantityPerBatch)
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="ResourceAllocated" Title="Resource Allocated">
+        <RadzenDataGridColumn Property="ResourceAllocated" Title="BOM Allocation" Visible="@(status==5)">
             <Template Context="data">
-                <RadzenLink Style="font-weight:600">
+                <RadzenLabel style=@GetBomStyle(data)>
                     @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}%", data.ResourceAllocated)
-                </RadzenLink>
+                </RadzenLabel>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn Property="Flag" Title="Status">
-            <Template Context="data">
-                <RadzenLabel style=@statusColorMap[data.Flag]>@statusMap[data.Flag]</RadzenLabel>
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn Filterable="false" Sortable="false" Width="80px">
+        @*  <RadzenDataGridColumn Property="Flag" Title="Status">
+        <Template Context="data">
+        <RadzenLabel style=@statusColorMap[data.Flag]>@statusMap[data.Flag]</RadzenLabel>
+        </Template>
+        </RadzenDataGridColumn> *@
+        <RadzenDataGridColumn Filterable="false" Sortable="false" Width="80px" Visible="@(status==5)">
             <Template Context="data">
                 <RadzenButton Visible="@(data.Flag==5)"
                               ButtonStyle="ButtonStyle.Success" Shade="Shade.Lighter" Icon="not_started"
@@ -92,6 +142,7 @@
     IList<ProductionItem> selectedItems = [];
 
     DateTime selectedDate;
+    bool isLoadingBom = false;
 
     Dictionary<byte, string> statusMap = new Dictionary<byte, string>
     {
@@ -117,6 +168,69 @@
         { 11, "color:darkorange" },
         { 12, "color:darkorange" }
     };
+
+    void RowRender(RowRenderEventArgs<ProductionItem> args)
+    {
+        args.Expandable = true; // args.Data.BomCount>0;
+    }
+
+    void RowExpand(ProductionItem item)
+    {
+        
+        isLoadingBom = true;
+
+        try
+        {
+            logger.LogInformation($"ProductList.RowExpand - Get BOM for product {item.InventoryId}");
+            item.BomAllocations = service.GetBomAllocation(item.InventoryId);
+            // NotificationService.Notify(NotificationSeverity.Success, "BOM Allocation",
+            //     $"BOM Allocation for {item.InventoryId} loaded successfully {item.BomAllocations.Count()}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"ProductList.RowExpand - Error getting BOM for product {item.InventoryId}");
+            NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Duration = 10000,
+                    SummaryContent = ns =>@<RadzenText TextStyle="TextStyle.H6">Failed to remove this item.</RadzenText>,
+                    DetailContent = ns =>
+    @<RadzenText>
+        <br />Please make sure the connection to the server is available.
+        <br /><br />Technical detail:
+        <br />@ex.Message
+    </RadzenText>
+    });
+        };
+        isLoadingBom = false;
+        //}
+    }
+
+    void OnRender(DataGridRenderEventArgs<BomAllocationResponse> args)
+    {
+        try
+        {
+            if (args.FirstRender)
+            {
+                logger.LogInformation($"BOMAllocation.OnRender - raw materials grouping based on RawMaterialNames");
+                args.Grid.Groups.Add(new GroupDescriptor() { Property = "RawMaterialNames", SortOrder = SortOrder.Ascending });
+                StateHasChanged();
+            }
+        } catch 
+        {
+            // NotificationService.Notify(NotificationSeverity.Error, "Failed to group BOM Allocation",
+            //     $"{ex.Message}\n\n{ex}");
+        }
+        
+    }
+
+    string GetBomStyle(ProductionItem data)
+    {
+        if (data.ResourceAllocated < 100)
+            return "color:red"; 
+        else
+            return "color:green";
+    }
 
     async Task OpenPrintDialog()
     {
@@ -160,9 +274,18 @@
     {
         if (item.ResourceAllocated < 100)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Resource Allocation",
-                "This production can't be started due to the lack of supplied raw materials. Please check out more raw materials from the warehouse.");
-            return;
+            // NotificationService.Notify(NotificationSeverity.Error, "Resource Allocation",
+            //     "This production can't be started due to the lack of supplied raw materials. Please check out more raw materials from the warehouse.");
+            
+            var dialogResult = 
+                await DialogService.Confirm(
+                    "Insufficient raw materials checked out for this production. Continue anyway?", 
+                    "Resource Allocation", 
+                    new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No", 
+                        Top="10px", Left="5px", AutoFocusFirstElement=true });
+           
+            if((dialogResult.HasValue && !dialogResult.Value) || !dialogResult.HasValue)
+                return;
         };
         var ok = await service.StartItemProduction(item.InventoryId);
         if (ok)

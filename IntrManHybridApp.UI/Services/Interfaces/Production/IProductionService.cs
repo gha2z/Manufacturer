@@ -26,4 +26,7 @@ public interface IProductionService
     Task<IEnumerable<InventoryItemDetail>> GetRunningProductionItemsAsync();
     Task<Guid> CreateFinishedProductCheckin(FinishedProductInternalCheckinRequest request);
 
+    Task<IEnumerable<BomAllocationResponse>> GetBomAllocationAsync(Guid inventoryId); 
+    IEnumerable<BomAllocationResponse> GetBomAllocation(Guid inventoryId);
+
 }

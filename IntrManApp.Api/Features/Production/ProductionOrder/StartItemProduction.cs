@@ -66,6 +66,7 @@ namespace IntrManApp.Api.Features.Production.ProductionOrder
 
                         if (inventoryItem != null)
                         {
+                            inventoryItem.ProductionDate = DateTime.Now;
                             inventoryItem.Flag = 6;
                             inventoryItem.ModifiedDate = DateTime.Now;
                         }

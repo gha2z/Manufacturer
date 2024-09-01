@@ -7,6 +7,8 @@ public partial class ProductInternalCheckInLinePackaging
 {
     public Guid LineId { get; set; }
 
+    public Guid InventoryId { get; set; }
+
     public Guid? MeasurementUnitId { get; set; }
 
     public decimal? Weight { get; set; }
@@ -20,8 +22,6 @@ public partial class ProductInternalCheckInLinePackaging
     public Guid? SourceLocationId { get; set; }
 
     public Guid? SourceRackingPalletId { get; set; }
-
-    public Guid InventoryId { get; set; }
 
     public virtual ProductInternalCheckInLine Line { get; set; } = null!;
 

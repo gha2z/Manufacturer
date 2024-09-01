@@ -176,7 +176,7 @@ namespace IntrManApp.Api.Features.Production
                             TotalBatches = packaging.Quantity,
                             ProductionDate = inventory.ProductionDate,
                             ExpirationDate = inventory.ExpirationDate,
-                            Flag = 7,
+                            Flag = 8,
                             ModifiedDate = DateTime.Now
                         };
 

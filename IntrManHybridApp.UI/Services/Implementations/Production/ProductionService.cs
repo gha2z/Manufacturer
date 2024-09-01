@@ -6,6 +6,7 @@ using System.Text.Json;
 
 namespace IntrManHybridApp.UI.Services;
 
+
 public class ProductionService(HttpClient httpClient, ILogger<ProductionService> logger) : IProductionService
 {
     public async Task<Guid> CreateProductionOrderAsync(ProductionOrderRequest request)
@@ -395,5 +396,38 @@ public class ProductionService(HttpClient httpClient, ILogger<ProductionService>
         }
     }
 
-  
+    public async Task<IEnumerable<BomAllocationResponse>> GetBomAllocationAsync(Guid inventoryId)
+    {
+        try
+        {
+            logger.LogInformation($"Getting BOM Allocation: Get {httpClient.BaseAddress}/GetBomAllocation/{inventoryId}");
+            
+            IEnumerable<BomAllocationResponse> bomAllocations =
+                await httpClient.GetFromJsonAsync<IEnumerable<BomAllocationResponse>>($"GetBomAllocation/{inventoryId}") ?? [];
+
+            return bomAllocations;
+         
+        } catch(Exception ex)
+        {
+            logger.LogError(ex, "Error getting BOM Allocation");
+            return [];
+        }
+    }
+
+    public IEnumerable<BomAllocationResponse> GetBomAllocation(Guid inventoryId)
+    {
+        try
+        {
+            logger.LogInformation($"Getting BOM Allocation: Get {httpClient.BaseAddress}/GetBomAllocation/{inventoryId}");
+
+            return 
+                httpClient.GetFromJsonAsync<IEnumerable<BomAllocationResponse>>($"GetBomAllocation/{inventoryId}").Result  ?? [];
+            
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting BOM Allocation");
+            return [];
+        }
+    }
 }

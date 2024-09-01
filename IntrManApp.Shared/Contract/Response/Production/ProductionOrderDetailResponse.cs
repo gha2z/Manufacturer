@@ -67,6 +67,7 @@ namespace IntrManApp.Shared.Contract
         public string IngredientQty_9 { get; set; } = string.Empty;
         public DateTime ProductionDate { get; set; }
         public DateTime ExpirationDate { get; set; }
+        public IEnumerable<BomAllocationResponse> BomAllocations { get; set; } = [];
     }
 
 

@@ -609,6 +609,8 @@ public partial class IntrManDbContext : DbContext
 
             entity.ToTable("ProductInternalCheckInLine", "Production");
 
+            entity.HasIndex(e => e.LineId, "AK_ProductInternalCheckInLine_LineId").IsUnique();
+
             entity.HasIndex(e => e.LineId, "IX_ProductInternalCheckInLine").IsUnique();
 
             entity.HasIndex(e => e.InventoryId, "IX_ProductInternalCheckInLine_InventoryId");
@@ -640,6 +642,16 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.LineId, e.InventoryId });
 
             entity.ToTable("ProductInternalCheckInLinePackaging", "Production");
+
+            entity.HasIndex(e => e.LocationId, "IX_ProductInternalCheckInLinePackaging_LocationId");
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductInternalCheckInLinePackaging_MeasurementUnitId");
+
+            entity.HasIndex(e => e.RackingPalletId, "IX_ProductInternalCheckInLinePackaging_RackingPalletId");
+
+            entity.HasIndex(e => e.SourceLocationId, "IX_ProductInternalCheckInLinePackaging_SourceLocationId");
+
+            entity.HasIndex(e => e.SourceRackingPalletId, "IX_ProductInternalCheckInLinePackaging_SourceRackingPalletId");
 
             entity.Property(e => e.InventoryId).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
@@ -860,6 +872,8 @@ public partial class IntrManDbContext : DbContext
             entity.ToTable("ProductVariant", "Production");
 
             entity.HasIndex(e => new { e.ProductId, e.MeasurementUnitId, e.Weight }, "IX_ProductVariant").IsUnique();
+
+            entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductVariant_MeasurementUnitId");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
             entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");

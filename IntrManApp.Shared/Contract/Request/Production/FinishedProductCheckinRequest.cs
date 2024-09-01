@@ -17,6 +17,7 @@ public class FinishedProductInternalCheckinLineRequest
     public Guid MeasurementUnitId { get; set; }
     public decimal Quantity { get; set; }
     public DateTime? ExpiryDate { get; set; }
+    public DateTime? ProductionDate { get; set; }
     public InventoryItemDetail? FinishedProduct { get; set; }
     public List<FinishedPackagedProductRequest> FinishedPackagedProducts { get; set; } = [];
     public bool IsNotFromExistingProduction { get; set; }

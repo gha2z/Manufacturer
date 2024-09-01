@@ -20,6 +20,14 @@ public partial class ProductInternalCheckInLine
 
     public Guid LineId { get; set; }
 
+    public Guid? LocationId { get; set; }
+
+    public Guid? RackingPalletId { get; set; }
+
+    public Guid? SourceLocationId { get; set; }
+
+    public Guid? SourceRackingPalletId { get; set; }
+
     public virtual ProductInternalCheckIn CheckIn { get; set; } = null!;
 
     public virtual ProductInventory Inventory { get; set; } = null!;
