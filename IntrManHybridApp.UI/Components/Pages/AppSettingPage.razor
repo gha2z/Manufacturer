@@ -267,7 +267,7 @@
 
     async Task ResetTransaction()
     {
-     
+
         var confirmed = await dialogService.Confirm("Any existing transaction will be permanently erased. Continue?", "Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
         if (confirmed != null && confirmed.Value)
         {
@@ -305,11 +305,15 @@
             isBusy = false;
             await InvokeAsync(StateHasChanged);
         }
-      
+
     }
 
     async Task RestoreDatabase()
     {
+        if(string.IsNullOrEmpty(backupFile) || !File.Exists(backupFile)) {
+            NotificationService.Notify(NotificationSeverity.Error, "Invalid Backup File","No backup file selected or backup file does not exist");
+            return;
+        }
         isBusy = true;
         var confirmed = await dialogService.Confirm("Are you sure to restore the database?", "Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
         if (confirmed!=null && confirmed.Value)
