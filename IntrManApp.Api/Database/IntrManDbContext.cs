@@ -609,8 +609,6 @@ public partial class IntrManDbContext : DbContext
 
             entity.ToTable("ProductInternalCheckInLine", "Production");
 
-            entity.HasIndex(e => e.LineId, "AK_ProductInternalCheckInLine_LineId").IsUnique();
-
             entity.HasIndex(e => e.LineId, "IX_ProductInternalCheckInLine").IsUnique();
 
             entity.HasIndex(e => e.InventoryId, "IX_ProductInternalCheckInLine_InventoryId");
@@ -1191,8 +1189,6 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.FeatureId, e.UserTypeId });
 
             entity.ToTable("UserTypeFeature");
-
-            entity.HasIndex(e => e.UserTypeId, "IX_UserTypeFeature_UserTypeId");
 
             entity.Property(e => e.Accessible).HasDefaultValue(false);
 

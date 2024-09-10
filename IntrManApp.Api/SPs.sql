@@ -1762,7 +1762,7 @@ begin
 end
 GO
 delete from dbo.Feature
-go
+GO
 declare @parentId uniqueidentifier
 
 insert into dbo.Feature(Name, Icon) values ('Basic Data','dataset')

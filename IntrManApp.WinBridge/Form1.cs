@@ -114,6 +114,7 @@ namespace IntrManApp.WinBridge
                         string path = jsonMessage.Data.ToString();
                         this.Invoke(new MethodInvoker(delegate ()
                         {
+                            this.BringToFront();
                             folderBrowser.SelectedPath = path;
                             if (folderBrowser.ShowDialog() == DialogResult.OK) {
                                 path = folderBrowser.SelectedPath;
@@ -130,6 +131,7 @@ namespace IntrManApp.WinBridge
                         string filePath = jsonMessage.Data.ToString();
                         this.Invoke(new MethodInvoker(delegate ()
                         {
+                            this.BringToFront();
                             openFile.InitialDirectory = filePath;
                             if (openFile.ShowDialog() == DialogResult.OK)
                             {

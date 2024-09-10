@@ -106,11 +106,11 @@ var app = builder.Build();
         sps = Path.Combine(appDataPath, "SPs.sql");
         Log.Logger.Information("Verifying stored procedures ...");
 
-        if (!File.Exists(sps))
-        {
+        //if (!File.Exists(sps))
+        //{
             Log.Logger.Information($"Copying {sps}");
             File.WriteAllText(sps, File.ReadAllText(Path.Combine("SPs.sql")));
-        }
+        //}
         if (File.Exists(sps))
         {
             var dbConnectionFactory = scope.ServiceProvider.GetRequiredService<IDbConnectionFactory>();
@@ -133,11 +133,11 @@ var app = builder.Build();
     sps = Path.Combine(appDataPath, "ConfigSPs.sql");
     Log.Logger.Information($"Verifying config stored procedures => {sps}");
 
-    if (!File.Exists(sps))
-    {
+    //if (!File.Exists(sps))
+    //{
         Log.Logger.Information($"Copying {sps}");
         File.WriteAllText(sps, File.ReadAllText(Path.Combine("ConfigSPs.sql")));
-    }
+    //}
     if (File.Exists(sps))
     {
         Log.Logger.Information($"Executing config stored procedures => {sps}");
@@ -162,11 +162,11 @@ var app = builder.Build();
     sps = Path.Combine(appDataPath, "FeatureUpdates.sql");
     Log.Logger.Information($"Verifying feature updates => {sps}");
 
-    if (!File.Exists(sps))
-    {
+    //if (!File.Exists(sps))
+    //{
         Log.Logger.Information($"Copying {sps}");
         File.WriteAllText(sps, File.ReadAllText(Path.Combine("FeatureUpdates.sql")));
-    }
+    //}
     if (File.Exists(sps))
     {
         Log.Logger.Information($"Executing feature updates => {sps}");

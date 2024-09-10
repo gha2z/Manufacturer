@@ -4,6 +4,7 @@ using IntrManApp.Api.Database;
 using IntrManApp.Shared.Common;
 using IntrManApp.Shared.Contract;
 using MediatR;
+using Serilog;
 using System.Data;
 using System.Security;
 
@@ -33,6 +34,13 @@ public static class CreateDatabase
 
                 var sps = Path.Combine(AppContext.BaseDirectory, "SPs.sql");
                 string queryString = string.Empty;
+
+
+                if (!File.Exists(sps))
+                {
+                    Log.Logger.Information($"Copying {sps}");
+                    File.WriteAllText(sps, File.ReadAllText(Path.Combine("SPs.sql")));
+                }
                 if (File.Exists(sps))
                 {
                     queryString = File.ReadAllText(sps);
