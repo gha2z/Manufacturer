@@ -1,6 +1,7 @@
 ﻿using Carter;
 using Dapper;
 using IntrManApp.Api.Database;
+using IntrManApp.Api.Entities;
 using IntrManApp.Shared.Common;
 using IntrManApp.Shared.Contract;
 using Mapster;
@@ -22,6 +23,35 @@ public static class GetMeasurementUnits
         
         public async Task<Result<List<MeasurementUnitRequest>>> Handle(Query request, CancellationToken cancellationToken)
         {
+            if (!context.MeasurementUnitGroups.Any())
+            {
+                var measurementUnitGroup = new MeasurementUnitGroup
+                {
+                    Name = "Weight - Kgs"
+                };
+
+                var childUnit = new MeasurementUnit()
+                {
+                    Name = "gram",
+                    Quantity = 1,
+                    Initial = "g",
+                    Group = measurementUnitGroup
+                };
+
+                var parentUnit = new MeasurementUnit()
+                {
+                    Name = "kilogram",
+                    Quantity = 1000,
+                    Child = childUnit,
+                    Initial = "kg",
+                    Group = measurementUnitGroup
+                };
+                context.Add(measurementUnitGroup);
+                context.Add(childUnit);
+                context.Add(parentUnit);
+
+                await context.SaveChangesAsync(cancellationToken);
+            }
 
             var measurementUnits = await context.MeasurementUnits.ToListAsync(cancellationToken);
             foreach(var measurementUnit in measurementUnits)

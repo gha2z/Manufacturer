@@ -367,7 +367,7 @@ public class ProductionService(HttpClient httpClient, ILogger<ProductionService>
         IEnumerable<InventoryItemDetail> endProductsInProgress = [];
         try
         {
-            logger.LogInformation("Calling api/rawMaterialsForProduction");
+            logger.LogInformation("Calling api/runningProductionItems");
             endProductsInProgress = await httpClient.GetFromJsonAsync<IEnumerable<InventoryItemDetail>>("runningProductionItems") ?? [];
         }
         catch (Exception ex)

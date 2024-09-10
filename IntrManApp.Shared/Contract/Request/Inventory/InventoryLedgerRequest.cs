@@ -10,5 +10,6 @@ namespace IntrManApp.Shared.Contract
     {
         public Guid ProductId { get; set; } = Guid.Empty;
         public Guid LocationId { get; set; } = Guid.Empty;
+        public decimal Weight { get; set; }
     }
 }

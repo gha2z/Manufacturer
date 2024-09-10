@@ -14,7 +14,7 @@
 <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
     <RadzenCard Variant="Variant.Outlined">
         <RadzenStack Orientation="Orientation.Horizontal">
-            <RadzenFormField Text="Batch Number" Style="width:130px">
+            <RadzenFormField Text="Batch Number" Style="width:230px">
 
                 <ChildContent>
                     <RadzenTextBox @bind-Value="@Line.BatchNumber" Change="@CheckBatchNumber" Placeholder="Scan Batch Number"
@@ -202,7 +202,9 @@
                 };
             Line.ProductId = selectedProduct.Id;
             Line.MeasurementUnitId = selectedProduct.MeasurementUnitOrderId;
-            Line.ExpiryDate = DateTime.Now.AddDays((int)selectedProduct.DaysToExpire);
+            //if (Line.ProductionDate == null) Line.ProductionDate = DateTime.Now;
+            NotificationService.Notify(NotificationSeverity.Info, "Production Date", $"{Line.ProductionDate}");
+            Line.ExpiryDate = Line.ProductionDate?.AddDays((int)selectedProduct.DaysToExpire);
         }
         variants = selectedProduct.ProductVariants.AsEnumerable();
         await InsertPackRow();
@@ -223,7 +225,8 @@
                 Line.ExpiryDate = DateTime.Now.AddDays(item.DaysToExpire);
                 Line.IsNotFromExistingProduction = false;
                 Line.ProductId = item.ProductId;
-
+                Line.ProductionDate = item.ProductionDate;
+                NotificationService.Notify(NotificationSeverity.Info, "Production Date", $"{item.ProductionDate}");
                 await OnProductChanged();
             }
             else

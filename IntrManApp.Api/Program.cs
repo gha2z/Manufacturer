@@ -35,6 +35,7 @@ builder.Services.AddHostedService<BackendService>();
 string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Intrepid Manufacture App");
 if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
 
+
 appDataPath = Path.Combine(appDataPath, "Backend Service");
 if(!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
 
@@ -104,6 +105,12 @@ var app = builder.Build();
         context.Database.EnsureCreated();
         sps = Path.Combine(appDataPath, "SPs.sql");
         Log.Logger.Information("Verifying stored procedures ...");
+
+        if (!File.Exists(sps))
+        {
+            Log.Logger.Information($"Copying {sps}");
+            File.WriteAllText(sps, File.ReadAllText(Path.Combine("SPs.sql")));
+        }
         if (File.Exists(sps))
         {
             var dbConnectionFactory = scope.ServiceProvider.GetRequiredService<IDbConnectionFactory>();
@@ -124,11 +131,16 @@ var app = builder.Build();
         }
     }
     sps = Path.Combine(appDataPath, "ConfigSPs.sql");
-    
+    Log.Logger.Information($"Verifying config stored procedures => {sps}");
 
+    if (!File.Exists(sps))
+    {
+        Log.Logger.Information($"Copying {sps}");
+        File.WriteAllText(sps, File.ReadAllText(Path.Combine("ConfigSPs.sql")));
+    }
     if (File.Exists(sps))
     {
-        Log.Logger.Information($"Verifying config stored procedures => {sps}");
+        Log.Logger.Information($"Executing config stored procedures => {sps}");
         var dbConfigConnectionFactory = scope.ServiceProvider.GetRequiredService<IDbConfigConnectionFactory>();
         using IDbConnection connection = dbConfigConnectionFactory.CreateOpenConnection();
         queryString = File.ReadAllText(sps);
@@ -145,12 +157,19 @@ var app = builder.Build();
                 Log.Logger.Error(ex, "Error executing query: {query}", query);
             }
         }
-    }
+    } else Log.Logger.Information($"No config stored procedures found => {sps}");
 
     sps = Path.Combine(appDataPath, "FeatureUpdates.sql");
+    Log.Logger.Information($"Verifying feature updates => {sps}");
+
+    if (!File.Exists(sps))
+    {
+        Log.Logger.Information($"Copying {sps}");
+        File.WriteAllText(sps, File.ReadAllText(Path.Combine("FeatureUpdates.sql")));
+    }
     if (File.Exists(sps))
     {
-        Log.Logger.Information($"Verifying feature updates => {sps}");
+        Log.Logger.Information($"Executing feature updates => {sps}");
         var dbConnectionFactory = scope.ServiceProvider.GetRequiredService<IDbConnectionFactory>();
         using IDbConnection connectionConf = dbConnectionFactory.CreateOpenConnection();
         queryString = File.ReadAllText(sps);
@@ -168,6 +187,7 @@ var app = builder.Build();
             }
         }
     }
+    else Log.Logger.Information($"No feature updates found => {sps}");
 }
 
 

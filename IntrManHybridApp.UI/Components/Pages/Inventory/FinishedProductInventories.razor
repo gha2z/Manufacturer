@@ -152,7 +152,8 @@
                 new InventoryLedgerRequest() 
                 {
                     ProductId = item.ProductId, 
-                    LocationId = item.LocationId
+                    LocationId = item.LocationId,
+                    Weight = item.Weight
                 });
         }
         catch (Exception ex)

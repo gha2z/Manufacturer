@@ -15,6 +15,7 @@ public static class GetFinishedProductInventoryLedgers
     {
         public Guid ProductId { get; set; }
         public Guid LocationId { get; set; }
+        public decimal Weight { get; set; }
     }
 
     internal sealed class Handler(IDbConnectionFactory dbConnectionFactory) : IRequestHandler<Query, Result<IEnumerable<InventoryLedger>>>
@@ -27,7 +28,7 @@ public static class GetFinishedProductInventoryLedgers
 
             IEnumerable<InventoryLedger>? queryResults =
                 (IEnumerable<InventoryLedger>?)await connection.QueryAsync<InventoryLedger>(
-                    "Production.FinishedProductLedger", new { request.ProductId, request.LocationId }, commandType: CommandType.StoredProcedure);
+                    "Production.FinishedProductLedger", new { request.ProductId, request.LocationId, request.Weight }, commandType: CommandType.StoredProcedure);
 
             if (queryResults == null)
             {
