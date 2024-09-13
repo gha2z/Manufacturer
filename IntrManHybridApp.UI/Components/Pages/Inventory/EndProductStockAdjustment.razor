@@ -1,0 +1,446 @@
+﻿@page "/EndProductStockAdjustment"
+
+@using IntrManApp.Shared.Contract
+@using System.Diagnostics
+@using System.Text.Json
+@using IntrManHybridApp.UI.Services
+@using Mapster
+
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject IInventoryService service
+@inject ILogger<EndProductStockAdjustment> logger
+@inject IJSRuntime JSRuntime
+
+<RadzenCard Style="margin-top:-24px">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+
+        <RadzenButton ButtonStyle="ButtonStyle.Secondary" Shade="Shade.Default" class="rz-shadow-0">
+            @caption
+            <RadzenBadge BadgeStyle="BadgeStyle.Secondary" IsPill="@true" Text="@captionExt" class="rz-ml-2" />
+        </RadzenButton>
+
+        <RadzenProgressBarCircular Visible="@isSaving" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large">
+            <Template>@progressCaption</Template>
+        </RadzenProgressBarCircular>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+            <RadzenButton Text="Clear" ButtonStyle="ButtonStyle.Danger" Click="@Clear" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+<RadzenSplitter Orientation="Orientation.Horizontal" style="border: 0px solid rgba(0,0,0,.08); margin-top:12px; background-color:white">
+
+    <RadzenSplitterPane Size="30%" Min="150px" Max="530px" Collapsed="@(!showProducts)">
+        <RadzenCard Visible="@showProducts" Variant="Variant.Flat">
+            <RadzenDataGrid Data="@inventoryItems" TItem="EndProductItemDetail" @ref="invGrid"
+                            AllowSorting="true" AllowPaging="true" PageSize="13" AllowFiltering="true" SelectionMode="DataGridSelectionMode.Single"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced" AllowColumnResize="true"
+                            @bind-Value="@selectedInventories" RowDoubleClick="@InsertInvItem">
+                <HeaderTemplate>
+                    <RadzenButton Click="@InsertInvItem" Icon="playlist_add" Text="Insert selected items" />
+                </HeaderTemplate>
+                <Columns>
+                    <RadzenDataGridColumn Property="BatchNumber" Title="Batch #" Width="120px" />
+                    <RadzenDataGridColumn Property="Names" Title="Item" Width="220px">
+                        <Template Context="item">
+                            @($"{item.Names} {item.Weight} {item.MeasurementUnitName}")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Quantity" Title="Weight (kg)">
+                        <Template Context="item">
+                           @item.Quantity.ToString("N2")
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenCard>
+    </RadzenSplitterPane>
+
+    <RadzenSplitterPane Collapsible="false">
+        <RadzenCard Variant="Variant.Flat">
+            <RadzenStack>
+
+               
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.75rem">
+                        <RadzenText Style="margin-top:6px; width:300px;"><small><strong>Show Inventory Items</strong></small></RadzenText>
+                        <RadzenSwitch @bind-Value=@showProducts Style="margin-top:12px" />
+                    </RadzenStack>
+                    
+              
+
+                <RadzenStack>
+                    <RadzenDataGrid @ref="EndProductStockAdjustmentGrid" Data="@EndProductStockAdjustments" TItem="EndProductStockAdjustmentLineRequest"
+                                    RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single" 
+                                    RowEdit="@OnRowEdit">
+                        <Columns>
+
+                            <RadzenDataGridColumn Property="ItemDetail.BatchNumber" Title="Batch #" Width="120px" 
+                            Frozen="true" TextAlign="TextAlign.Center">
+                                <EditTemplate Context="item">
+                                    <RadzenTextBox @bind-Value="item.ItemDetail.BatchNumber" Change="@(args => ItemValidated(item))" 
+                                        Placeholder="Scan Carton Id / Batch #" Style="width:100%;font-size:small" @ref=@batchTextBox TabIndex="0" />
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Title="Item" Width="240px">
+                                <Template Context="item">
+                                    @($"{item.ItemDetail.Names} {item.ItemDetail.Weight} {item.ItemDetail.MeasurementUnitName}")
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="InitialQuantity" Title="Current Weight (kg)" Width="120px">
+                                <Template Context="raw">
+                                    @raw.InitialQuantity.ToString("N2")
+                                </Template>
+                            </RadzenDataGridColumn>
+                            
+                            <RadzenDataGridColumn Property="Quantity" Title="New Weight (kg)" Width="120px">
+                                <Template Context="raw">
+                                    @raw.Quantity.ToString("N2")
+                                </Template>
+                                <EditTemplate Context="raw">
+                                    <RadzenNumeric @ref=@quantityTextBox @bind-Value="raw.Quantity" Step="0.5" Style="width:100px;" 
+                                    Min="0" Format="N2" />
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="Reason" Title="Adjustment Reason">
+                                <EditTemplate Context="raw">
+                                    <RadzenAutoComplete FilterOperator="StringFilterOperator.Contains" FilterDelay="100"
+                                                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" @bind-Value=raw.Reason
+                                                        Data=@EndProductStockAdjustmentReasons TextProperty="Reason" Style="width: 200px; font-size:small"
+                                                        InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Reason" }})" />
+                                    </EditTemplate>
+                                </RadzenDataGridColumn>
+
+                            @*    <RadzenDataGridColumn Title="Source Location" Width="150px">
+                            <Template Context="raw">
+                            @FormatSourceLocationAndRack(raw)
+                            </Template>
+                            </RadzenDataGridColumn> *@
+
+                           @*  <RadzenDataGridColumn Property="Location.Name" Title="Target Location" Width="180px">
+                                <EditTemplate Context="rawMaterial">
+                                    <RadzenDropDown @bind-Value="rawMaterial.LocationId" Data="@targetLocations" TextProperty="Name" ValueProperty="Id"
+                                                    @ref=@locationDropDown Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true" />
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="RackingPallet.ColRow" Title="Rack" Width="100px">
+                                <EditTemplate Context="rawMaterial">
+                                    <RadzenDropDown @bind-Value="rawMaterial.RackingPalletId" Data="@rackingPallets" TextProperty="ColRow"
+                                                    @ref=@rackingPalletDropDown ValueProperty="Id" Style="width:100%" AllowClear="false" AllowFiltering="true"
+                                                    ClearSearchAfterSelection="true" />
+                                </EditTemplate>
+                            </RadzenDataGridColumn> *@
+
+                            <RadzenDataGridColumn Property="ProductionDate" Title="Production Date" Width="140px">
+                                <EditTemplate Context="item">
+                                    <RadzenDatePicker @bind-Value="item.ProductionDate" DateFormat="MM/dd/yyyy" ShowTime="false" />
+                                </EditTemplate>
+                                <Template Context="item">
+                                    @item.ProductionDate.ToString("MM/dd/yyyy")
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="ExpirationDate" Title="Expiry Date" Width="140px">
+                                <EditTemplate Context="item">
+                                    <RadzenDatePicker @bind-Value="item.ExpirationDate" DateFormat="MM/dd/yyyy" ShowTime="false" />
+                                </EditTemplate>
+                                <Template Context="item">
+                                    @item.ExpirationDate.ToString("MM/dd/yyyy")
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Context="raw" Filterable="false" Sortable="false" TextAlign="TextAlign.Right"
+                                                  Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Width="100px">
+                                <Template Context="raw">
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat"
+                                                  Size="ButtonSize.Medium" Click="@(args => EditRow(raw))" @onclick:stopPropagation="true">
+                                    </RadzenButton>
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter"
+                                                  Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(raw))" @onclick:stopPropagation="true">
+                                    </RadzenButton>
+                                </Template>
+                                <EditTemplate Context="raw">
+                                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(raw))">
+                                    </RadzenButton>
+                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(raw))">
+                                    </RadzenButton>
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(raw))">
+                                    </RadzenButton>
+                                </EditTemplate>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenSplitterPane>
+</RadzenSplitter>
+
+@code {
+    RadzenDataGrid<EndProductStockAdjustmentLineRequest> EndProductStockAdjustmentGrid = new();
+    RadzenDataGrid<EndProductItemDetail> invGrid = new();
+
+    List<EndProductStockAdjustmentLineRequest> EndProductStockAdjustments = [];
+
+    EndProductStockAdjustmentLineRequest? tmpItem;
+
+    IEnumerable<EndProductItemDetail> inventoryItems = [];
+    IEnumerable<StockAdjustmentReason> EndProductStockAdjustmentReasons = [];
+    List<EndProductItemDetail> inventoryItemsByLocation = [];
+    IList<EndProductItemDetail> selectedInventories = [];
+
+    string caption = "New End Product Stock Adjustment";
+    string captionExt = "0";
+    bool isSaving = false;
+    bool isAddNew = false;
+    string progressCaption = "Working";
+    string currentLocationName = "";
+
+    RadzenTextBox? batchTextBox;
+    RadzenNumeric<decimal>? quantityTextBox;
+
+    bool showProducts = false;
+    bool fromInvGrid = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await base.OnInitializedAsync();
+
+
+
+        try
+        {
+            EndProductStockAdjustmentReasons = await service.GetStockAdjustmentReasonsAsync();
+            inventoryItems = await service.GetPackagedProductsByLocationAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"{ex.Message}");
+        }
+
+        await InsertRow();
+    }
+
+    async void InsertInvItem()
+    {
+        if (selectedInventories.Count == 0) return;
+        fromInvGrid = true;
+        foreach (var item in selectedInventories)
+        {
+            if (EndProductStockAdjustments.FirstOrDefault(p => p.ItemDetail.BatchNumber.Equals(item.BatchNumber)) == null)
+            {
+                var newItem = new EndProductStockAdjustmentLineRequest();
+                newItem.ItemDetail.BatchNumber = item.BatchNumber;
+                ItemValidated(newItem);
+                EndProductStockAdjustments.Add(newItem);
+            }
+        }
+        await EndProductStockAdjustmentGrid.Reload();
+        fromInvGrid = false;
+        await InsertRow();
+    }
+
+    string FormatSourceLocationAndRack(EndProductStockAdjustmentLineRequest item)
+    {
+        string ret = "";
+        var product = inventoryItems.FirstOrDefault(p => p.InventoryId == item.InventoryId);
+        if (product != null)
+        {
+            ret = $"{product.CurrentLocationName} ({product.CurrentRackingPalletColRow})";
+        }
+        return ret;
+    }
+
+    bool ItemValidated(EndProductStockAdjustmentLineRequest item)
+    {
+        bool validated = false;
+        logger.LogInformation($"ItemChanged/Validated Raised ...");
+        EndProductItemDetail? raw = null;
+        if (!string.IsNullOrEmpty(item.ItemDetail.BatchNumber))
+        {
+            if (EndProductStockAdjustments.Any(p => p.ItemDetail.BatchNumber.ToLower().Trim().Equals(item.ItemDetail.BatchNumber.Trim().ToLower()) && p != item))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Carton ID/Batch Number already exists");
+                if (!isAddNew && tmpItem != null) item.ItemDetail.BatchNumber = tmpItem.ItemDetail.BatchNumber;
+                return false;
+            };
+            raw = inventoryItems.FirstOrDefault(p => p.BatchNumber.ToLower().Trim().Equals(item.ItemDetail.BatchNumber.Trim().ToLower()));
+            if (raw != null)
+            {
+                item.UnitMeasurementId = raw.MeasurementUnitId;
+                item.InitialQuantity = raw.Quantity;
+                item.InventoryId = raw.InventoryId;
+                item.ItemDetail = raw;
+
+                // JSRuntime.InvokeVoidAsync("alert", item.QuantityChangeReason);
+
+                if (isAddNew)
+                {
+                    item.ProductionDate = raw.ProductionDate;
+                    item.ExpirationDate = raw.ExpiryDate;
+                    item.Quantity = raw.Quantity;
+                }
+                quantityTextBox?.Element.FocusAsync();
+
+            }
+        }
+        validated = raw != null;
+        logger.LogInformation($"Validation result => {validated}");
+        //if (validated && isAddNew && !fromInvGrid) SaveRow(item);
+        return (validated);
+    }
+
+    async Task InsertRow()
+    {
+        logger.LogInformation("Inserting new row");
+        var newItem = new EndProductStockAdjustmentLineRequest();
+        isAddNew = true;
+        await EndProductStockAdjustmentGrid.InsertRow(newItem);
+
+    }
+
+    void OnRowEdit(EndProductStockAdjustmentLineRequest item)
+    {
+        logger.LogInformation($"OnRowEdit '{item.ItemDetail.Names ?? string.Empty}'");
+        quantityTextBox?.Element.FocusAsync();
+    }
+
+
+    void OnRowCreate(EndProductStockAdjustmentLineRequest item)
+    {
+        logger.LogInformation($"OnRowCreate");
+        if (item.InventoryId != Guid.Empty)
+        {
+            logger.LogInformation($"OnRowCreate ... Adding row to collection '{item.ItemDetail.Names ?? string.Empty}'");
+            //EndProductStockAdjustments.Add(item);
+            quantityTextBox?.Element.FocusAsync();
+            captionExt = $"({EndProductStockAdjustments.Count})";
+        }
+        else
+        {
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.ItemDetail.Names ?? string.Empty}'");
+            EndProductStockAdjustmentGrid.CancelEditRow(item);
+        }
+    }
+
+
+
+    async Task EditRow(EndProductStockAdjustmentLineRequest item)
+    {
+        isAddNew = false;
+        logger.LogInformation($"Editing row - collection count:'{EndProductStockAdjustments.Count}");
+        tmpItem = item.Adapt<EndProductStockAdjustmentLineRequest>();
+        await EndProductStockAdjustmentGrid.EditRow(item);
+        logger.LogInformation($"Editing row '{item.ItemDetail.Names ?? string.Empty}' EditMode:{EndProductStockAdjustmentGrid.IsRowInEditMode(item)}");
+        logger.LogInformation($"Editing row - collection count:'{EndProductStockAdjustments.Count}" +
+            $"{Environment.NewLine}===> grid.Count:{EndProductStockAdjustmentGrid.Count}");
+        await EndProductStockAdjustmentGrid.Reload();
+        await EndProductStockAdjustmentGrid.EditRow(item);
+    }
+
+    void OnUpdateRow(EndProductStockAdjustmentLineRequest item)
+    {
+
+
+        if (ItemValidated(item))
+        {
+            logger.LogInformation($"Items Validated ...  '{item.ItemDetail.Names ?? string.Empty}'");
+        }
+        else
+        {
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit and re-enter edit mode '{item.ItemDetail.Names ?? string.Empty}'");
+            EndProductStockAdjustmentGrid.CancelEditRow(item);
+            if (tmpItem != null) item = tmpItem.Adapt<EndProductStockAdjustmentLineRequest>();
+            EndProductStockAdjustmentGrid.EditRow(item);
+        }
+
+        // logger.LogInformation($"Adding row to collection '{item.ItemDetail.Names ?? string.Empty}'");
+    }
+
+    async Task DeleteRow(EndProductStockAdjustmentLineRequest item)
+    {
+        logger.LogInformation($"delete row - orderg if the row exists '{item.ItemDetail.Names ?? string.Empty}'");
+        if (EndProductStockAdjustments.Contains(item))
+        {
+            logger.LogInformation("deleting row");
+            EndProductStockAdjustments.Remove(item);
+            await EndProductStockAdjustmentGrid.Reload();
+            captionExt = $"({EndProductStockAdjustments.Count})";
+            await InsertRow();
+        }
+    }
+
+    async void CancelEdit(EndProductStockAdjustmentLineRequest item)
+    {
+        logger.LogInformation($"Cancelling Edit '{item.ItemDetail.Names ?? string.Empty}'");
+        EndProductStockAdjustmentGrid.CancelEditRow(item);
+        await InsertRow();
+    }
+
+    async void SaveRow(EndProductStockAdjustmentLineRequest item)
+    {
+        logger.LogInformation($"Save Row '{item.ItemDetail.Names ?? string.Empty}'");
+        if (item.InventoryId == Guid.Empty) return;
+        await EndProductStockAdjustmentGrid.UpdateRow(item);
+        await InsertRow();
+    }
+
+    async void Clear()
+    {
+
+        EndProductStockAdjustments.Clear();
+        await EndProductStockAdjustmentGrid.Reload();
+        await InsertRow();
+        captionExt = "";
+    }
+
+    async Task Save()
+    {
+        Guid response = Guid.Empty;
+        if (EndProductStockAdjustments.Count == 0)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No items to save");
+            return;
+        };
+
+        var json = JsonSerializer.Serialize(EndProductStockAdjustments);
+        logger.LogInformation($"Saving inventory transfer:{Environment.NewLine}{json}");
+        progressCaption = "Saving";
+        isSaving = true;
+        foreach (var item in EndProductStockAdjustments)
+        {
+            if (!item.ItemDetail.IsFinishedGood) item.Quantity *= 1000;
+        }
+        var adjustment = new EndProductStockAdjustmentRequest
+        {
+            Items = EndProductStockAdjustments
+        };
+        response = await service.CreateEndProductStockAdjustment (adjustment); 
+
+        if (response != Guid.Empty)
+        {
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Transaction Saved", "Inventory transfer has been saved successfully");
+            Clear();
+            inventoryItems = await service.GetPackagedProductsByLocationAsync();
+            isSaving = false;
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Oooppss ...", "Failed to save inventory transfer");
+            isSaving = false;
+        }
+    }
+
+
+
+
+
+}

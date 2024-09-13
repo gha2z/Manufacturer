@@ -11,6 +11,8 @@ public partial class ProductCheckOutLine
 
     public Guid? MeasurementUnitId { get; set; }
 
+    public decimal? Weight { get; set; }
+
     public decimal? Quantity { get; set; }
 
     public Guid? LocationId { get; set; }

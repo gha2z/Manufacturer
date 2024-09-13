@@ -13,7 +13,7 @@ public partial class ProductInternalCheckInLinePackaging
 
     public decimal? Weight { get; set; }
 
-    public int? Quantity { get; set; }
+    public decimal? Quantity { get; set; }
 
     public Guid? LocationId { get; set; }
 

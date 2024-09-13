@@ -94,6 +94,7 @@ namespace IntrManApp.Api.Features.Production
                                 RackingPalletId = product.RackingPalletId,
                                 MeasurementUnitId = item.MeasurementUnitId,
                                 TotalBatches = 1,
+                                Quantity = item.Weight,
                                 ModifiedDate = DateTime.Now
                             };
                             _context.ProductInventories.Add(inventory);
@@ -104,15 +105,16 @@ namespace IntrManApp.Api.Features.Production
                             InventoryId = item.InventoryId,
                             MeasurementUnitId = item.MeasurementUnitId,
                             Quantity = item.Quantity,
+                            Weight = item.Weight,
                             ModifiedDate = DateTime.Now
                         };
 
                         productCheckin.ProductInternalCheckInLines.Add(line);
                      
-                        inventory.Flag = 7;
+                        inventory.Flag = 16;
                         inventory.ExpirationDate = item.ExpiryDate;
                         inventory.ProductionDate = request.CheckInDate;
-                        inventory.Quantity = 0;
+                        //inventory.TotalBatches = 0;
                        
                         var order = await _context.ProductionOrderLineDetails.FindAsync([inventory.InventoryId], cancellationToken: cancellationToken);
                         if(product!=null && order!=null)
@@ -142,6 +144,7 @@ namespace IntrManApp.Api.Features.Production
                     await _context.SaveChangesAsync(cancellationToken);
 
                 await transaction1.CommitAsync(cancellationToken);
+
 
                 foreach (var item in productCheckin.ProductInternalCheckInLines)
                 {
@@ -181,9 +184,10 @@ namespace IntrManApp.Api.Features.Production
                         };
 
                         _context.ProductInventories.Add(packagingInventory);
+                        await _context.SaveChangesAsync(cancellationToken);
                     }
                 }
-                await _context.SaveChangesAsync(cancellationToken);
+                //await _context.SaveChangesAsync(cancellationToken);
                 return productCheckin.Id;
                 //}
                 //catch (Exception ex)

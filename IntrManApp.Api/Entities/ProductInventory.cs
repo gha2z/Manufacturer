@@ -32,7 +32,7 @@ public partial class ProductInventory
 
     public Guid? TransIdReference { get; set; }
 
-    public int? TotalBatches { get; set; }
+    public decimal? TotalBatches { get; set; }
 
     public virtual InventoryFlag? FlagNavigation { get; set; }
 

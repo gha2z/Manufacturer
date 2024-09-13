@@ -99,6 +99,31 @@ GO
 /****** Object:  StoredProcedure [dbo].[ResetTransactions]    Script Date: 9/10/2024 7:12:37 AM ******/
 DROP PROCEDURE IF EXISTS [dbo].[ResetTransactions]
 GO
+DROP FUNCTION IF EXISTS Production.GetProductNames
+GO
+Create Function [Production].[GetProductNames]
+(
+	@ProductId uniqueidentifier
+) returns nvarchar(103) 
+begin
+	declare @ret nvarchar(103) = '';
+	declare @name nvarchar(50) = '';
+	declare c cursor for 
+		SELECT [Name] from Production.ProductNameAndDescriptionCulture 
+		WHERE ProductId = @ProductId order by CultureId
+	OPEN c
+	fetch next from c into @name
+	WHILE @@FETCH_STATUS=0
+	BEGIN
+		if len(@ret)>0 set @ret = @ret + ' / '
+		SET @ret = @ret + @name
+		fetch next from c into @name
+	END
+	close c
+	deallocate c
+	return @ret
+end
+GO
 /****** Object:  StoredProcedure [dbo].[ResetTransactions]    Script Date: 9/10/2024 7:12:37 AM ******/
 SET ANSI_NULLS ON
 GO
@@ -287,15 +312,10 @@ begin
 			
 	fetch next from c into @chkInventoryId, @chkQuantity, @chkRawMaterialId, @chkMeasurementUnitId 
 end
-
 close c
 deallocate c
-
 GO
-/****** Object:  StoredProcedure [Production].[FinishedProductInventories]    Script Date: 9/10/2024 7:12:37 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS Production.FinishedProductInventories 
 GO
 CREATE PROCEDURE [Production].[FinishedProductInventories]
 as
@@ -342,13 +362,10 @@ LEFT OUTER JOIN
 WHERE 
 	isnull(i.Flag,0) < 12 
 	AND
-	p.IsFinishedGood = 1 
-	AND
-	i.Quantity>0
+	p.IsFinishedGood = 1
 GROUP BY
 	p.CategoryId, c.Name, p.Id, p.ProductNumber, production.GetProductNames(p.Id), i.Quantity, mu.Initial, 
 	i.LocationId, l.Name, r.Col+'-'+cast(r.Row as nvarchar(5)), i.Flag, f.Name  
- 
 GO
 /****** Object:  StoredProcedure [Production].[FinishedProductLedger]    Script Date: 9/10/2024 7:12:37 AM ******/
 SET ANSI_NULLS ON
@@ -1707,8 +1724,84 @@ INNER JOIN
 		dl.InventoryId = i.InventoryId 
 WHERE  
 	DATEDIFF(day,do.OrderDate,@date)=0
-
 GO
+DROP PROCEDURE IF EXISTS Production.GetPackagedProductsByLocation
+GO
+CREATE Proc [Production].[GetPackagedProductsByLocation]
+
+as
+SELECT 
+	inv.ProductId,
+	inv.InventoryId,
+	inv.BatchNumber,
+	production.GetProductNames(inv.ProductId) as Names,
+	inv.Quantity as Weight,
+	inv.MeasurementUnitId,
+	isnull(mu.Initial, mu.Name) as MeasurementUnitName,
+	inv.TotalBatches as Quantity,
+	p.LocationId,
+	loc.Name as LocationName,
+	p.RackingPalletId, 
+	rack.Col+'-'+cast(rack.row as nvarchar(5)) as RackingPalletColRow,
+	p.DaysToExpire,
+	p.DaysToManufacture,
+	inv.ExpirationDate as ExpiryDate,
+	inv.ProductionDate,
+	isnull(p.OutLocationId, 
+		isnull((select top 1 Id from production.location where name like '%product%'),
+			isnull((select top 1 Id from production.Location where Id<>p.LocationId),p.locationId))) 
+		as OutLocationId,
+	loc2.Name as OutLocationName,
+	isnull(p.OutRackingPalletId, p.rackingPalletId) as OutRackingPalletId,
+	rack2.Col+'-'+cast(rack2.row as nvarchar(5)) as OutRackingPalletColRow,
+	inv.LocationId as CurrentLocationId,
+	loc3.Name as CurrentLocationName,
+	inv.RackingPalletId as CurrentRackingPalletId,
+	rack3.Col+'-'+cast(rack3.row as nvarchar(5)) as CurrentRackingPalletColRow,
+	p.IsFinishedGood 
+FROM 
+	Production.ProductInventory inv 
+INNER JOIN 
+	Production.Product p 
+	ON
+		inv.ProductId = p.Id 
+INNER JOIN 
+	Production.MeasurementUnit mu 
+	ON
+		inv.MeasurementUnitId = mu.Id 
+INNER JOIN 
+	Production.Location loc 
+	ON
+		p.LocationId = loc.Id 
+INNER JOIN 
+	Production.RackingPallet rack 
+	ON
+		p.RackingPalletId = rack.Id
+INNER JOIN 
+	Production.Location loc2 
+	ON
+		isnull(p.OutLocationId, 
+		isnull((select top 1 Id from production.location where name like '%product%'),
+			isnull((select top 1 Id from production.Location where Id<>p.LocationId),p.locationId)))  = loc2.Id 
+INNER JOIN 
+	Production.RackingPallet rack2 
+	ON
+		isnull(p.OutRackingPalletId, p.RackingPalletId) = rack2.Id
+INNER JOIN 
+	Production.Location loc3 
+	ON
+		inv.LocationId = loc3.Id 
+INNER JOIN 
+	Production.RackingPallet rack3 
+	ON
+		inv.RackingPalletId = rack3.Id
+WHERE 
+	
+	inv.Flag in (1,3,7,8,9,10,11,13,14,15) 
+	AND 
+	p.IsFinishedGood = 1
+GO
+
 if not exists(select * from Production.InventoryFlag where Id=1) 
 INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (1, N'Checkin (Purchased)')
 GO
@@ -1754,6 +1847,9 @@ GO
 if not exists(select * from Production.InventoryFlag where Id=15) 
 INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (15, N'Unused for any productions')
 GO
+if not exists(select * from Production.InventoryFlag where Id=16) 
+INSERT [Production].[InventoryFlag] ([Id], [Name]) VALUES (16, N'Production Batch - Completed')
+GO
 if not exists (select * from dbo.userType where name='Administrator')
 INSERT dbo.userType(name) values ('Administrator')
 GO
@@ -1782,4 +1878,6 @@ begin
 	Insert into dbo.UserTypeFeature select f.Id, t.Id, 0 from dbo.usertype t, dbo.feature f where f.ParentId=@parentId
 	update dbo.UserTypeFeature set accessible=1 where UserTypeId=@adminId
 end
+GO
+Update dbo.Feature set Path='/EndProductStockAdjustment' where Name = 'Finished Product Adjustment'
 GO

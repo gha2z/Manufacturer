@@ -227,12 +227,13 @@
     {
         logger.LogInformation($"ProductList.NewItem - open new Product dialog: IsFinishedGood={isFinishedGood}");
         var title = isFinishedGood ? "New End Product" : "New Raw Material";
+        var height = isFinishedGood ? "740px" : "670px";
         var res = await DialogService.OpenAsync<ProductMod>(title,
               new Dictionary<string, object>() { 
                   { "Id", Guid.Empty },
                   { "IsFinishedGood", isFinishedGood}
               },
-              new DialogOptions() { Width = "640px", Height = "570px", Resizable = true, Draggable = true });
+              new DialogOptions() { Width = "640px", Height = height , Resizable = true, Draggable = true });
 
         if (res != null && res) await InitData();
     }

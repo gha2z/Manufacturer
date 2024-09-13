@@ -13,7 +13,7 @@ public partial class ProductCheckInLine
 
     public Guid? ProductId { get; set; }
 
-    public int TotalBatches { get; set; }
+    public decimal TotalBatches { get; set; }
 
     public decimal QuantityPerBatch { get; set; }
 

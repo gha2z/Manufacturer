@@ -26,5 +26,8 @@ namespace IntrManHybridApp.UI.Services
         Task<Guid> CreateStockAdjustment(StockAdjustmentRequest request);
 
         Task<IEnumerable<StockAdjustmentReason>> GetStockAdjustmentReasonsAsync();
+        Task<IEnumerable<EndProductItemDetail>> GetPackagedProductsByLocationAsync();
+
+        Task<Guid> CreateEndProductStockAdjustment(EndProductStockAdjustmentRequest request);
     }
 }

@@ -11,15 +11,15 @@ public partial class ProductionOrderLine
 
     public Guid? ProductId { get; set; }
 
-    public int TotalBatches { get; set; }
+    public decimal TotalBatches { get; set; }
 
     public decimal QuantityPerBatch { get; set; }
 
     public Guid? MeasurementUnitId { get; set; }
 
-    public int? TotalBatchesCompleted { get; set; }
+    public decimal? TotalBatchesCompleted { get; set; }
 
-    public int? TotalBatchesScrapped { get; set; }
+    public decimal? TotalBatchesScrapped { get; set; }
 
     public DateTime? ModifiedDate { get; set; }
 

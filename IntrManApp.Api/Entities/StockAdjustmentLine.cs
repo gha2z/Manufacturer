@@ -11,6 +11,8 @@ public partial class StockAdjustmentLine
 
     public Guid? MeasurementUnitId { get; set; }
 
+    public decimal? Weight { get; set; }
+
     public decimal? InitialQuantity { get; set; }
 
     public decimal? Quantity { get; set; }

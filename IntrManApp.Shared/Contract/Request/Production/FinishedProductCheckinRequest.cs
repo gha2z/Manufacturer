@@ -15,7 +15,8 @@ public class FinishedProductInternalCheckinLineRequest
     public string BatchNumber { get; set; } = string.Empty;
     public Guid InventoryId { get; set; }
     public Guid MeasurementUnitId { get; set; }
-    public decimal Quantity { get; set; }
+    public Decimal Weight { get; set; }
+    public Decimal Quantity { get; set; }
     public DateTime? ExpiryDate { get; set; }
     public DateTime? ProductionDate { get; set; }
     public InventoryItemDetail? FinishedProduct { get; set; }
@@ -29,7 +30,7 @@ public class FinishedPackagedProductRequest
 {
     public string BatchNumber { get; set; } = string.Empty;
     public Guid ProductVariantId { get; set; }
-    public int Quantity { get; set; }
+    public Decimal Quantity { get; set; }
     public Guid LocationId { get; set; }
     public Guid RackingPalletId { get; set; }
     public InventoryItemDetail? FinishedProduct { get; set; }

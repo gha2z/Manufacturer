@@ -249,17 +249,19 @@
         {
             isBusy = true;
             var result = await config.CreateDatabaseAsync();
-            isBusy = false;
+          
             if (result)
             {
                 NotificationService.Notify(NotificationSeverity.Success, "Database creation completed",
                     $"Database has been successfully created");
                 await InvokeAsync(StateHasChanged);
+                isBusy = false;
             }
             else
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Database restore failed");
                 await InvokeAsync(StateHasChanged);
+                isBusy = false;
             }
 
         }
@@ -268,7 +270,7 @@
     async Task ResetTransaction()
     {
 
-        var confirmed = await dialogService.Confirm("Any existing transaction will be permanently erased. Continue?", "Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+        var confirmed = await dialogService.Confirm("Any existing transactions will be permanently erased. Continue?", "Confirmation", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
         if (confirmed != null && confirmed.Value)
         {
             isBusy = true;

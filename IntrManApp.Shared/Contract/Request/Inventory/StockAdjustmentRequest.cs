@@ -23,3 +23,22 @@ public class StockAdjustmentLineRequest
     public DateTime ProductionDate { get; set; }
 
 }
+
+public class EndProductStockAdjustmentRequest
+{
+    public List<EndProductStockAdjustmentLineRequest> Items { get; set; } = [];
+}
+
+public class EndProductStockAdjustmentLineRequest
+{
+    public Guid InventoryId { get; set; }
+    public decimal Weight { get; set; }
+    public decimal Quantity { get; set; }
+    public Guid UnitMeasurementId { get; set; }
+    public decimal InitialQuantity { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public EndProductItemDetail ItemDetail { get; set; } = new();
+    public DateTime ExpirationDate { get; set; }
+    public DateTime ProductionDate { get; set; }
+
+}

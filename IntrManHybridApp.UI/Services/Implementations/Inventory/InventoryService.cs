@@ -294,4 +294,34 @@ public class InventoryService(HttpClient httpClient, ILogger<InventoryService> l
             throw new Exception(ex.Message);
         }
     }
+
+    public async Task<IEnumerable<EndProductItemDetail>> GetPackagedProductsByLocationAsync()
+    {
+        try
+        {
+            logger.LogInformation("Getting Packaged Products by Location");
+            return await httpClient.GetFromJsonAsync<IEnumerable<EndProductItemDetail>>("PackagedProductsByLocation") ?? [];
+        } catch(Exception ex)
+        {
+            logger.LogError(ex, $"Error getting Packaged Products by Location");
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public async Task<Guid> CreateEndProductStockAdjustment(EndProductStockAdjustmentRequest request)
+    {
+        var json = JsonSerializer.Serialize(request);
+        logger.LogInformation($"CreateEndProductStockAdjustment:{httpClient.BaseAddress}/EndProductStockAdjustment/{json}");
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("EndProductStockAdjustment", request);
+            return response.Content.ReadFromJsonAsync<Guid>().Result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, $"CreateEndProductStockAdjustment:{httpClient.BaseAddress}/EndProductStockAdjustment/{json}" +
+                $"{Environment.NewLine}{ex.Message}{ex}");
+            throw new Exception(ex.Message);
+        }
+    }
 }

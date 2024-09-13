@@ -20,8 +20,6 @@ public static class Login
 
     internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<LoginResponse>>
     {
-       
-
         public async Task<Result<LoginResponse>> Handle(Query request, CancellationToken cancellationToken)
         {
             var result = await dbContext.Users

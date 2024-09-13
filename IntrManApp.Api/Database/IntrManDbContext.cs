@@ -471,6 +471,7 @@ public partial class IntrManDbContext : DbContext
             entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
             entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.QuantityPerBatch).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TotalBatches).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.CheckIn).WithMany(p => p.ProductCheckInLines)
                 .HasForeignKey(d => d.CheckInId)
@@ -536,6 +537,7 @@ public partial class IntrManDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.CheckOut).WithMany(p => p.ProductCheckOutLines)
                 .HasForeignKey(d => d.CheckOutId)
@@ -620,6 +622,7 @@ public partial class IntrManDbContext : DbContext
                 .HasComment("Finished Product CheckIn-Type: 0: New finished product 1: Move between locations (e.g from production to warehouse facilitiy)")
                 .HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.CheckIn).WithMany(p => p.ProductInternalCheckInLines)
                 .HasForeignKey(d => d.CheckInId)
@@ -652,6 +655,7 @@ public partial class IntrManDbContext : DbContext
             entity.HasIndex(e => e.SourceRackingPalletId, "IX_ProductInternalCheckInLinePackaging_SourceRackingPalletId");
 
             entity.Property(e => e.InventoryId).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Line).WithMany(p => p.ProductInternalCheckInLinePackagings)
@@ -786,7 +790,9 @@ public partial class IntrManDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.TotalBatches).HasDefaultValue(1);
+            entity.Property(e => e.TotalBatches)
+                .HasDefaultValue(1.0m)
+                .HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.FlagNavigation).WithMany(p => p.ProductInventories)
                 .HasForeignKey(d => d.Flag)
@@ -919,6 +925,9 @@ public partial class IntrManDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.QuantityPerBatch).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TotalBatches).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TotalBatchesCompleted).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TotalBatchesScrapped).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductionOrderLines)
                 .HasForeignKey(d => d.MeasurementUnitId)
@@ -1115,6 +1124,7 @@ public partial class IntrManDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.AdjustmentNavigation).WithMany(p => p.StockAdjustmentLines)
                 .HasForeignKey(d => d.AdjustmentId)

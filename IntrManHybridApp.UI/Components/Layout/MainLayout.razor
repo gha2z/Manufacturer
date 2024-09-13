@@ -57,10 +57,20 @@
             @foreach (var item in AppUser.FeatureAccesses)
             {
                 logger.LogInformation($"Adding Feature: {item.Name}");
-                <RadzenPanelMenuItem Text="@item.Name" Visible="@item.ChildrenFeatures.Where(c=>c.CanView).Any()" Icon="@item.Icon" Click="setActiveWindow">
+                try
+                {
+                    icons.Add(item.Name, item.Icon);
+                }
+                catch { }
+                <RadzenPanelMenuItem Text="@item.Name"  Visible="@item.ChildrenFeatures.Where(c=>c.CanView).Any()" Icon="@item.Icon" Click="setActiveWindow">
                     @foreach (var subItem in item.ChildrenFeatures)
                     {
                         logger.LogInformation($"Adding sub Feature {subItem.Name} to {item.Name}");
+                        try
+                        {
+                            icons.Add(subItem.Name, subItem.Icon);
+                        }
+                        catch { }
                         <RadzenPanelMenuItem Text="@subItem.Name" Icon="@subItem.Icon" Style="margin-left:6px"
                                              Click="setActiveWindow" Path="@subItem.Path" Visible="@subItem.CanView" />
                     }
@@ -79,6 +89,8 @@
     string activeWindow = "Home";
     string activeIcon = "home";
 
+    Dictionary<string, string> icons = [];
+
     void SidebarToggleClick()
     {
         sidebarExpanded = !sidebarExpanded;
@@ -87,7 +99,7 @@
     void setActiveWindow(MenuItemEventArgs args)
     {
         activeWindow = args.Text;
-        activeIcon = AppUser.FeatureAccesses.Where(f => f.Name == args.Text).FirstOrDefault()?.Icon ?? string.Empty;
+        activeIcon = icons[args.Text];
     }
 
     protected override async Task OnInitializedAsync()
@@ -102,6 +114,7 @@
         NavigationManager.NavigateTo("/");
         activeWindow = "Home";
         activeIcon = "home";
+        icons.Clear();
     }
 
     async Task ChangePassword()
