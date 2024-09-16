@@ -1,0 +1,57 @@
+{
+  "Id": "00000000-0000-0000-0000-000000000000",
+  "CheckoutDate": "2024-09-16T06:33:50.2234995+07:00",
+  "ProductCheckoutDetail": [
+    {
+      "BatchNumber": "160920243",
+      "InventoryId": "63814468-ac57-4bcf-a998-300d5fdbc19f",
+      "UnitMeasurementId": "9f632c5e-6271-ef11-9256-04ea564d4841",
+      "Weight": 0,
+      "Quantity": 3,
+      "LocationId": "bd683f54-6271-ef11-9256-04ea564d4841",
+      "RackingPalletId": "f56e7593-6271-ef11-9256-04ea564d4841",
+      "ProductionDate": "2024-09-16T06:31:48.493",
+      "ExpirationDate": "2024-10-16T06:31:54.11",
+      "InitialQuantity": 5.00,
+      "QuantityChangeReason": "",
+      "ItemDetail": {
+        "ProductId": "114dfb9d-6271-ef11-9256-04ea564d4841",
+        "InventoryId": "63814468-ac57-4bcf-a998-300d5fdbc19f",
+        "BatchNumber": "160920243",
+        "Names": "End 1 / -",
+        "Weight": 500.00,
+        "MeasurementUnitId": "9f632c5e-6271-ef11-9256-04ea564d4841",
+        "MeasurementUnitName": "g",
+        "Quantity": 5.00,
+        "LocationId": "bd683f54-6271-ef11-9256-04ea564d4841",
+        "LocationName": "Production 1",
+        "RackingPalletId": "f56e7593-6271-ef11-9256-04ea564d4841",
+        "RackingPalletColRow": "X-1",
+        "DaysToExpire": 30,
+        "DaysToManufacture": 0,
+        "ExpiryDate": "2024-10-16T06:31:54.11",
+        "ProductionDate": "2024-09-16T06:31:48.493",
+        "OutLocationId": "bc683f54-6271-ef11-9256-04ea564d4841",
+        "OutLocationName": "Warehouse 1",
+        "OutRackingPalletId": "f56e7593-6271-ef11-9256-04ea564d4841",
+        "OutRackingPalletColRow": "X-1",
+        "CurrentLocationId": "bc683f54-6271-ef11-9256-04ea564d4841",
+        "CurrentLocationName": "Warehouse 1",
+        "CurrentRackingPalletId": "f56e7593-6271-ef11-9256-04ea564d4841",
+        "CurrentRackingPalletColRow": "X-1",
+        "IsFinishedGood": true
+      },
+      "Location": {
+        "Id": "bd683f54-6271-ef11-9256-04ea564d4841",
+        "Name": "Production 1"
+      },
+      "RackingPallet": {
+        "Id": "f56e7593-6271-ef11-9256-04ea564d4841",
+        "Col": "X",
+        "Row": 1,
+        "Description": "",
+        "ColRow": "X-1"
+      }
+    }
+  ]
+}

@@ -35,7 +35,7 @@
 
     <RadzenSplitterPane Size="30%" Min="150px" Max="530px" Collapsed="@(!showProducts)">        
         <RadzenCard Visible="@showProducts" Variant="Variant.Flat">
-            <RadzenDataGrid Data="@inventoryItemsByLocation" TItem="InventoryItemDetail" @ref="invGrid"
+            <RadzenDataGrid Data="@inventoryItemsByLocation" TItem="EndProductItemDetail" @ref="invGrid"
                 AllowSorting="true" AllowPaging="true" PageSize="13" AllowFiltering="true" SelectionMode="DataGridSelectionMode.Multiple"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced" AllowColumnResize="true"
                             @bind-Value="@selectedInventories"  RowDoubleClick="@InsertInvItem">
@@ -44,8 +44,12 @@
                 </HeaderTemplate>
                 <Columns>
                     <RadzenDataGridColumn Property="BatchNumber" Title="Carton Id/Batch #" Width="120px" />
-                    <RadzenDataGridColumn Property="Names" Title="Item" Width="220px"/>
-                    <RadzenDataGridColumn Property="Quantity" Title="Weight (kg)" >
+                    <RadzenDataGridColumn Property="Names" Title="Item" Width="220px">
+                        <Template Context="item">
+                            @($"{item.Names} {item.Weight} {item.MeasurementUnitName}")
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Quantity" Title="Quantity" >
                         <Template Context = "item">
                             @item.Quantity.ToString("N2")
                         </Template> 
@@ -75,50 +79,43 @@
                 </RadzenStack>
 
                 <RadzenStack>
-                    <RadzenDataGrid @ref="rawMaterialsGrid" Data="@checkout.ProductCheckoutDetail" TItem="ProductCheckOutDetailRequest"
+                    <RadzenDataGrid @ref="rawMaterialsGrid" Data="@checkout.ProductCheckoutDetail" TItem="EndProductCheckOutDetailRequest"
                                     RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single" RowEdit="@OnRowEdit">
                         <Columns>
 
-                            <RadzenDataGridColumn Property="BatchNumber" Title="Carton ID / Batch #" Width="120px" Frozen="true" TextAlign="TextAlign.Center">
+                            <RadzenDataGridColumn Property="BatchNumber" Title="Batch #" Width="120px" Frozen="true" TextAlign="TextAlign.Center">
                                 <EditTemplate Context="item" >
                                     <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Carton Id / Batch #" 
                                         Style="width:100%;font-size:small" @ref=@batchTextBox TabIndex="0" />
                                 </EditTemplate>
                             </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn Property="RawMaterial.Names" Title="Item" Width="240px" />
+                            <RadzenDataGridColumn Title="Item" Width="240px">
+                                <Template Context="item">
+                                    @($"{item.ItemDetail.Names} {item.ItemDetail.Weight} {item.ItemDetail.MeasurementUnitName}")
+                                </Template>
+                            </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn Property="Quantity" Title="Weight (kg)" Width="240px">
+                            <RadzenDataGridColumn Property="Quantity" Title="Quantity" Width="240px">
                                 <Template Context="raw">
-                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                    @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", raw.Quantity)
+                                   @*  <RadzenStack Orientation="Orientation.Vertical" Gap="0">
                                         @(FormatQtyItem(raw))
                                         <RadzenText Style="font-size:smaller" Visible="@(raw.Quantity!=raw.InitialQuantity)">
                                             @string.Format($"Adjustment reason: {raw.QuantityChangeReason}")
                                         </RadzenText>
-                                    </RadzenStack>
+                                    </RadzenStack> *@
                                 </Template>
                                 <EditTemplate Context="raw">
                                     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
                                         <RadzenStack Orientation="Orientation.Horizontal">
-                                            <RadzenNumeric @bind-Value="raw.Quantity" Step="0.5" Format="N2" Style="width:100px;" Min="0"/>
+                                            <RadzenNumeric @bind-Value="raw.Quantity" Step="1" Format="N2" Style="width:100px;" Min="0"/>
                                            
                                         </RadzenStack>
-                                        <RadzenFormField Text="Adjustment Reason" Style="width: 200px; margin-top:-9px">
-                                            <RadzenAutoComplete FilterOperator="StringFilterOperator.Contains" FilterDelay="100" 
-                                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" @bind-Value=raw.QuantityChangeReason 
-                                                Data=@stockAdjustmentReasons TextProperty="Reason"  Style="width: 200px; font-size:small" 
-                                                InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Reason" }})"  />
-                                            
-                                        </RadzenFormField>
+                                     
                                     </RadzenStack>
                                  </EditTemplate>
                             </RadzenDataGridColumn >
-
-                         @*    <RadzenDataGridColumn Title="Source Location" Width="150px">
-                                <Template Context="raw">
-                                    @FormatSourceLocationAndRack(raw)
-                                </Template>
-                            </RadzenDataGridColumn> *@
 
                             <RadzenDataGridColumn Property="Location.Name" Title="Target Location" Width="180px">
                                 <EditTemplate Context="rawMaterial">
@@ -181,16 +178,16 @@
 </RadzenSplitter>
 
 @code {
-    RadzenDataGrid<ProductCheckOutDetailRequest> rawMaterialsGrid = new();
-    RadzenDataGrid<InventoryItemDetail> invGrid = new();
+    RadzenDataGrid<EndProductCheckOutDetailRequest> rawMaterialsGrid = new();
+    RadzenDataGrid<EndProductItemDetail> invGrid = new();
 
-    ProductCheckOutRequest checkout = new() { CheckoutDate = DateTime.Now };
+    EndProductCheckOutRequest checkout = new() { CheckoutDate = DateTime.Now };
 
-    ProductCheckOutDetailRequest? tmpItem;
+    EndProductCheckOutDetailRequest? tmpItem;
 
-    IEnumerable<InventoryItemDetail> inventoryItems= [];
-    List<InventoryItemDetail> inventoryItemsByLocation = [];
-    IList<InventoryItemDetail> selectedInventories = [];
+    IEnumerable<EndProductItemDetail> inventoryItems= [];
+    List<EndProductItemDetail> inventoryItemsByLocation = [];
+    IList<EndProductItemDetail> selectedInventories = [];
     IEnumerable<LocationResponse> locations = [];
     IEnumerable<LocationResponse> targetLocations = [];
     IEnumerable<RackingPalletResponse> rackingPallets = [];
@@ -219,7 +216,7 @@
         locations = await locationService.GetLocationsAsync();
         var selectedLocation = locations.FirstOrDefault();
         if(selectedLocation!=null) selectedLocationId = selectedLocation.Id;
-        inventoryItems = await service.GetInventoryItemsByLocation();
+        inventoryItems = await service.GetPackagedProductsByLocationAsync();
 
         rackingPallets = await locationService.GetRackingPalletsAsync();
 
@@ -243,7 +240,7 @@
         {
             if (checkout.ProductCheckoutDetail.FirstOrDefault(p => p.BatchNumber.Equals(item.BatchNumber)) == null)
             {
-                var newItem = new ProductCheckOutDetailRequest() { BatchNumber = item.BatchNumber };
+                var newItem = new EndProductCheckOutDetailRequest() { BatchNumber = item.BatchNumber };
                 ItemValidated(newItem);
                 checkout.ProductCheckoutDetail.Add(newItem);
             }
@@ -253,7 +250,7 @@
         await InsertRow();
     }
 
-    string FormatQtyItem(ProductCheckOutDetailRequest item)
+    string FormatQtyItem(EndProductCheckOutDetailRequest item)
     {
         string ret = "0";
 
@@ -265,7 +262,7 @@
         return ret;
     }
 
-    string FormatSourceLocationAndRack(ProductCheckOutDetailRequest item)
+    string FormatSourceLocationAndRack(EndProductCheckOutDetailRequest item)
     {
         string ret = "";
         var product = inventoryItems.FirstOrDefault(p => p.InventoryId == item.InventoryId);
@@ -291,7 +288,7 @@
 
             if (filterResults != null && filterResults.Any())
             {
-                inventoryItemsByLocation = filterResults.Adapt<List<InventoryItemDetail>>();
+                inventoryItemsByLocation = filterResults.Adapt<List<EndProductItemDetail>>();
             } 
             currentLocationName = $"Inventory Items at {locationName} ({inventoryItemsByLocation.Count} items)";
             targetLocations = locations.Where(p => p.Id != selectedLocationId);
@@ -303,26 +300,28 @@
         }
     }
 
-    bool ItemValidated(ProductCheckOutDetailRequest item)
+    bool ItemValidated(EndProductCheckOutDetailRequest item)
     {
         bool validated = false;
         logger.LogInformation($"ItemChanged/Validated Raised ...");
-        InventoryItemDetail? raw = null;
+        EndProductItemDetail? raw = null;
         if (!string.IsNullOrEmpty(item.BatchNumber))
         {
             if(checkout.ProductCheckoutDetail.Any(p=>p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()) && p!=item))
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Carton ID/Batch Number already exists");
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Batch Number already exists");
                 if (!isAddNew && tmpItem != null) item.BatchNumber = tmpItem.BatchNumber; 
                 return false;
             };
-            raw = inventoryItems.FirstOrDefault(p => p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()));
+            raw = inventoryItems.FirstOrDefault(p => 
+                p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()) && 
+                p.CurrentLocationId == selectedLocationId );
             if (raw != null)
             {
                 item.UnitMeasurementId = raw.MeasurementUnitId;
                 item.InitialQuantity = raw.Quantity;
                 item.InventoryId = raw.InventoryId;
-                item.RawMaterial = raw;
+                item.ItemDetail = raw;
 
                 // JSRuntime.InvokeVoidAsync("alert", item.QuantityChangeReason);
 
@@ -365,72 +364,72 @@
     async Task InsertRow()
     {
         logger.LogInformation("Inserting new row");
-        var newItem = new ProductCheckOutDetailRequest();
+        var newItem = new EndProductCheckOutDetailRequest();
         isAddNew = true;
         await rawMaterialsGrid.InsertRow(newItem);
 
     }
 
-    void OnRowEdit(ProductCheckOutDetailRequest item)
+    void OnRowEdit(EndProductCheckOutDetailRequest item)
     {
-        logger.LogInformation($"OnRowEdit '{item.RawMaterial?.Names ?? string.Empty}'");
+        logger.LogInformation($"OnRowEdit '{item.ItemDetail?.Names ?? string.Empty}'");
         batchTextBox?.Element.FocusAsync();
     }
 
 
-    void OnRowCreate(ProductCheckOutDetailRequest item)
+    void OnRowCreate(EndProductCheckOutDetailRequest item)
     {
         logger.LogInformation($"OnRowCreate");
         if (item.InventoryId != Guid.Empty)
         {
-            logger.LogInformation($"OnRowCreate ... Adding row to collection '{item.RawMaterial?.Names ?? string.Empty}'");
+            logger.LogInformation($"OnRowCreate ... Adding row to collection '{item.ItemDetail?.Names ?? string.Empty}'");
             checkout.ProductCheckoutDetail.Add(item);
             captionExt = $"({checkout.ProductCheckoutDetail.Count})";
         }
         else
         {
-            logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.RawMaterial?.Names ?? string.Empty}'");
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.ItemDetail?.Names ?? string.Empty}'");
             rawMaterialsGrid.CancelEditRow(item);
         }
     }
 
 
 
-    async Task EditRow(ProductCheckOutDetailRequest item)
+    async Task EditRow(EndProductCheckOutDetailRequest item)
     {
         isAddNew = false;
         logger.LogInformation($"Editing row - collection count:'{checkout.ProductCheckoutDetail.Count}");
-        tmpItem = item.Adapt<ProductCheckOutDetailRequest>();
+        tmpItem = item.Adapt<EndProductCheckOutDetailRequest>();
         await rawMaterialsGrid.EditRow(item);
-        logger.LogInformation($"Editing row '{item.RawMaterial?.Names ?? string.Empty}' EditMode:{rawMaterialsGrid.IsRowInEditMode(item)}");
+        logger.LogInformation($"Editing row '{item.ItemDetail?.Names ?? string.Empty}' EditMode:{rawMaterialsGrid.IsRowInEditMode(item)}");
         logger.LogInformation($"Editing row - collection count:'{checkout.ProductCheckoutDetail.Count}" +
             $"{Environment.NewLine}===> grid.Count:{rawMaterialsGrid.Count}");
         await rawMaterialsGrid.Reload();
         await rawMaterialsGrid.EditRow(item);
     }
 
-    void OnUpdateRow(ProductCheckOutDetailRequest item)
+    void OnUpdateRow(EndProductCheckOutDetailRequest item)
     {
 
 
         if (ItemValidated(item))
         {
-            logger.LogInformation($"Items Validated ...  '{item.RawMaterial?.Names ?? string.Empty}'");
+            logger.LogInformation($"Items Validated ...  '{item.ItemDetail?.Names ?? string.Empty}'");
         }
         else
         {
-            logger.LogInformation($"Items NOT Validated ... Cancelling Edit and re-enter edit mode '{item.RawMaterial?.Names ?? string.Empty}'");
+            logger.LogInformation($"Items NOT Validated ... Cancelling Edit and re-enter edit mode '{item.ItemDetail?.Names ?? string.Empty}'");
             rawMaterialsGrid.CancelEditRow(item);
-            if(tmpItem!=null) item = tmpItem.Adapt<ProductCheckOutDetailRequest>();
+            if(tmpItem!=null) item = tmpItem.Adapt<EndProductCheckOutDetailRequest>();
             rawMaterialsGrid.EditRow(item);
         }
 
         // logger.LogInformation($"Adding row to collection '{item.RawMaterial?.Names ?? string.Empty}'");
     }
 
-    async Task DeleteRow(ProductCheckOutDetailRequest item)
+    async Task DeleteRow(EndProductCheckOutDetailRequest item)
     {
-        logger.LogInformation($"delete row - orderg if the row exists '{item.RawMaterial?.Names ?? string.Empty}'");
+        logger.LogInformation($"delete row - orderg if the row exists '{item.ItemDetail?.Names ?? string.Empty}'");
         if (checkout.ProductCheckoutDetail.Contains(item))
         {
             logger.LogInformation("deleting row");
@@ -441,16 +440,16 @@
         }
     }
 
-    async void CancelEdit(ProductCheckOutDetailRequest item)
+    async void CancelEdit(EndProductCheckOutDetailRequest item)
     {
-        logger.LogInformation($"Cancelling Edit '{item.RawMaterial?.Names ?? string.Empty}'");
+        logger.LogInformation($"Cancelling Edit '{item.ItemDetail?.Names ?? string.Empty}'");
         rawMaterialsGrid.CancelEditRow(item);
         await InsertRow();
     }
 
-    async void SaveRow(ProductCheckOutDetailRequest item)
+    async void SaveRow(EndProductCheckOutDetailRequest item)
     {
-        logger.LogInformation($"Save Row '{item.RawMaterial?.Names ?? string.Empty}'");
+        logger.LogInformation($"Save Row '{item.ItemDetail?.Names ?? string.Empty}'");
         if (item.InventoryId == Guid.Empty || item.LocationId == Guid.Empty || item.RackingPalletId == Guid.Empty) return;
         await rawMaterialsGrid.UpdateRow(item);
         await InsertRow();
@@ -480,16 +479,16 @@
         isSaving = true;
         foreach(var item in checkout.ProductCheckoutDetail)
         {
-            if (!item.RawMaterial.IsFinishedGood) item.Quantity *= 1000;
+            if (!item.ItemDetail.IsFinishedGood) item.Quantity *= 1000;
         }
-        response = await service.CreateProductCheckout(checkout);
+        response = await service.CreateEndProductCheckout(checkout);
 
         if (response != Guid.Empty)
         {
             NotificationService.Notify(NotificationSeverity.Success,
                 "Transaction Saved", "Inventory transfer has been saved successfully");
             Clear();
-            inventoryItems = await service.GetInventoryItemsByLocation();
+            inventoryItems = await service.GetPackagedProductsByLocationAsync();
             InitInventoryByLocation(selectedLocationId);
             isSaving = false;
         }

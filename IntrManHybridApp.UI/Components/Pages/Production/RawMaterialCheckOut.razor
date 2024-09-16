@@ -13,23 +13,56 @@
 @inject ILogger<RawMaterialCheckOut> logger
 @inject IJSRuntime JSRuntime
 
-@* <RadzenTemplateForm TItem="ProductCheckOutRequest" Data="@checkout" Submit="@Save"> *@
-    <RadzenCard Style="margin-bottom:10px">
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+<RadzenCard Style="margin-top:-48px">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" AlignItems="AlignItems.Start">
             <RadzenButton ButtonStyle="ButtonStyle.Warning" Shade="Shade.Darker" class="rz-shadow-0">
                 @caption
                 <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="@true" Text="@captionExt" class="rz-ml-2" />
             </RadzenButton>
-            <RadzenProgressBarCircular Visible="@isSaving" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium">
-                <Template>Saving</Template>
-            </RadzenProgressBarCircular>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
-                <RadzenButton Text="Clear" ButtonStyle="ButtonStyle.Danger" Click="@Clear" />
-            </RadzenStack>
+            <RadzenText Style="margin-top:6px; margin-right:0px;"><small><strong>Show Raw Materials</strong></small></RadzenText>
+            <RadzenSwitch @bind-Value=@showProducts Style="margin-top:12px; margin-left:0px" />
         </RadzenStack>
-    </RadzenCard>
-    <RadzenCard>
+
+        <RadzenProgressBarCircular Visible="@isSaving" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium">
+            <Template>Saving</Template>
+        </RadzenProgressBarCircular>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+            <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Click="@Save" />
+            <RadzenButton Text="Clear" ButtonStyle="ButtonStyle.Danger" Click="@Clear" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
+
+ <RadzenSplitter Orientation="Orientation.Horizontal" style="border: 0px solid rgba(0,0,0,.08); margin-top:12px; background-color:white">
+
+    <RadzenSplitterPane Size="50%" Min="470px" Max="550px" Collapsed="@(!showProducts)">        
+        <RadzenCard Visible="@showProducts" Variant="Variant.Flat">
+            <RadzenDataGrid Data="@rawMaterials" TItem="InventoryItemDetail" @ref="invGrid"
+                AllowSorting="true" AllowPaging="true" PageSize="13" AllowFiltering="true" SelectionMode="DataGridSelectionMode.Multiple"
+                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced" AllowColumnResize="true"
+                            @bind-Value="@selectedInventories"  RowDoubleClick="@InsertInvItem">
+                <HeaderTemplate>
+                    <RadzenButton Click="@InsertInvItem" Icon="playlist_add" Text="Insert selected items" />
+                </HeaderTemplate>
+                <Columns>
+                    <RadzenDataGridColumn Property="ExpiryDate" Title="Exp. Date" FormatString="{0:d}" Width="110px"/>
+                    <RadzenDataGridColumn Property="BatchNumber" Title="Carton Id" Width="90px" />
+                    <RadzenDataGridColumn Property="Names" Title="Item" Width="160px">
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Quantity" Title="Weight (gr)" Width="110px" >
+                        <Template Context = "item">
+                            @item.Quantity.ToString("N2")
+                        </Template> 
+                    </RadzenDataGridColumn>
+                </Columns> 
+            </RadzenDataGrid>   
+        </RadzenCard>
+    </RadzenSplitterPane>
+
+    <RadzenSplitterPane Collapsible="false">
+        <RadzenCard Variant="Variant.Flat">
 
         <RadzenStack>
 
@@ -37,7 +70,7 @@
                 <RadzenFormField Text="Checkout Date">
                     <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="@checkout.CheckoutDate" Name="checkoutDate" ShowTime="true" />
                 </RadzenFormField>
-               
+             
             </RadzenStack>
 
             <RadzenStack>
@@ -57,15 +90,15 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn Property="RawMaterial.Names" Title="Item" Width="230px">
-                           
-                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn Property="RawMaterial.Names" Title="Item" Width="230px" />
 
                         <RadzenDataGridColumn Property="Quantity" Title="Batch Size (gr)" Width="80px">
                             <Template Context="raw">
                                 @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", raw.Quantity)
                             </Template>
                         </RadzenDataGridColumn>
+
+                      
 
                     <RadzenDataGridColumn Property="Location.Name" Title="Location" Width="130px">
                             <EditTemplate Context="item">
@@ -105,18 +138,20 @@
             </RadzenStack>
         </RadzenStack>
     </RadzenCard>
-@* 
-</RadzenTemplateForm> *@
+    </RadzenSplitterPane>
+</RadzenSplitter> 
 
 @code {
     RadzenDataGrid<ProductCheckOutDetailRequest> rawMaterialsGrid = new();
+    RadzenDataGrid<InventoryItemDetail> invGrid = new();
 
     ProductCheckOutRequest checkout = new() { CheckoutDate = DateTime.Now };
-
+    IEnumerable<ProductCheckOutDetailRequest> checkoutItems = [];
     ProductCheckOutDetailRequest? tmpItem;
 
     IEnumerable<InventoryItemDetail> rawMaterials = [];
-    IEnumerable<ProductCheckOutDetailRequest> checkoutItems = [];
+    IList<InventoryItemDetail> selectedInventories = [];
+
     IEnumerable<LocationResponse> locations = [];
     IEnumerable<RackingPalletResponse> rackingPallets = [];
 
@@ -124,6 +159,8 @@
     string captionExt = "0";
     bool isSaving = false;
     bool isAddNew = false;
+    bool showProducts = true;
+    bool fromInvGrid = false;
 
     RadzenDropDown<Guid>? locationDropDown;
     RadzenDropDown<Guid>? rackingPalletDropDown;
@@ -136,6 +173,24 @@
         locations = await locationService.GetLocationsAsync();
         rackingPallets = await locationService.GetRackingPalletsAsync();
         rawMaterials = await service.GetRawMaterialsForProductionAsync();
+        await InsertRow();
+    }
+
+    async void InsertInvItem()
+    {
+        if (selectedInventories.Count == 0) return;
+        fromInvGrid = true;
+        foreach (var item in selectedInventories)
+        {
+            if (checkout.ProductCheckoutDetail.FirstOrDefault(p => p.BatchNumber.Equals(item.BatchNumber)) == null)
+            {
+                var newItem = new ProductCheckOutDetailRequest() { BatchNumber = item.BatchNumber };
+                ItemValidated(newItem);
+                checkout.ProductCheckoutDetail.Add(newItem);
+            }
+        }
+        await rawMaterialsGrid.Reload();
+        fromInvGrid = false;
         await InsertRow();
     }
 
@@ -327,8 +382,9 @@
             NotificationService.Notify(NotificationSeverity.Success,
                 "Transaction Saved", "Raw Material checkout has been saved successfully");
             Clear();
-           
+            
             isSaving = false;
+            rawMaterials = await service.GetRawMaterialsForProductionAsync();
         }
         else
         {

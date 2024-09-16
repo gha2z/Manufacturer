@@ -180,6 +180,7 @@ namespace IntrManApp.Api.Features.Production
                             ProductionDate = inventory.ProductionDate,
                             ExpirationDate = inventory.ExpirationDate,
                             Flag = 8,
+                            TransIdReference = item.InventoryId,
                             ModifiedDate = DateTime.Now
                         };
 

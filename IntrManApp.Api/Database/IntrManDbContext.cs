@@ -708,6 +708,7 @@ public partial class IntrManDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.CheckOut).WithMany(p => p.ProductInternalCheckOutLines)
                 .HasForeignKey(d => d.CheckOutId)
@@ -1199,6 +1200,8 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.FeatureId, e.UserTypeId });
 
             entity.ToTable("UserTypeFeature");
+
+            entity.HasIndex(e => e.UserTypeId, "IX_UserTypeFeature_UserTypeId");
 
             entity.Property(e => e.Accessible).HasDefaultValue(false);
 

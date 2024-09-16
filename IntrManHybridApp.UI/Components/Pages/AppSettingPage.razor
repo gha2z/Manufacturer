@@ -58,13 +58,15 @@
                     <RadzenPassword @bind-Value=@DatabaseSettings.Password Disabled="@DatabaseSettings.UseIntegratedSecurity"></RadzenPassword>
                 </RadzenFormField>
             </RadzenStack>
-            <RadzenStack Gap="0.75rem" Orientation="Orientation.Horizontal">
+            <RadzenStack Gap="0.75rem" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                 <RadzenButton Text="Apply" Click="@SetDatabaseServer" Style="height:40px; margin-top:9px"
                               BusyText="Wait ..." IsBusy="@isBusy" class="rz-background-color-primary-light" />
-                <RadzenButton Text="Re-create database" Click="@CreateDatabase" Style="height:40px; margin-top:9px"
-                              BusyText="Wait ..." IsBusy="@isBusy" ButtonStyle="ButtonStyle.Danger" />
-                <RadzenButton Text="Reset Transaction" Click="@ResetTransaction" Style="height:40px; margin-top:9px"
-                              BusyText="Wait ..." IsBusy="@isBusy" ButtonStyle="ButtonStyle.Danger" />
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End">
+                    <RadzenButton Text="Reset Transaction" Click="@ResetTransaction" Style="height:40px; margin-top:9px"
+                                  BusyText="Wait ..." IsBusy="@isBusy" ButtonStyle="ButtonStyle.Danger" Shade="Shade.Dark" />
+                    <RadzenButton Text="Re-create database" Click="@CreateDatabase" Style="height:40px; margin-top:9px"
+                                  BusyText="Wait ..." IsBusy="@isBusy" ButtonStyle="ButtonStyle.Danger" />
+                </RadzenStack>
             </RadzenStack>
         </RadzenStack>
        

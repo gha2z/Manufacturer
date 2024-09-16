@@ -29,5 +29,6 @@ namespace IntrManHybridApp.UI.Services
         Task<IEnumerable<EndProductItemDetail>> GetPackagedProductsByLocationAsync();
 
         Task<Guid> CreateEndProductStockAdjustment(EndProductStockAdjustmentRequest request);
+        Task<Guid> CreateEndProductCheckout(EndProductCheckOutRequest request);
     }
 }

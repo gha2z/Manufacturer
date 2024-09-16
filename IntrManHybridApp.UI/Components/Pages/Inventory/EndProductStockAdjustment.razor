@@ -62,13 +62,10 @@
         <RadzenCard Variant="Variant.Flat">
             <RadzenStack>
 
-               
                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.75rem">
                         <RadzenText Style="margin-top:6px; width:300px;"><small><strong>Show Inventory Items</strong></small></RadzenText>
                         <RadzenSwitch @bind-Value=@showProducts Style="margin-top:12px" />
                     </RadzenStack>
-                    
-              
 
                 <RadzenStack>
                     <RadzenDataGrid @ref="EndProductStockAdjustmentGrid" Data="@EndProductStockAdjustments" TItem="EndProductStockAdjustmentLineRequest"
@@ -80,7 +77,7 @@
                             Frozen="true" TextAlign="TextAlign.Center">
                                 <EditTemplate Context="item">
                                     <RadzenTextBox @bind-Value="item.ItemDetail.BatchNumber" Change="@(args => ItemValidated(item))" 
-                                        Placeholder="Scan Carton Id / Batch #" Style="width:100%;font-size:small" @ref=@batchTextBox TabIndex="0" />
+                                        Placeholder="Scan Batch #" Style="width:100%;font-size:small" @ref=@batchTextBox TabIndex="0" />
                                 </EditTemplate>
                             </RadzenDataGridColumn>
 
@@ -90,7 +87,7 @@
                                 </Template>
                             </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn Property="InitialQuantity" Title="Current Weight (kg)" Width="120px">
+                            <RadzenDataGridColumn Property="InitialQuantity" Title="Current Quantity" Width="120px">
                                 <Template Context="raw">
                                     @raw.InitialQuantity.ToString("N2")
                                 </Template>
@@ -101,7 +98,7 @@
                                     @raw.Quantity.ToString("N2")
                                 </Template>
                                 <EditTemplate Context="raw">
-                                    <RadzenNumeric @ref=@quantityTextBox @bind-Value="raw.Quantity" Step="0.5" Style="width:100px;" 
+                                    <RadzenNumeric @ref=@quantityTextBox @bind-Value="raw.Quantity" Step="1" Style="width:100px;" 
                                     Min="0" Format="N2" />
                                 </EditTemplate>
                             </RadzenDataGridColumn>

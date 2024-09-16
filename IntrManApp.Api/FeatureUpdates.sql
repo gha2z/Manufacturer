@@ -416,23 +416,49 @@ INSERT @stockFlow
 		ON
 			cl.InventoryId = i.InventoryId 
 	WHERE I.ProductId = @ProductId AND CL.LocationId=@LocationId and cl.Weight=@weight 
-UNION ALL 
-	SELECT 
-		c.CheckOutDate as TransDate, cl.InventoryId, i.BatchNumber, 
-		Description =  'Move to ' + (select Name from Production.Location where id=cl.LocationId),
-		0, cl.Quantity, 0,
-		13 
+UNION ALL
+SELECT 
+		c.CheckInDate as TransDate, cl.InventoryId, i.BatchNumber, 
+		Description = case 
+			WHEN c.CheckInType=1 then 'Production' 
+			else 'Move From ' + (select Name from Production.Location where id=cl.SourceLocationId) end,
+		cl.Quantity, 0, 0,
+		case 
+			when c.CheckInType=1 then 7 
+			when c.CheckInType=2 then 13 end 
 	FROM 
-		Production.ProductInternalCheckOutLine cl
+		Production.ProductInternalCheckInLine cl
 	INNER JOIN 
-		Production.ProductInternalCheckOut c 
+		Production.ProductInternalCheckIn c 
 		ON
-			cl.CheckOutId = c.Id 
+			cl.CheckInId = c.Id 
 	INNER JOIN 
 		Production.ProductInventory i 
 		ON
 			cl.InventoryId = i.InventoryId 
-	WHERE I.ProductId = @ProductId AND CL.SourceLocationId=@LocationId and i.Quantity=@weight 
+	WHERE I.ProductId = @ProductId AND CL.LocationId=@LocationId and cl.Weight=@weight and isnull(c.CheckInType,2)<>1 
+UNION ALL
+SELECT 
+		c.CheckInDate as TransDate, cl.InventoryId, i.BatchNumber, 
+		Description = case 
+			WHEN c.CheckInType=1 then 'Production' 
+			else 'Move to ' + (select Name from Production.Location where id=cl.LocationId) end,
+		0, cl.Quantity, 0,
+		case 
+			when c.CheckInType=1 then 7 
+			when c.CheckInType=2 then 13 end 
+	FROM 
+		Production.ProductInternalCheckInLine cl
+	INNER JOIN 
+		Production.ProductInternalCheckIn c 
+		ON
+			cl.CheckInId = c.Id 
+	INNER JOIN 
+		Production.ProductInventory i 
+		ON
+			cl.InventoryId = i.InventoryId 
+	WHERE I.ProductId = @ProductId AND CL.SourceLocationId=@LocationId and cl.Weight=@weight and isnull(c.CheckInType,2)<>1 
+
 UNION ALL
 	SELECT 
 		SO.OrderDate, sl.InventoryId, I.BatchNumber, f.Name, 0, sl.Quantity , 0, i.Flag 
@@ -451,12 +477,11 @@ UNION ALL
 		ON
 			i.Flag = f.Id 
 	WHERE I.ProductId = @ProductId AND i.LocationId = @LocationId AND I.Flag BETWEEN 10 AND 12 AND i.Quantity=@weight 
-
-	ORDER BY TransDate 
+ORDER BY TransDate
 
 UPDATE @stockFlow set @balance = balance=@balance+StockIn-StockOut
 
-SELECT * FROM @stockFlow
+SELECT * FROM @stockFlow order by TransDate
 GO
 /****** Object:  StoredProcedure [Production].[GetBomAllocation]    Script Date: 9/10/2024 7:12:37 AM ******/
 SET ANSI_NULLS ON
@@ -831,8 +856,8 @@ FROM
 	INNER JOIN production.MeasurementUnit mu 
 		ON p.MeasurementUnitOrderId = mu.Id 
 WHERE IsFinishedGood=0
-GO
-/****** Object:  StoredProcedure [Production].[GetRawMaterialsForProduction]    Script Date: 9/10/2024 7:12:37 AM ******/
+GO 
+/****** Object:  StoredProcedure [Production].[GetRawMaterialsForProduction]    Script Date: 9/15/2024 7:12:37 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -854,7 +879,9 @@ SELECT
 	isnull(p.OutRackingPalletId, p.RackingPalletId) as RackingPalletId, 
 	rack.Col+'-'+cast(rack.row as nvarchar(5)) as RackingPalletColRow,
 	p.DaysToExpire,
-	p.DaysToManufacture 
+	p.DaysToManufacture,
+	inv.ProductionDate,
+	inv.ExpirationDate as ExpiryDate
 FROM 
 	Production.ProductInventory inv 
 INNER JOIN 
@@ -876,7 +903,9 @@ INNER JOIN
 	ON
 		isnull(p.OutRackingPalletId, p.RackingPalletId) = rack.Id 
 WHERE 
-	p.IsFinishedGood = 0 AND inv.Quantity>0
+	p.IsFinishedGood = 0 AND inv.Quantity>0 
+ORDER BY
+	inv.ExpirationDate desc 
 GO
 /****** Object:  StoredProcedure [Production].[GetRunningProductionItems]    Script Date: 9/10/2024 7:12:37 AM ******/
 SET ANSI_NULLS ON
@@ -1880,4 +1909,5 @@ begin
 end
 GO
 Update dbo.Feature set Path='/EndProductStockAdjustment' where Name = 'Finished Product Adjustment'
+Update dbo.Feature set Path='/EndProductStockTransfer' where Name = 'Finished Product Transfer'
 GO

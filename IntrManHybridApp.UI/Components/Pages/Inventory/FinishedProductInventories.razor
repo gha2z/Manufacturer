@@ -76,11 +76,11 @@
             </Template>
         </RadzenDataGridColumn> *@
 
-        <RadzenDataGridColumn Property="ProductName" Title="Product"  Width="240px" Frozen="true"/>
         <RadzenDataGridColumn Property="CategoryName" Title="Category" />
-        <RadzenDataGridColumn Property="Weight" Title="Weight">
+        <RadzenDataGridColumn Title="Product Name">
             <Template Context="data">
-                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2} {1}", data.Weight, data.MeasurementUnitName)
+                @String.Format(new System.Globalization.CultureInfo("en-US"), "{2} {0:N2} {1}", 
+                    data.Weight, data.MeasurementUnitName, data.ProductName)
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn Property="Location" Title="Location" />

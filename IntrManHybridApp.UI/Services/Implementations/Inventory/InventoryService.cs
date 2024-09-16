@@ -72,22 +72,28 @@ public class InventoryService(HttpClient httpClient, ILogger<InventoryService> l
                     Location = item.Location,
                     LocationId = item.LocationId
                 };
-                var qtyFlag = response.FirstOrDefault(
-                       x => x.ProductId == item.ProductId && x.Weight == item.Weight && (x.Flag == 7 || x.Flag == 8));
+                var qtyFlag = response.FirstOrDefault(x => 
+                    x.ProductId == item.ProductId && x.Weight == item.Weight && 
+                    x.LocationId == item.LocationId && (x.Flag == 7 || x.Flag == 8));
                 if (qtyFlag != null) newItem.QtyAvailable = qtyFlag.Quantity;
-                qtyFlag = response.FirstOrDefault(
-                        x => x.ProductId == item.ProductId && x.Weight == item.Weight && x.Flag >= 9);
+
+                qtyFlag = response.FirstOrDefault(x => 
+                    x.ProductId == item.ProductId && x.Weight == item.Weight &&
+                    x.LocationId == item.LocationId && x.Flag >= 9);
                 if (qtyFlag != null) newItem.QtyReserved = qtyFlag.Quantity;
-                qtyFlag = response.FirstOrDefault(
-                        x => x.ProductId == item.ProductId && x.Weight == item.Weight && x.Flag == 6);
+                
+                qtyFlag = response.FirstOrDefault(x => 
+                    x.ProductId == item.ProductId && x.Weight == item.Weight &&
+                    x.LocationId == item.LocationId && x.Flag == 6);
                 if (qtyFlag != null) newItem.QtyInProduction = qtyFlag.Quantity;
-                qtyFlag = response.FirstOrDefault(
-                        x => x.ProductId == item.ProductId && x.Weight == item.Weight && x.Flag == 5);
+                
+                qtyFlag = response.FirstOrDefault(x => 
+                    x.ProductId == item.ProductId && x.Weight == item.Weight &&
+                    x.LocationId == item.LocationId && x.Flag == 5);
                 if (qtyFlag != null) newItem.QtyToBeProduced = qtyFlag.Quantity;
 
                 inventoryItems.Add(newItem);
             }
-
         }
         catch (Exception ex)
         {
@@ -102,7 +108,7 @@ public class InventoryService(HttpClient httpClient, ILogger<InventoryService> l
         try
         {
 
-            logger.LogInformation($"Getting Inventory Ledger: Get {httpClient.BaseAddress}/finishedProcutInventoryLedger");
+            logger.LogInformation($"Getting Inventory Ledger: Get {httpClient.BaseAddress}/finishedProductInventoryLedger");
             //var response = await httpClient.PostAsJsonAsync("productCheckout", request);
             //return response.Content.ReadFromJsonAsync<Guid>().Result;
             var response = httpClient.PostAsJsonAsync($"finishedProductInventoryLedger", request);
@@ -322,6 +328,22 @@ public class InventoryService(HttpClient httpClient, ILogger<InventoryService> l
             logger.LogError(ex, $"CreateEndProductStockAdjustment:{httpClient.BaseAddress}/EndProductStockAdjustment/{json}" +
                 $"{Environment.NewLine}{ex.Message}{ex}");
             throw new Exception(ex.Message);
+        }
+    }
+
+    public async Task<Guid> CreateEndProductCheckout(EndProductCheckOutRequest request)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(request);
+            logger.LogInformation($"Creating End Product Checkout: Post {httpClient.BaseAddress}/EndProductInternalCheckOut/{json}");
+            var response = await httpClient.PostAsJsonAsync("EndProductInternalCheckout", request);
+            return response.Content.ReadFromJsonAsync<Guid>().Result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating Raw Materials Checkout");
+            return Guid.Empty;
         }
     }
 }

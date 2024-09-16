@@ -181,7 +181,10 @@ namespace IntrManApp.SetupConfigurator
                 {
                     if (isServerIncluded)
                     {
+                        if(Directory.Exists(binPath)) Directory.Delete(binPath, true);
                         if (!Directory.Exists(binPath)) Directory.CreateDirectory(binPath);
+                      
+
                         Notify("Extracting Backend Service ...");
                         ZipFile.ExtractToDirectory(Path.Combine(Application.StartupPath, "backend.zip"), binPath, true);
 

@@ -202,8 +202,6 @@
                 };
             Line.ProductId = selectedProduct.Id;
             Line.MeasurementUnitId = selectedProduct.MeasurementUnitOrderId;
-            //if (Line.ProductionDate == null) Line.ProductionDate = DateTime.Now;
-            NotificationService.Notify(NotificationSeverity.Info, "Production Date", $"{Line.ProductionDate}");
             Line.ExpiryDate = Line.ProductionDate?.AddDays((int)selectedProduct.DaysToExpire);
         }
         variants = selectedProduct.ProductVariants.AsEnumerable();
@@ -226,7 +224,6 @@
                 Line.IsNotFromExistingProduction = false;
                 Line.ProductId = item.ProductId;
                 Line.ProductionDate = item.ProductionDate;
-                NotificationService.Notify(NotificationSeverity.Info, "Production Date", $"{item.ProductionDate}");
                 await OnProductChanged();
             }
             else
@@ -390,14 +387,7 @@
         var totalWeight = Line.FinishedPackagedProducts.Sum(
            v => v.ProductVariant.Weight * measurementUnits.Where(
                m => m.Id == v.ProductVariant.MeasurementUnitId).FirstOrDefault().Quantity * v.Quantity);
-        // foreach(var v in Line.FinishedPackagedProducts)
-        // {
-        //     var weight = v.ProductVariant.Weight * measurementUnits.Where(
-        //         m=>m.Id==v.ProductVariant.MeasurementUnitId).FirstOrDefault().Quantity * v.Quantity;
-        //     totalWeight += weight;
-        // }
-
-        // NotificationService.Notify(NotificationSeverity.Info, $"Line Weight: {lineWeight}, total packaging weight: {totalWeight}");
+     
 
         if (Line.InventoryId == Guid.Empty)
         {
@@ -439,11 +429,6 @@
             NotificationService.Notify(NotificationSeverity.Error, "Error", "Total Packaging weight must be equal to Production Weight");
             return;
         }
-        // if (Line.FinishedPackagedProducts.Any(p => p.Quantity > p.ProductVariant.Weight Quantity))
-        // {
-        //     NotificationService.Notify(NotificationSeverity.Error, "Error", "Packaging quantity cannot be greater than the product variant quantity");
-        //     return;
-        // }
         DialogService.Close(Line);
     }
 
