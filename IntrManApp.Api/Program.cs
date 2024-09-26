@@ -8,6 +8,7 @@ using Serilog;
 using System.Data;
 using System.Text.Json;
 using IntrManApp.Shared.Common;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,20 +50,29 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Logging.AddSerilog();
 
+var appSettingFile = Path.Combine(appDataPath, "appsettings.json");
 ServerAppSettings setting;
-var appSettingFile = Path.Combine(appDataPath, "appsettings.json"); 
-if(File.Exists(appSettingFile))
+
+
+if(!File.Exists(appSettingFile))
 {
-    setting = JsonSerializer.Deserialize<ServerAppSettings>(File.ReadAllText(appSettingFile)) ?? new();
-    if (setting.ConnectionStrings.Database.Contains(@"\\")) setting.ConnectionStrings.Database = setting.ConnectionStrings.Database.Replace(@"\\", @"\");
-    if (setting.ConnectionStrings.DbConfig.Contains(@"\\")) setting.ConnectionStrings.Database = setting.ConnectionStrings.DbConfig.Replace(@"\\", @"\");
+    setting = new();
+    Log.Logger.Information("Creating a new setting file ...");
     File.WriteAllText(appSettingFile, JsonSerializer.Serialize(setting));
 }
-else
-{
-    setting = new ();
-    File.WriteAllText(appSettingFile, JsonSerializer.Serialize(setting));
-}
+var fileContent = File.ReadAllText(appSettingFile);
+setting = JsonSerializer.Deserialize<ServerAppSettings>(fileContent) ?? new();
+//if(!File.Exists(appSettingFile))
+////{
+////    
+////    
+////    //if (setting.ConnectionStrings.Database.Contains(@"\\")) setting.ConnectionStrings.Database = setting.ConnectionStrings.Database.Replace(@"\\", @"\");
+////    //if (setting.ConnectionStrings.DbConfig.Contains(@"\\")) setting.ConnectionStrings.Database = setting.ConnectionStrings.DbConfig.Replace(@"\\", @"\");
+////    Log.Logger.Information($"Reading app settings from {appSettingFile} =>\n{fileContent} dbCs={setting.ConnectionStrings.Database}");
+////    //File.WriteAllText(appSettingFile, JsonSerializer.Serialize(setting));
+////}
+////else
+
 
 builder.Configuration.AddJsonFile(appSettingFile,false,true);
 
@@ -70,7 +80,9 @@ builder.Services.Configure<ConnectionStrings>(builder.Configuration.GetSection("
 
 builder.Services.AddDbContext<IntrManDbContext>(o =>
 {
-    o.UseSqlServer(builder.Configuration.GetConnectionString("Database"));
+    var cs = builder.Configuration.GetConnectionString("Database");
+    Log.Logger.Information($"Configuring database connection => \"{cs}\"");
+    o.UseSqlServer(cs);
     //o.EnableSensitiveDataLogging();
 
 });
@@ -99,19 +111,26 @@ var app = builder.Build();
     var context = scope.ServiceProvider.GetRequiredService<IntrManDbContext>();
 
     Log.Logger.Information("Checking if database \"IntrManDB\" exists");
-    if(!context.Database.CanConnect())
+    bool dbCreated = context.Database.CanConnect();
+
+    if (!dbCreated)
     {
-        Log.Logger.Information("No such database found. Creating database ...");
-        context.Database.EnsureCreated();
+       
+        Log.Logger.Information($"No such database found. Creating database ...");
+        try
+        {
+            dbCreated = context.Database.EnsureCreated();
+        } catch (SqlException ex)
+        {
+            Log.Logger.Error(ex, $"Error creating database\nException Message:{ex.Message}\n\nException ToString:{ex}");
+        }
         sps = Path.Combine(appDataPath, "SPs.sql");
         Log.Logger.Information("Verifying stored procedures ...");
-
-        //if (!File.Exists(sps))
-        //{
-            Log.Logger.Information($"Copying {sps}");
-            File.WriteAllText(sps, File.ReadAllText(Path.Combine("SPs.sql")));
-        //}
-        if (File.Exists(sps))
+#if DEBUG
+        Log.Logger.Information($"Copying {sps}");
+        File.WriteAllText(sps, File.ReadAllText(Path.Combine("SPs.sql")));
+#endif
+        if (File.Exists(sps) && dbCreated)
         {
             var dbConnectionFactory = scope.ServiceProvider.GetRequiredService<IDbConnectionFactory>();
             using IDbConnection connection = dbConnectionFactory.CreateOpenConnection();
@@ -129,16 +148,21 @@ var app = builder.Build();
                 }
             }
         }
+        else
+        {
+            if(!dbCreated) Log.Logger.Information($"Skipping database operation since the database creation was not successful");
+            else Log.Logger.Information($"No stored procedures and related script found => {sps}");
+        }
     }
     sps = Path.Combine(appDataPath, "ConfigSPs.sql");
     Log.Logger.Information($"Verifying config stored procedures => {sps}");
 
-    //if (!File.Exists(sps))
-    //{
-        Log.Logger.Information($"Copying {sps}");
-        File.WriteAllText(sps, File.ReadAllText(Path.Combine("ConfigSPs.sql")));
-    //}
-    if (File.Exists(sps))
+#if DEBUG
+    Log.Logger.Information($"Copying {sps}");
+    File.WriteAllText(sps, File.ReadAllText(Path.Combine("ConfigSPs.sql")));
+#endif
+
+    if (dbCreated && File.Exists(sps))
     {
         Log.Logger.Information($"Executing config stored procedures => {sps}");
         var dbConfigConnectionFactory = scope.ServiceProvider.GetRequiredService<IDbConfigConnectionFactory>();
@@ -157,17 +181,22 @@ var app = builder.Build();
                 Log.Logger.Error(ex, "Error executing query: {query}", query);
             }
         }
-    } else Log.Logger.Information($"No config stored procedures found => {sps}");
+    }
+    else 
+    {
+        if (!dbCreated) Log.Logger.Information($"Skipping database operation since the database creation was not successful");
+        else Log.Logger.Information($"No dbconfig stored procedures and related script found => {sps}");
+    }
 
     sps = Path.Combine(appDataPath, "FeatureUpdates.sql");
     Log.Logger.Information($"Verifying feature updates => {sps}");
 
-    //if (!File.Exists(sps))
-    //{
-        Log.Logger.Information($"Copying {sps}");
-        File.WriteAllText(sps, File.ReadAllText(Path.Combine("FeatureUpdates.sql")));
-    //}
-    if (File.Exists(sps))
+#if DEBUG
+    Log.Logger.Information($"Copying {sps}");
+    File.WriteAllText(sps, File.ReadAllText(Path.Combine("FeatureUpdates.sql")));
+#endif
+
+    if (dbCreated && File.Exists(sps))
     {
         Log.Logger.Information($"Executing feature updates => {sps}");
         var dbConnectionFactory = scope.ServiceProvider.GetRequiredService<IDbConnectionFactory>();
@@ -187,7 +216,11 @@ var app = builder.Build();
             }
         }
     }
-    else Log.Logger.Information($"No feature updates found => {sps}");
+    else
+    {
+        if (!dbCreated) Log.Logger.Information($"Skipping database operation since the database creation was not successful");
+        else Log.Logger.Information($"No feature updates and related script found => {sps}");
+    }
 }
 
 

@@ -10,8 +10,9 @@ namespace IntrManHybridApp.UI.Services
     public interface ISaleService
     {
         Task<Guid> CreateDispatchEntry(DispatchRequest request);
-        Task<IEnumerable<InventoryItemDetail>> GetDispatchableProducts();
+        Task<IEnumerable<EndProductItemDetail>> GetDispatchableProducts();
         Task<IEnumerable<DispatchOrderDetail>> GetDispatchOrderDetailByDate(DateTime date);
-        Task<bool> SetNextInventoryDispatchStatus(Guid inventoryId);
+        Task<IEnumerable<DispatchOrderDetail>> GetUnDispatchedOrdersAsync();
+        Task<bool> SetNextInventoryDispatchStatus(NextDispatchStatusRequest request);
     }
 }

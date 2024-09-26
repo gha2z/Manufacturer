@@ -8,29 +8,31 @@ using System.Data;
 
 namespace IntrManApp.Api.Features.BasicModules;
 
-public static class GetDispatchableProducts
+public static class GetUndispatchedOrders
 {
-    public class Query : IRequest<Result<IEnumerable<EndProductItemDetail>>>
+    public class Query : IRequest<Result<IEnumerable<DispatchOrderDetail>>>
     {
-
+       
     }
 
     internal sealed class Handler(IDbConnectionFactory dbConnectionFactory) :
-    IRequestHandler<Query, Result<IEnumerable<EndProductItemDetail>>>
+    IRequestHandler<Query, Result<IEnumerable<DispatchOrderDetail>>>
     {
         private readonly IDbConnectionFactory _dbConnectionFactory = dbConnectionFactory;
 
-        public async Task<Result<IEnumerable<EndProductItemDetail>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<IEnumerable<DispatchOrderDetail>>> Handle(
+            Query request, CancellationToken cancellationToken)
         {
             using IDbConnection connection = _dbConnectionFactory.CreateOpenConnection();
 
-            IEnumerable<EndProductItemDetail>? queryResults =
-                (IEnumerable<EndProductItemDetail>?)await connection.QueryAsync<EndProductItemDetail>(
-                    "Production.GetDispatchableProducts", commandType: CommandType.StoredProcedure);
+            IEnumerable<DispatchOrderDetail>? queryResults =
+                (IEnumerable<DispatchOrderDetail>?)await connection.QueryAsync<DispatchOrderDetail>(
+                    "Sales.GetUndispatchedOrders",  commandType: CommandType.StoredProcedure);
 
             if (queryResults == null)
             {
-                return Result.Failure<IEnumerable<EndProductItemDetail>>(new Error("GetDispatchableProducts.NotFound", "No products found"));
+                return Result.Failure<IEnumerable<DispatchOrderDetail>>(
+                    new Error("GetUndispatchedOrders.NotFound", "No products found"));
             }
             else
             {
@@ -40,13 +42,13 @@ public static class GetDispatchableProducts
     }
 }
 
-public class GetDispatchableProductsEndPoint : ICarterModule
+public class GetUndispatchedOrdersEndPoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("api/dispatchableProducts", async (ISender sender) =>
+        app.MapGet("api/undispatchedOrders", async (ISender sender) =>
         {
-            var query = new GetDispatchableProducts.Query();
+            var query = new GetUndispatchedOrders.Query();
 
             var result = await sender.Send(query);
 
@@ -57,8 +59,8 @@ public class GetDispatchableProductsEndPoint : ICarterModule
             return Results.Ok(result.Value);
         }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
         {
-            Description = "Show list of dispatchable produts",
-            Summary = "Dispatchable Products",
+            Description = "Show list of undispatched orders",
+            Summary = "Undispatched Orders",
             Tags =
             [
                 new Microsoft.OpenApi.Models.OpenApiTag

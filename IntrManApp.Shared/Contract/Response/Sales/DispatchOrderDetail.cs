@@ -16,6 +16,7 @@ namespace IntrManApp.Shared.Contract
 		public string? ProductName { get; set; }
         public string? BatchNumber { get; set; }
         public Guid InventoryId { get; set; }
+        public decimal Weight { get; set; }
         public Guid MeasurementUnitId { get; set; }
 	    public string? ProductMeasurementUnitName { get; set; }
         public decimal Quantity { get; set; }

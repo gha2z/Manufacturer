@@ -87,13 +87,13 @@
                                 </Template>
                             </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn Property="InitialQuantity" Title="Current Quantity" Width="120px">
+                            <RadzenDataGridColumn Property="InitialQuantity" Title="Qty on Hand" Width="120px">
                                 <Template Context="raw">
                                     @raw.InitialQuantity.ToString("N2")
                                 </Template>
                             </RadzenDataGridColumn>
                             
-                            <RadzenDataGridColumn Property="Quantity" Title="New Weight (kg)" Width="120px">
+                            <RadzenDataGridColumn Property="Quantity" Title="New Qty" Width="120px">
                                 <Template Context="raw">
                                     @raw.Quantity.ToString("N2")
                                 </Template>

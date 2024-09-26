@@ -34,6 +34,8 @@ public partial class ProductInventory
 
     public decimal? TotalBatches { get; set; }
 
+    public decimal? Reserved { get; set; }
+
     public virtual InventoryFlag? FlagNavigation { get; set; }
 
     public virtual Location? Location { get; set; }

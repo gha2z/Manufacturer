@@ -13,6 +13,8 @@ public partial class SalesOrderLine
 
     public decimal? Quantity { get; set; }
 
+    public byte? Flag { get; set; }
+
     public virtual ProductInventory Inventory { get; set; } = null!;
 
     public virtual MeasurementUnit? MeasurementUnit { get; set; }

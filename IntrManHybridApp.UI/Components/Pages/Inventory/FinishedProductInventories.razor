@@ -21,7 +21,7 @@
     PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
     AllowRowSelectOnRowClick="true" HideGroupedColumn="true"
     RowExpand="RowExpand" RowRender="@RowRender" ExpandMode="DataGridExpandMode.Single"
-    TItem="InventoryItemExtendedFlag" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite">
+    TItem="InventoryItem" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite">
    
     <Template Context="item">
         <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowSorting="false" Data="@item.InventoryLedgers" IsLoading="@isExpandingRow">
@@ -40,7 +40,11 @@
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn Property="BatchNumber" Title="#Batch" TextAlign="TextAlign.Center" Width="140px" />
-                <RadzenDataGridColumn Property="Description" Title="Description"/>
+                <RadzenDataGridColumn Property="Description" Title="Description">
+                    <Template Context="data">
+                        @((MarkupString)data.Description)
+                    </Template>    
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn Property="StockIn" Title="In" Width="90px" TextAlign="TextAlign.Right">
                     <Template Context="ledger">
                         @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", ledger.StockIn)
@@ -87,10 +91,10 @@
         @* <RadzenDataGridColumn Property="ColRow" Title="Racking" /> *@
         <RadzenDataGridColumn Title="Quantity" TextAlign="TextAlign.Center">
             <Columns>
-                <RadzenDataGridColumn Property="QtyAvailable" Title="Available" Width="70px" TextAlign="TextAlign.Right" />
-                <RadzenDataGridColumn Property="QtyReserved" Title="Reserved" Width="70px" TextAlign="TextAlign.Right" />
-                <RadzenDataGridColumn Property="QtyInProduction" Title="Production in Progress" Width="70px" TextAlign="TextAlign.Right"/>
-                <RadzenDataGridColumn Property="QtyToBeProduced" Title="Scheduled for Production" Width="70px" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn Property="QtyOnHand" Title="Qty on Hand" Width="70px" TextAlign="TextAlign.Right" />
+                <RadzenDataGridColumn Property="QtyAvailable" Title="Qty Available" Width="70px" TextAlign="TextAlign.Right" />
+               @*  <RadzenDataGridColumn Property="QtyInProduction" Title="Production in Progress" Width="70px" TextAlign="TextAlign.Right"/>
+                <RadzenDataGridColumn Property="QtyToBeProduced" Title="Scheduled for Production" Width="70px" TextAlign="TextAlign.Right" /> *@
             </Columns>
         </RadzenDataGridColumn>
        
@@ -111,8 +115,8 @@
 
 @code {
 
-    IEnumerable<InventoryItemExtendedFlag> items = [];
-    IList<InventoryItemExtendedFlag> selectedItems = [];
+    IEnumerable<InventoryItem> items = [];
+    IList<InventoryItem> selectedItems = [];
 
     bool isExpandingRow = false;
 
@@ -136,12 +140,12 @@
 
     }
 
-    void RowRender(RowRenderEventArgs<InventoryItemExtendedFlag> args)
+    void RowRender(RowRenderEventArgs<InventoryItem> args)
     {
         args.Expandable = true; // args.Data.BomCount>0;
     }
 
-    void RowExpand(InventoryItemExtendedFlag item)
+    void RowExpand(InventoryItem item)
     {
         isExpandingRow = true;
 

@@ -12,7 +12,7 @@ namespace IntrManHybridApp.UI.Services
         Task<IEnumerable<InventoryItemDetail>> GetInventoryItemsByLocation();
         Task<Guid> CreateProductCheckout(ProductCheckOutRequest request);
 
-        Task<IEnumerable<InventoryItemExtendedFlag>> GetFinishedProductInventoriesAsync();
+        Task<IEnumerable<InventoryItem>> GetFinishedProductInventoriesAsync();
 
         IEnumerable<InventoryLedger> GetInventoryLedger(InventoryLedgerRequest request);
 

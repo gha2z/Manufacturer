@@ -107,8 +107,7 @@ public partial class IntrManDbContext : DbContext
     public virtual DbSet<UserTypeFeature> UserTypeFeatures { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=.;Database=IntrManDb;TrustServerCertificate=True;Integrated Security=True");
+        => optionsBuilder.UseSqlServer("Name=ConnectionStrings:Database");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -791,6 +790,9 @@ public partial class IntrManDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Reserved)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(18, 0)");
             entity.Property(e => e.TotalBatches)
                 .HasDefaultValue(1.0m)
                 .HasColumnType("decimal(18, 2)");
@@ -1200,8 +1202,6 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.FeatureId, e.UserTypeId });
 
             entity.ToTable("UserTypeFeature");
-
-            entity.HasIndex(e => e.UserTypeId, "IX_UserTypeFeature_UserTypeId");
 
             entity.Property(e => e.Accessible).HasDefaultValue(false);
 

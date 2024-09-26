@@ -31,7 +31,24 @@
     </RadzenStack>
 </RadzenCard>
 
-<RadzenSplitter Orientation="Orientation.Horizontal" style="border: 0px solid rgba(0,0,0,.08); margin-top:12px; background-color:white">
+<RadzenCard class="rz-mt-2">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.75rem">
+            <RadzenText Style="margin-top:6px; "><small>Location</small></RadzenText>
+            <RadzenDropDown AllowFiltering="true" AllowClear="false" Data="@locations" TextProperty="Name" ValueProperty="Id"
+                            @bind-Value="selectedLocationId" Placeholder="Select Source Location"
+                            Change="@(args=>InitInventoryByLocation(selectedLocationId))" Disabled="@(checkout.ProductCheckoutDetail.Count>0)" />
+
+            <RadzenText Style="margin-top:6px;"><small><strong>Show Inventory Items</strong></small></RadzenText>
+            <RadzenSwitch @bind-Value=@showProducts Style="margin-top:12px" />
+        </RadzenStack>
+        <RadzenFormField Text="Transaction Date">
+            <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="@checkout.CheckoutDate" Name="checkoutDate" ShowTime="true" />
+        </RadzenFormField>
+    </RadzenStack>
+</RadzenCard>
+
+<RadzenSplitter Orientation="Orientation.Horizontal" style="border: 0px solid rgba(0,0,0,.08); margin-top:6px; background-color:white">
 
     <RadzenSplitterPane Size="30%" Min="150px" Max="530px" Collapsed="@(!showProducts)">        
         <RadzenCard Visible="@showProducts" Variant="Variant.Flat">
@@ -62,22 +79,6 @@
     <RadzenSplitterPane Collapsible="false">
         <RadzenCard Variant="Variant.Flat">
             <RadzenStack>
-
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.75rem">
-                        <RadzenText Style="margin-top:6px; "><small>Location</small></RadzenText>
-                        <RadzenDropDown AllowFiltering="true" AllowClear="false" Data="@locations" TextProperty="Name" ValueProperty="Id" 
-                                @bind-Value="selectedLocationId" Style="width:100%;" Placeholder="Select Source Location" 
-                                Change = "@(args=>InitInventoryByLocation(selectedLocationId))" Disabled="@(checkout.ProductCheckoutDetail.Count>0)"/>
-                        
-                        <RadzenText Style="margin-top:6px; width:300px;"><small><strong>Show Inventory Items</strong></small></RadzenText>
-                        <RadzenSwitch @bind-Value=@showProducts Style="margin-top:12px" />
-                    </RadzenStack>
-                    <RadzenFormField Text="Transaction Date">
-                        <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="@checkout.CheckoutDate" Name="checkoutDate" ShowTime="true" />
-                    </RadzenFormField>
-                </RadzenStack>
-
                 <RadzenStack>
                     <RadzenDataGrid @ref="rawMaterialsGrid" Data="@checkout.ProductCheckoutDetail" TItem="EndProductCheckOutDetailRequest"
                                     RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single" RowEdit="@OnRowEdit">

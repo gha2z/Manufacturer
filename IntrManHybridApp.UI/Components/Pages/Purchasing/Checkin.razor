@@ -76,7 +76,7 @@
                                 @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", rawMaterial.QuantityPerBatch)
                             </Template>
                             <EditTemplate Context="rawMaterial">
-                                <RadzenNumeric @bind-Value="rawMaterial.QuantityPerBatch" Step="0.5" />
+                                <RadzenNumeric @bind-Value="rawMaterial.QuantityPerBatch" Step="0.5" Min="@((decimal)0.01)" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
@@ -320,6 +320,13 @@
               "Supplier Required");
 
             supplierDropDown?.Element.FocusAsync();
+            return;
+        }
+        if (checkin.ProductCheckInDetail.Count==0)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+              "No checked in raw materials to save ...");
+
             return;
         }
         Guid response = Guid.Empty;

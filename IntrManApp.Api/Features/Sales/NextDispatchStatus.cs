@@ -2,6 +2,7 @@
 using FluentValidation;
 using IntrManApp.Api.Database;
 using IntrManApp.Shared.Common;
+using IntrManApp.Shared.Contract;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
@@ -13,14 +14,15 @@ namespace IntrManApp.Api.Features.Production.ProductionOrder
     {
         public class Command : IRequest<Result<bool>>
         {
-            public Guid Id { get; set; }
+            public Guid OrderId { get; set; }
+            public Guid InventoryId { get; set; }
         }
 
         public class Validator : AbstractValidator<Command>
         {
             public Validator()
             {
-                RuleFor(c => c.Id).NotEmpty();
+                RuleFor(c => c.OrderId).NotEmpty();
             }
         }
 
@@ -48,16 +50,27 @@ namespace IntrManApp.Api.Features.Production.ProductionOrder
 
                     try
                     {
-                        var inventoryItem = await _context.ProductInventories
-                            .FindAsync(request.Id, cancellationToken);
 
-                        if (inventoryItem != null && inventoryItem.Flag<12)
+                        var orders = await _context.SalesOrderLines
+                            .FirstOrDefaultAsync(
+                                x => x.OrderId == request.OrderId && x.InventoryId == request.InventoryId, cancellationToken);
+
+                        var inventoryItem = await _context.ProductInventories
+                            .FindAsync(request.InventoryId, cancellationToken);
+
+                        if (inventoryItem != null && orders != null)
                         {
-                            inventoryItem.Flag++;
-                            inventoryItem.ModifiedDate = DateTime.Now;
+                            orders.Flag++;
+                            if (orders.Flag == 12)
+                            {
+                                inventoryItem.Reserved -= orders.Quantity;
+                                inventoryItem.TotalBatches -= orders.Quantity;
+                                inventoryItem.ModifiedDate = DateTime.Now;
+                            }
+                            await _context.SaveChangesAsync(cancellationToken);
+                            await transaction.CommitAsync(cancellationToken);
+
                         }
-                        await _context.SaveChangesAsync(cancellationToken);
-                        await transaction.CommitAsync(cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -74,9 +87,13 @@ namespace IntrManApp.Api.Features.Production.ProductionOrder
     {
         public void AddRoutes(IEndpointRouteBuilder app)
         {
-            app.MapGet("api/nextDispatchStatus/{id}", async (Guid id, ISender sender) =>
+            app.MapPost("api/nextDispatchStatus", async (NextDispatchStatusRequest request, ISender sender) =>
             {
-                var command = new NextDispatchStatus.Command() { Id = id };
+                var command = new NextDispatchStatus.Command() 
+                { 
+                    OrderId = request.OrderId,
+                    InventoryId = request.InventoryId
+                };
 
                 var result = await sender.Send(command);
 
@@ -88,15 +105,15 @@ namespace IntrManApp.Api.Features.Production.ProductionOrder
                 return Results.BadRequest(result.Error);
             }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
             {
-                Description = "Set next dispatch status for an inventory item and " +
+                Description = "Set next dispatch status for a dispatch order line " +
                     "returns TRUE on successful operation." +
                     "10 (",
-                Summary = "Delete an existing Production Order",
+                Summary = "Set Next Dispatch Status",
                 Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
                 {
                     new Microsoft.OpenApi.Models.OpenApiTag
                     {
-                        Name = "Production"
+                        Name = "Sales"
                     }
                 }
             });

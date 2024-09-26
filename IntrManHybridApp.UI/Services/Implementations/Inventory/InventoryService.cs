@@ -24,76 +24,82 @@ public class InventoryService(HttpClient httpClient, ILogger<InventoryService> l
         }
     }
 
-    public async Task<IEnumerable<InventoryItemExtendedFlag>> GetFinishedProductInventoriesAsync()
+    public async Task<IEnumerable<InventoryItem>> GetFinishedProductInventoriesAsync()
     {
-        List<InventoryItemExtendedFlag> inventoryItems = [];
+        //List<InventoryItemExtendedFlag> inventoryItems = [];
+        IEnumerable<InventoryItem> inventoryItems = [];
         try
         {
             logger.LogInformation($"Getting Finished Product Inventory Items : Get {httpClient.BaseAddress}/GetFinishedProductInventories");
-            IEnumerable<InventoryItem> response = await
+            //IEnumerable<InventoryItem> response
+            inventoryItems = await
                 httpClient.GetFromJsonAsync<IEnumerable<InventoryItem>>($"FinishedProductInventories") ?? [];
 
-            var groupedItems = response
-                .GroupBy(x => new {
-                    x.CategoryId,
-                    x.CategoryName,
-                    x.ProductId,
-                    x.ProductNumber,
-                    x.ProductName,
-                    x.Weight,
-                    x.MeasurementUnitName,
-                    x.Location,
-                    x.LocationId
-                })
-                .Select(x => new InventoryItem
-                {
-                    CategoryId = x.Key.CategoryId,
-                    CategoryName = x.Key.CategoryName,
-                    ProductId = x.Key.ProductId,
-                    ProductNumber = x.Key.ProductNumber,
-                    ProductName = x.Key.ProductName,
-                    Weight = x.Key.Weight,
-                    MeasurementUnitName = x.Key.MeasurementUnitName,
-                    Location = x.Key.Location,
-                    LocationId = x.Key.LocationId
-                }).ToList();
+            //var groupedItems = response
+            //    .GroupBy(x => new {
+            //        x.CategoryId,
+            //        x.CategoryName,
+            //        x.ProductId,
+            //        x.ProductNumber,
+            //        x.ProductName,
+            //        x.Weight,
+            //        x.MeasurementUnitName,
+            //        x.Location,
+            //        x.LocationId,
+            //        x.QtyAvailable,
+            //        x.QtyOnHand
+            //    })
+            //    .Select(x => new InventoryItem
+            //    {
+            //        CategoryId = x.Key.CategoryId,
+            //        CategoryName = x.Key.CategoryName,
+            //        ProductId = x.Key.ProductId,
+            //        ProductNumber = x.Key.ProductNumber,
+            //        ProductName = x.Key.ProductName,
+            //        Weight = x.Key.Weight,
+            //        MeasurementUnitName = x.Key.MeasurementUnitName,
+            //        Location = x.Key.Location,
+            //        LocationId = x.Key.LocationId,
+            //        QtyAvailable = x.Key.QtyAvailable,
+            //        QtyOnHand = x.Key.QtyOnHand 
+            //    }).ToList();
 
-            foreach (var item in groupedItems)
-            {
-                InventoryItemExtendedFlag newItem = new()
-                {
-                    CategoryId = item.CategoryId,
-                    CategoryName = item.CategoryName,
-                    ProductId = item.ProductId,
-                    ProductNumber = item.ProductNumber,
-                    ProductName = item.ProductName,
-                    Weight = item.Weight,
-                    MeasurementUnitName = item.MeasurementUnitName,
-                    Location = item.Location,
-                    LocationId = item.LocationId
-                };
-                var qtyFlag = response.FirstOrDefault(x => 
-                    x.ProductId == item.ProductId && x.Weight == item.Weight && 
-                    x.LocationId == item.LocationId && (x.Flag == 7 || x.Flag == 8));
-                if (qtyFlag != null) newItem.QtyAvailable = qtyFlag.Quantity;
+            //foreach (var item in groupedItems)
+            //{
+            //    InventoryItemExtendedFlag newItem = new()
+            //    {
+            //        CategoryId = item.CategoryId,
+            //        CategoryName = item.CategoryName,
+            //        ProductId = item.ProductId,
+            //        ProductNumber = item.ProductNumber,
+            //        ProductName = item.ProductName,
+            //        Weight = item.Weight,
+            //        MeasurementUnitName = item.MeasurementUnitName,
+            //        Location = item.Location,
+            //        LocationId = item.LocationId
+            //    };
+            //    var qtyFlag = response.FirstOrDefault(x => 
+            //        x.ProductId == item.ProductId && x.Weight == item.Weight && 
+            //        x.LocationId == item.LocationId && (x.Flag == 7 || x.Flag == 8));
+            //    if (qtyFlag != null) newItem.QtyAvailable = qtyFlag.Quantity;
 
-                qtyFlag = response.FirstOrDefault(x => 
-                    x.ProductId == item.ProductId && x.Weight == item.Weight &&
-                    x.LocationId == item.LocationId && x.Flag >= 9);
-                if (qtyFlag != null) newItem.QtyReserved = qtyFlag.Quantity;
+            //    qtyFlag = response.FirstOrDefault(x => 
+            //        x.ProductId == item.ProductId && x.Weight == item.Weight &&
+            //        x.LocationId == item.LocationId && x.Flag >= 9);
+            //    if (qtyFlag != null) newItem.QtyReserved = qtyFlag.Quantity;
                 
-                qtyFlag = response.FirstOrDefault(x => 
-                    x.ProductId == item.ProductId && x.Weight == item.Weight &&
-                    x.LocationId == item.LocationId && x.Flag == 6);
-                if (qtyFlag != null) newItem.QtyInProduction = qtyFlag.Quantity;
+            //    qtyFlag = response.FirstOrDefault(x => 
+            //        x.ProductId == item.ProductId && x.Weight == item.Weight &&
+            //        x.LocationId == item.LocationId && x.Flag == 6);
+            //    if (qtyFlag != null) newItem.QtyInProduction = qtyFlag.Quantity;
                 
-                qtyFlag = response.FirstOrDefault(x => 
-                    x.ProductId == item.ProductId && x.Weight == item.Weight &&
-                    x.LocationId == item.LocationId && x.Flag == 5);
-                if (qtyFlag != null) newItem.QtyToBeProduced = qtyFlag.Quantity;
+            //    qtyFlag = response.FirstOrDefault(x => 
+            //        x.ProductId == item.ProductId && x.Weight == item.Weight &&
+            //        x.LocationId == item.LocationId && x.Flag == 5);
+            //    if (qtyFlag != null) newItem.QtyToBeProduced = qtyFlag.Quantity;
 
-                inventoryItems.Add(newItem);
-            }
+            //    inventoryItems.Add(newItem);
+            //}
         }
         catch (Exception ex)
         {
@@ -149,7 +155,7 @@ public class InventoryService(HttpClient httpClient, ILogger<InventoryService> l
                     ProductNumber = x.Key.ProductNumber,
                     ProductName = x.Key.ProductName,
                     Weight = x.Sum(y => y.Weight),
-                    Quantity = x.Sum(y => y.Quantity),
+                    //Quantity = x.Sum(y => y.Quantity),
                     MeasurementUnitName = x.Key.MeasurementUnitName,
                     Location = x.Key.Location,
                     LocationId = x.Key.LocationId

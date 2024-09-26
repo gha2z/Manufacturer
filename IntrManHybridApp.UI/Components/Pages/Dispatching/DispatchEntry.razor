@@ -10,9 +10,10 @@
 @inject DialogService DialogService
 @inject ISaleService service
 @inject ICustomerService customerService
+@inject ILocationService locationService
 @inject ILogger<DispatchEntry> logger
 
-<RadzenCard Style="margin-bottom:10px">
+<RadzenCard Style="margin-top:-48px">
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
         <RadzenButton ButtonStyle="ButtonStyle.Danger" Shade="Shade.Dark" class="rz-shadow-0">
             @caption
@@ -27,77 +28,130 @@
         </RadzenStack>
     </RadzenStack>
 </RadzenCard>
-<RadzenCard>
 
-    <RadzenStack>
+<RadzenCard class="rz-mt-2">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1.5rem">
+        <RadzenFormField Text="Location">        
+            <RadzenDropDown AllowFiltering="true" AllowClear="false" Data="@locations" TextProperty="Name" ValueProperty="Id"
+                        @bind-Value="selectedLocationId" Placeholder="Select Source Location"
+                        Change="@(args=>InitInventoryByLocation(selectedLocationId))" Disabled="@(checkin.DispatchLines.Count>0)"/>
+        </RadzenFormField>
 
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1.5rem">
-            <RadzenFormField Text="Dispatch Date">
-                <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="@checkin.DispatchDate" Name="checkinDate" ShowTime="true" />
-            </RadzenFormField>
-             <RadzenFormField Text="Customer">
+        <RadzenText Style="margin-top:18px; margin-right:0px;"><small><strong>Show Raw Materials</strong></small></RadzenText>
+        
+        <RadzenSwitch @bind-Value=@showProducts Style="margin-top:24px; margin-left:0px" />
+        <RadzenFormField Text="Dispatch Date">
+            <RadzenDatePicker DateFormat="MM/dd/yyyy HH:mm" @bind-Value="@checkin.DispatchDate" Name="checkinDate" ShowTime="true" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="Customer">
             <RadzenDropDown @bind-Value="checkin.CustomerId" Data="@customers" TextProperty="Name" ValueProperty="BusinessEntityId"
-                            Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true" />
-            </RadzenFormField>
-        </RadzenStack>
+                            Style="width:100%" AllowClear="true" AllowFiltering="true" ClearSearchAfterSelection="true" Name="CustId" />
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="CustId" Text="Customer required!"/>
+    </RadzenStack>
 
-        <RadzenStack>
-            <RadzenDataGrid @ref="inventoryGrid" Data="@checkin.DispatchLines" TItem="DispatchLineRequest"
-                            RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single">
+</RadzenCard>
+
+<RadzenSplitter Orientation="Orientation.Horizontal" style="border: 0px solid rgba(0,0,0,.08); margin-top:6px; background-color:white">
+
+    <RadzenSplitterPane Size="30%" Min="150px" Max="530px" Collapsed="@(!showProducts)">        
+        <RadzenCard Visible="@showProducts" Variant="Variant.Flat">
+            <RadzenDataGrid Data="@inventoryItemsByLocation" TItem="EndProductItemDetail" @ref="invGrid"
+            AllowSorting="true" AllowPaging="true" PageSize="13" AllowFiltering="true" SelectionMode="DataGridSelectionMode.Multiple"
+            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterMode="FilterMode.Advanced" AllowColumnResize="true"
+            @bind-Value="@selectedInventories"  RowDoubleClick="@InsertInvItem">
+                <HeaderTemplate>
+                    <RadzenButton Click="@InsertInvItem" Icon="playlist_add" Text="Insert selected items" />
+                </HeaderTemplate>
                 <Columns>
-
-                    <RadzenDataGridColumn Property="BatchNumber" Title="Batch Number" Width="100px" Frozen="true" TextAlign="TextAlign.Center">
-                        <EditTemplate Context="item">
-                           
-                            <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Batch Number" Style="width:100%;font-size:small" />
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn Property="FinishedProduct.Names" Title="Item" Width="230px">
-
-                    </RadzenDataGridColumn>
-
-                    <RadzenDataGridColumn Property="Quantity" Title="Batch Size (kg)" Width="80px">
-                        <Template Context="product">
-                            @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", product.Quantity)
+                    <RadzenDataGridColumn Property="BatchNumber" Title="Carton Id/Batch #" Width="120px" />
+                    <RadzenDataGridColumn Title="Item" Width="220px">
+                        <Template Context="item">
+                            @($"{item.Names} {item.Weight} {item.MeasurementUnitName}")
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="Quantity" Title="Quantity" >
+                        <Template Context = "item">
+                            @item.Quantity.ToString("N2")
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns> 
+            </RadzenDataGrid>   
+        </RadzenCard>
+    </RadzenSplitterPane>
+
+    <RadzenSplitterPane Collapsible="false">
+        <RadzenStack>
+
+          
+            <RadzenStack>
+                <RadzenDataGrid @ref="refGrid" Data="@checkin.DispatchLines" TItem="DispatchLineRequest"
+                                RowUpdate="@OnUpdateRow" RowCreate="@OnRowCreate" ColumnWidth="200px" EditMode="DataGridEditMode.Single">
+                    <Columns>
+
+                        <RadzenDataGridColumn Property="BatchNumber" Title="Batch Number" Width="100px" Frozen="true" TextAlign="TextAlign.Center">
+                            <EditTemplate Context="item">
+                           
+                                <RadzenTextBox @bind-Value="item.BatchNumber" Change="@(args => ItemValidated(item))" Placeholder="Scan Batch Number" Style="width:100%;font-size:small" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Title="Item" Width="240px">
+                            <Template Context="item">
+                                @($"{item.FinishedProduct.Names} {item.FinishedProduct.Weight} {item.FinishedProduct.MeasurementUnitName}")
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn Property="Quantity" Title="Quantity" Width="80px">
+                            <Template Context="product">
+                                @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", product.Quantity)
+                            </Template>
+
+                            <EditTemplate Context="item">
+                                <RadzenNumeric @bind-Value="item.Quantity" Min="1" Style="width:100%;font-size:small" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
 
                  
 
-                    <RadzenDataGridColumn Context="product" Filterable="false" Sortable="false" TextAlign="TextAlign.Right"
-                                          Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Width="100px">
-                        <Template Context="product">
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(product))" @onclick:stopPropagation="true">
-                            </RadzenButton>
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(product))" @onclick:stopPropagation="true">
-                            </RadzenButton>
-                        </Template>
-                        <EditTemplate Context="product">
-                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(product))">
-                            </RadzenButton>
-                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(product))">
-                            </RadzenButton>
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(product))">
-                            </RadzenButton>
-                        </EditTemplate>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
+                        <RadzenDataGridColumn Context="product" Filterable="false" Sortable="false" TextAlign="TextAlign.Right"
+                                              Frozen="true" FrozenPosition="FrozenColumnPosition.Right" Width="100px">
+                            <Template Context="product">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(product))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(product))" @onclick:stopPropagation="true">
+                                </RadzenButton>
+                            </Template>
+                            <EditTemplate Context="product">
+                                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(product))">
+                                </RadzenButton>
+                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(product))">
+                                </RadzenButton>
+                                <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(product))">
+                                </RadzenButton>
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </RadzenStack>
         </RadzenStack>
-    </RadzenStack>
-</RadzenCard>
-@*
-</RadzenTemplateForm> *@
+        </RadzenSplitterPane>
+        </RadzenSplitter>
 
 @code {
-    RadzenDataGrid<DispatchLineRequest> inventoryGrid = new();
-
+    RadzenDataGrid<DispatchLineRequest> refGrid = new();
+    RadzenDataGrid<EndProductItemDetail> invGrid = new();
     DispatchRequest checkin = new() { DispatchDate = DateTime.Now };
 
     DispatchLineRequest? tmpItem;
 
-    IEnumerable<InventoryItemDetail> endProducts = [];
+    IEnumerable<EndProductItemDetail> endProducts = [];
+    IList<EndProductItemDetail> selectedInventories = [];
+    List<EndProductItemDetail> inventoryItemsByLocation = [];
+
+    IEnumerable<LocationResponse> locations = [];
+
     IEnumerable<DispatchLineRequest> checkinItems = [];
     IEnumerable<CustomerResponse> customers = [];
 
@@ -105,21 +159,73 @@
     string captionExt = "0";
     bool isSaving = false;
     bool isAddNew = false;
+    bool showProducts = true;
+    bool fromInvGrid = false;
+
+    Guid selectedLocationId = Guid.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
         customers = await customerService.GetCustomersAsync();
-        endProducts = await service.GetDispatchableProducts();
+        locations = await locationService.GetLocationsAsync();
 
+        selectedLocationId = locations.FirstOrDefault()?.Id ?? Guid.Empty;
+        endProducts = await service.GetDispatchableProducts();
+        InitInventoryByLocation(selectedLocationId);
+        await InsertRow();
+    }
+
+    void InitInventoryByLocation(Guid locationId)
+    {
+        try
+        {
+            inventoryItemsByLocation.Clear();
+            if (locationId == Guid.Empty) return;
+            logger.LogInformation($"InitInventoryByLocation '{locationId}'");
+            var locationName = locations.FirstOrDefault(p => p.Id == locationId)?.Name ?? "-";
+            var filterResults = endProducts.Where(p => p.CurrentLocationId == locationId);
+
+            if (filterResults != null && filterResults.Any())
+            {
+                inventoryItemsByLocation = filterResults.Adapt<List<EndProductItemDetail>>();
+                logger.LogInformation($"InitInventoryByLocation - found '{inventoryItemsByLocation.Count}' items for location '{locationName}'");
+            } else
+            {
+                logger.LogInformation($"InitInventoryByLocation - no items found for location '{locationName}'");
+            }
+            invGrid.Reload();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"{ex.Message}");
+        }
+    }
+
+    async void InsertInvItem()
+    {
+        if (selectedInventories.Count == 0) return;
+        fromInvGrid = true;
+        foreach (var item in selectedInventories)
+        {
+            var line = checkin.DispatchLines.FirstOrDefault(p => p.BatchNumber.Equals(item.BatchNumber));
+            if ( line == null)
+            {
+                line = new DispatchLineRequest() { BatchNumber = item.BatchNumber };
+                checkin.DispatchLines.Add(line);
+            }
+            ItemValidated(line);
+        }
+        await refGrid .Reload();
+        fromInvGrid = false;
         await InsertRow();
     }
 
     bool ItemValidated(DispatchLineRequest item)
     {
         logger.LogInformation($"ItemChanged Raised ...");
-        InventoryItemDetail? product = null;
+        EndProductItemDetail? product = null;
         if (!string.IsNullOrEmpty(item.BatchNumber))
         {
             if (checkin.DispatchLines.Any(p => p.BatchNumber.ToLower().Trim().Equals(item.BatchNumber.Trim().ToLower()) && p != item))
@@ -132,13 +238,17 @@
             if (product != null)
             {
                 item.MeasurementUnitId = product.MeasurementUnitId;
-                item.Quantity = product.Quantity;
+                if(fromInvGrid && item.Quantity<product.Quantity) item.Quantity++; // product.Quantity;
                 item.InventoryId = product.InventoryId;
                 item.FinishedProduct = product;
                 //generate expiry date based on checkin.checkIndate + product.DaysToExpire
                 if (checkin.DispatchDate == null) checkin.DispatchDate = DateTime.Now;
-                
-
+                if(item.Quantity>product.Quantity)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Quantity is not valid", "The item quantity exceeds the available quantity!");
+                    item.Quantity = product.Quantity;
+                    return false;
+                }
             }
         }
         return (product != null);
@@ -149,7 +259,7 @@
         logger.LogInformation("Inserting new row");
         var newItem = new DispatchLineRequest();
         isAddNew = true;
-        await inventoryGrid.InsertRow(newItem);
+        await refGrid.InsertRow(newItem);
     }
 
     void OnRowCreate(DispatchLineRequest item)
@@ -169,24 +279,22 @@
             else
             {
                 logger.LogInformation($"Items NOT Validated ... Cancelling Edit '{item.FinishedProduct?.Names ?? string.Empty}'");
-                inventoryGrid.CancelEditRow(item);
+                refGrid.CancelEditRow(item);
             }
         };
     }
-
-
 
     async Task EditRow(DispatchLineRequest item)
     {
         isAddNew = false;
         logger.LogInformation($"Editing row - collection count:'{checkin.DispatchLines.Count}");
         tmpItem = item.Adapt<DispatchLineRequest>();
-        await inventoryGrid.EditRow(item);
-        logger.LogInformation($"Editing row '{item.FinishedProduct?.Names ?? string.Empty}' EditMode:{inventoryGrid.IsRowInEditMode(item)}");
+        await refGrid.EditRow(item);
+        logger.LogInformation($"Editing row '{item.FinishedProduct?.Names ?? string.Empty}' EditMode:{refGrid.IsRowInEditMode(item)}");
         logger.LogInformation($"Editing row - collection count:'{checkin.DispatchLines.Count}" +
-            $"{Environment.NewLine}===> grid.Count:{inventoryGrid.Count}");
-        await inventoryGrid.Reload();
-        await inventoryGrid.EditRow(item);
+            $"{Environment.NewLine}===> grid.Count:{refGrid.Count}");
+        await refGrid.Reload();
+        await refGrid.EditRow(item);
     }
 
     void OnUpdateRow(DispatchLineRequest item)
@@ -200,9 +308,9 @@
         else
         {
             logger.LogInformation($"Items NOT Validated ... Cancelling Edit and re-enter edit mode '{item.FinishedProduct?.Names ?? string.Empty}'");
-            inventoryGrid.CancelEditRow(item);
+            refGrid.CancelEditRow(item);
             if (tmpItem != null) item = tmpItem.Adapt<DispatchLineRequest>();
-            inventoryGrid.EditRow(item);
+            refGrid.EditRow(item);
         }
 
         logger.LogInformation($"Adding row to collection '{item.FinishedProduct?.Names ?? string.Empty}'");
@@ -215,7 +323,7 @@
         {
             logger.LogInformation("deleting row");
             checkin.DispatchLines.Remove(item);
-            await inventoryGrid.Reload();
+            await refGrid.Reload();
             captionExt = $"({checkin.DispatchLines.Count})";
             await InsertRow();
         }
@@ -224,7 +332,7 @@
     async void CancelEdit(DispatchLineRequest item)
     {
         logger.LogInformation($"Cancelling Edit '{item.FinishedProduct?.Names ?? string.Empty}'");
-        inventoryGrid.CancelEditRow(item);
+        refGrid.CancelEditRow(item);
         await InsertRow();
     }
 
@@ -232,7 +340,7 @@
     {
         logger.LogInformation($"Save Row '{item.FinishedProduct?.Names ?? string.Empty}'");
         if (item.InventoryId == Guid.Empty) return;
-        await inventoryGrid.UpdateRow(item);
+        await refGrid.UpdateRow(item);
         await InsertRow();
     }
 
@@ -240,7 +348,7 @@
     {
 
         checkin.DispatchLines.Clear();
-        await inventoryGrid.Reload();
+        await refGrid.Reload();
         await InsertRow();
         captionExt = "";
     }
@@ -266,6 +374,8 @@
             Clear();
 
             isSaving = false;
+            endProducts = await service.GetDispatchableProducts();
+            InitInventoryByLocation(selectedLocationId);
         }
         else
         {

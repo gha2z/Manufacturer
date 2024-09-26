@@ -80,14 +80,21 @@ namespace IntrManApp.Api.Features.Production
                                 "CreateProductDispatch.Validation", $"Inventory Item not found"));
                         }
 
+                        if (inventory.TotalBatches - inventory.Reserved < item.Quantity)
+                        {
+                            return Result.Failure<Guid>(new Error(
+                                "CreateProductDispatch.Validation", $"Inventory Item {inventory.InventoryId} has insufficient quantity"));
+                        }
+
                         productCheckin.SalesOrderLines.Add(
                            new SalesOrderLine()
                            {
                                InventoryId = item.InventoryId,
                                MeasurementUnitId = item.MeasurementUnitId,
-                               Quantity = item.Quantity
+                               Quantity = item.Quantity,
+                               Flag = 9
                            });
-                        inventory.Flag = 9;
+                        inventory.Reserved += item.Quantity;
 
                     }
                     _context.SalesOrders.Add(productCheckin);

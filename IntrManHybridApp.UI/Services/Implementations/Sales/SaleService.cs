@@ -29,13 +29,13 @@ namespace IntrManHybridApp.UI.Services
             }
         }
 
-        public async Task<IEnumerable<InventoryItemDetail>> GetDispatchableProducts()
+        public async Task<IEnumerable<EndProductItemDetail>> GetDispatchableProducts()
         {
             try
             {
                 logger.LogInformation($"Getting End Products: Get {httpClient.BaseAddress}/DispatchableProducts");
-                IEnumerable<InventoryItemDetail> response = 
-                    await httpClient.GetFromJsonAsync<IEnumerable<InventoryItemDetail>>("DispatchableProducts") ?? [];
+                IEnumerable<EndProductItemDetail> response = 
+                    await httpClient.GetFromJsonAsync<IEnumerable<EndProductItemDetail>>("DispatchableProducts") ?? [];
                 return response;
             }
             catch (Exception ex)
@@ -61,13 +61,31 @@ namespace IntrManHybridApp.UI.Services
             }
         }
 
-        public async Task<bool> SetNextInventoryDispatchStatus(Guid inventoryId)
+        public async Task<IEnumerable<DispatchOrderDetail>> GetUnDispatchedOrdersAsync()
+        {
+            try
+            {
+                logger.LogInformation($"Getting Undispatched Order: Get {httpClient.BaseAddress}/undispatchedOrders");
+                IEnumerable<DispatchOrderDetail> response =
+                    await httpClient.GetFromJsonAsync<IEnumerable<DispatchOrderDetail>>($"undispatchedOrders") ?? [];
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error getting Un dispatched Orders");
+                return [];
+            }
+        }
+
+        public async Task<bool> SetNextInventoryDispatchStatus(NextDispatchStatusRequest request)
         {
             bool result = false;
             try
             {
-                logger.LogInformation($"Setting Next Inventory Dispatch Status: Put {httpClient.BaseAddress}/inventory/{inventoryId}");
-                result = await httpClient.GetFromJsonAsync<bool>($"nextDispatchStatus/{inventoryId}");
+                var json = System.Text.Json.JsonSerializer.Serialize(request);
+                logger.LogInformation($"Setting Next Inventory Dispatch Status: Post {httpClient.BaseAddress}/{json}");
+                var response = await httpClient.PostAsJsonAsync($"nextDispatchStatus", request);
+                result = response.Content.ReadFromJsonAsync<bool>().Result;
             } catch (Exception ex)
             {
                 logger.LogError(ex, "Error setting next inventory dispatch status");

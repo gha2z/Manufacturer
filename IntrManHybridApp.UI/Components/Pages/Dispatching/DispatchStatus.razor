@@ -20,14 +20,13 @@
 <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced"
                 FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="20" AllowPaging="true"
                 PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" LogicalFilterOperator="LogicalFilterOperator.Or"
-                SelectionMode="DataGridSelectionMode.Multiple" AllowRowSelectOnRowClick="true" HideGroupedColumn="true"
-                TItem="DispatchOrderDetail" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite">
+                SelectionMode="DataGridSelectionMode.Multiple" AllowRowSelectOnRowClick="true" HideGroupedColumn="true" Render="@OnRender"
+                TItem="DispatchOrderDetail" Data="@items" @bind-Value="@selectedItems" style="background-color:ghostwhite; margin-top:-48px">
 
     <GroupHeaderTemplate>
-        @(context.Data.Items.Cast<DispatchOrderDetail>().First().CustomerName) - 
-        Dispatch Id: @(context.Data.Items.Cast<DispatchOrderDetail>().First().Id)
+        Customer: <strong>@(context.Data.Items.Cast<DispatchOrderDetail>().First().CustomerName)</strong>
     </GroupHeaderTemplate>
-    <HeaderTemplate>
+   @*  <HeaderTemplate>
         <RadzenStack Orientation="Orientation.Horizontal" Style="padding:5px;border:thin" AlignItems="AlignItems.Stretch">
             <RadzenCard Variant="Variant.Filled">
                 Dispatch Order Date
@@ -35,12 +34,18 @@
                                   CurrentDateChanged="@OnScheduleDateChanged" />
             </RadzenCard>
         </RadzenStack>
-    </HeaderTemplate>
+    </HeaderTemplate> *@
 
     <Columns>
+        <RadzenDataGridColumn Property="CustomerId" Title="CustomerId" />
+        <RadzenDataGridColumn Property="OrderDate" Title="Order Date" FormatString="{0:d}" />
         <RadzenDataGridColumn Property="BatchNumber" Title="Batch Number" />
-        <RadzenDataGridColumn Property="ProductName" Title="Product" />
-        <RadzenDataGridColumn Property="Quantity" Title="Weight (kgs)">
+        <RadzenDataGridColumn Property="ProductName" Title="Product">
+            <Template Context="data">
+                @($"{data.ProductName} {data.Weight} {data.ProductMeasurementUnitName}")
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Property="Quantity" Title="Quantity">
             <Template Context="data">
                 @String.Format(new System.Globalization.CultureInfo("en-US"), "{0:N2}", data.Quantity)
             </Template>
@@ -65,7 +70,7 @@
 
 </RadzenDataGrid>
 
-@code { 
+@code {
     public DateTime selectedDate { get; set; } = DateTime.Now;
 
     IEnumerable<DispatchOrderDetail> items = [];
@@ -98,7 +103,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        
+
         await LoadData();
         await base.OnInitializedAsync();
     }
@@ -106,8 +111,8 @@
     async Task LoadData()
     {
         logger.LogInformation($"DispatchStatus.LoadData - date:{selectedDate}");
-        items = await service.GetDispatchOrderDetailByDate(selectedDate);
-        
+        items = await service.GetUnDispatchedOrdersAsync();
+
     }
 
     void OnRender(DataGridRenderEventArgs<DispatchOrderDetail> args)
@@ -115,7 +120,7 @@
         if (args.FirstRender)
         {
             logger.LogInformation($"DispatchStatus.OnRender - grouping based on dispatch order ID");
-            args.Grid.Groups.Add(new GroupDescriptor() { Property = "Id", SortOrder = SortOrder.Ascending });
+            args.Grid.Groups.Add(new GroupDescriptor() { Property = "CustomerId", SortOrder = SortOrder.Ascending });
             StateHasChanged();
         }
     }
@@ -129,10 +134,15 @@
 
     async Task SetDispatchStatus(DispatchOrderDetail item)
     {
-        var ok = await service.SetNextInventoryDispatchStatus(item.InventoryId);
+        var ok = await service.SetNextInventoryDispatchStatus(
+            new NextDispatchStatusRequest()
+            {
+                OrderId = item.Id,
+                InventoryId = item.InventoryId
+            });
         if (ok)
         {
-            NotificationService.Notify(NotificationSeverity.Success, "Production Started", "Production started successfully");
+            NotificationService.Notify(NotificationSeverity.Success, "Dispatch Status Upadated", "The dispatch status has been successfully updated.");
             await LoadData();
             selectedItems = [];
         }

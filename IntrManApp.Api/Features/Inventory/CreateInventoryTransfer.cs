@@ -105,7 +105,6 @@ namespace IntrManApp.Api.Features.Inventory
 
                         inventory.LocationId = item.LocationId;
                         inventory.RackingPalletId = item.RackingPalletId;
-                        inventory.Flag = 13;
                         inventory.ModifiedDate = DateTime.Now;
                         inventory.ProductionDate = item.ProductionDate;
                         inventory.ExpirationDate = item.ExpirationDate;

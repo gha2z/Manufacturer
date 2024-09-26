@@ -180,6 +180,7 @@
             PasswordTxt.Location = new Point(186, 199);
             PasswordTxt.Name = "PasswordTxt";
             PasswordTxt.PasswordChar = '*';
+            PasswordTxt.ReadOnly = true;
             PasswordTxt.Size = new Size(354, 30);
             PasswordTxt.TabIndex = 6;
             // 
@@ -197,6 +198,7 @@
             UserIdTxt.BorderStyle = BorderStyle.FixedSingle;
             UserIdTxt.Location = new Point(186, 163);
             UserIdTxt.Name = "UserIdTxt";
+            UserIdTxt.ReadOnly = true;
             UserIdTxt.Size = new Size(354, 30);
             UserIdTxt.TabIndex = 4;
             // 

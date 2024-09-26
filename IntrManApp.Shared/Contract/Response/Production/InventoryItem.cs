@@ -21,7 +21,8 @@ namespace IntrManApp.Shared.Contract
 
         public byte Flag { get; set; }
         public string Status { get; set; } = string.Empty;
-        public decimal Quantity { get; set; }
+        public decimal QtyAvailable { get; set; }
+        public decimal QtyOnHand { get; set; }
         public IEnumerable<InventoryLedger> InventoryLedgers { get; set; } = [];
     }
 
@@ -38,9 +39,7 @@ namespace IntrManApp.Shared.Contract
         public string Location { get; set; } = string.Empty;
         public string ColRow { get; set; } = string.Empty;
         public decimal QtyAvailable { get; set; }
-        public decimal QtyReserved { get; set; }
-        public decimal QtyToBeProduced { get; set; }
-        public decimal QtyInProduction { get; set; }
+        public decimal QtyOnHand { get; set; }
         public IEnumerable<InventoryLedger> InventoryLedgers { get; set; } = [];
     }
 

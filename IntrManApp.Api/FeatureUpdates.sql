@@ -96,6 +96,41 @@ GO
 /****** Object:  StoredProcedure [Production].[BomSpecification]    Script Date: 9/10/2024 7:12:37 AM ******/
 DROP PROCEDURE IF EXISTS [Production].[BomSpecification]
 GO
+DROP PROCEDURE IF EXISTS sales.GetUndispatchedOrders
+GO
+CREATE PROCEDURE [Sales].[GetUnDispatchedOrders]
+as
+SELECT
+	do.Id,	
+	do.OrderDate,
+	do.CustomerId,
+	c.Name as CustomerName,
+	i.ProductId,
+	production.GetProductNames(i.ProductId) as ProductName,
+	i.BatchNumber,
+	dl.InventoryId,
+	i.Quantity as Weight,
+	dl.MeasurementUnitId as MeasurementUnitId,
+	(select Initial from production.MeasurementUnit where Id=dl.MeasurementUnitId) as ProductMeasurementUnitName,
+	dl.Quantity,
+	dl.Flag 
+FROM
+	Sales.SalesOrder do
+INNER JOIN 
+	Sales.Customer c 
+	ON
+		do.CustomerId = c.BusinessEntityId 
+INNER JOIN 
+	Sales.SalesOrderLine dl 
+	ON 
+		do.Id = dl.OrderId
+INNER JOIN 
+	Production.ProductInventory i 
+	ON 
+		dl.InventoryId = i.InventoryId 
+WHERE  
+	dl.Flag<12
+GO
 /****** Object:  StoredProcedure [dbo].[ResetTransactions]    Script Date: 9/10/2024 7:12:37 AM ******/
 DROP PROCEDURE IF EXISTS [dbo].[ResetTransactions]
 GO
@@ -332,7 +367,8 @@ SELECT
 	isnull(r.Col+'-'+cast(r.Row as nvarchar(5)),'-') as ColRow,
 	isnull(i.Flag,0) as Flag,
 	isnull(f.Name,'Unavailable') as Status,
-	sum(i.TotalBatches) as Quantity
+	sum(i.TotalBatches-isnull(i.Reserved,0)) as QtyAvailable,
+	sum(i.TotalBatches) as QtyOnHand
 FROM
 	Production.Product p 
 LEFT OUTER JOIN 
@@ -395,7 +431,7 @@ INSERT @stockFlow
 	SELECT 
 		c.CheckInDate as TransDate, cl.InventoryId, i.BatchNumber, 
 		Description = case 
-			WHEN c.CheckInType=1 then 'Production' 
+			WHEN c.CheckInType=1 then 'Checked-in from Production' 
 			WHEN c.CheckInType=2 then 'Move From ' + (select Name from Production.Location where id=cl.SourceLocationId) end,
 		cl.Quantity, 0, 0,
 		case 
@@ -420,7 +456,7 @@ UNION ALL
 SELECT 
 		c.CheckInDate as TransDate, cl.InventoryId, i.BatchNumber, 
 		Description = case 
-			WHEN c.CheckInType=1 then 'Production' 
+			WHEN c.CheckInType=1 then 'Checked-in from Production' 
 			else 'Move From ' + (select Name from Production.Location where id=cl.SourceLocationId) end,
 		cl.Quantity, 0, 0,
 		case 
@@ -461,7 +497,8 @@ SELECT
 
 UNION ALL
 	SELECT 
-		SO.OrderDate, sl.InventoryId, I.BatchNumber, f.Name, 0, sl.Quantity , 0, i.Flag 
+		SO.OrderDate, sl.InventoryId, I.BatchNumber, 
+		'Dispatched to <strong>'+(select Name from Sales.Customer where BusinessEntityId=so.CustomerId)+'</strong>', 0, sl.Quantity , 0, i.Flag 
 	FROM 
 		Sales.SalesOrderLine sl 
 	INNER JOIN 
@@ -475,8 +512,8 @@ UNION ALL
 	INNER JOIN 
 		Production.InventoryFlag F 
 		ON
-			i.Flag = f.Id 
-	WHERE I.ProductId = @ProductId AND i.LocationId = @LocationId AND I.Flag BETWEEN 10 AND 12 AND i.Quantity=@weight 
+			sl.Flag = f.Id 
+	WHERE I.ProductId = @ProductId AND i.LocationId = @LocationId AND SL.Flag=12 AND i.Quantity=@weight 
 ORDER BY TransDate
 
 UPDATE @stockFlow set @balance = balance=@balance+StockIn-StockOut
@@ -547,15 +584,30 @@ SELECT
 	inv.InventoryId,
 	inv.BatchNumber,
 	production.GetProductNames(inv.ProductId) as Names,
-	inv.Quantity,
+	inv.Quantity as Weight,
 	inv.MeasurementUnitId,
-	mu.Name as MeasurementUnitName,
-	inv.LocationId,
+	isnull(mu.Initial, mu.Name) as MeasurementUnitName,
+	inv.TotalBatches - isnull(inv.Reserved,0) as Quantity,
+	p.LocationId,
 	loc.Name as LocationName,
-	inv.RackingPalletId, 
+	p.RackingPalletId, 
 	rack.Col+'-'+cast(rack.row as nvarchar(5)) as RackingPalletColRow,
 	p.DaysToExpire,
-	p.DaysToManufacture 
+	p.DaysToManufacture,
+	inv.ExpirationDate as ExpiryDate,
+	inv.ProductionDate,
+	isnull(p.OutLocationId, 
+		isnull((select top 1 Id from production.location where name like '%product%'),
+			isnull((select top 1 Id from production.Location where Id<>p.LocationId),p.locationId))) 
+		as OutLocationId,
+	loc2.Name as OutLocationName,
+	isnull(p.OutRackingPalletId, p.rackingPalletId) as OutRackingPalletId,
+	rack2.Col+'-'+cast(rack2.row as nvarchar(5)) as OutRackingPalletColRow,
+	inv.LocationId as CurrentLocationId,
+	loc3.Name as CurrentLocationName,
+	inv.RackingPalletId as CurrentRackingPalletId,
+	rack3.Col+'-'+cast(rack3.row as nvarchar(5)) as CurrentRackingPalletColRow,
+	p.IsFinishedGood 
 FROM 
 	Production.ProductInventory inv 
 INNER JOIN 
@@ -569,13 +621,36 @@ INNER JOIN
 INNER JOIN 
 	Production.Location loc 
 	ON
-		inv.LocationId = loc.Id 
+		p.LocationId = loc.Id 
 INNER JOIN 
 	Production.RackingPallet rack 
 	ON
-		inv.RackingPalletId = rack.Id 
+		p.RackingPalletId = rack.Id
+INNER JOIN 
+	Production.Location loc2 
+	ON
+		isnull(p.OutLocationId, 
+		isnull((select top 1 Id from production.location where name like '%product%'),
+			isnull((select top 1 Id from production.Location where Id<>p.LocationId),p.locationId)))  = loc2.Id 
+INNER JOIN 
+	Production.RackingPallet rack2 
+	ON
+		isnull(p.OutRackingPalletId, p.RackingPalletId) = rack2.Id
+INNER JOIN 
+	Production.Location loc3 
+	ON
+		inv.LocationId = loc3.Id 
+INNER JOIN 
+	Production.RackingPallet rack3 
+	ON
+		inv.RackingPalletId = rack3.Id
 WHERE 
-	inv.Flag=7 AND p.IsFinishedGood = 1
+	
+	inv.Flag in (7,8,13) 
+	AND 
+	p.IsFinishedGood = 1 
+	AND
+	inv.TotalBatches - isnull(inv.Reserved,0) > 0
 GO
 /****** Object:  StoredProcedure [Production].[GetInventoryItemsByLocation]    Script Date: 9/10/2024 7:12:37 AM ******/
 SET ANSI_NULLS ON
