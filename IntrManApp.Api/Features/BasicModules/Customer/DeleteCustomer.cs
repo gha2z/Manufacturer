@@ -17,9 +17,9 @@ public class DeleteCustomer
 
     internal sealed class Handler : IRequestHandler<Command, Result<bool>>
     {
-        private readonly IntrManDbContext _context;
+        private readonly Gha2zErpDbContext _context;
 
-        public Handler(IntrManDbContext dbContext)
+        public Handler(Gha2zErpDbContext dbContext)
         {
             _context = dbContext;
         }

@@ -80,6 +80,7 @@ public class AuthService(HttpClient httpClient, ILogger<AuthService> logger) : I
                 Password = Utility.Encrypt(password)
             };
             var json = JsonSerializer.Serialize(loginRequest);
+            //std::cout << "Login Request: << json;
             logger.LogInformation("Login request: {0}", json);
             var response = await httpClient.PostAsJsonAsync("login", loginRequest);
             var loginResponse = response.Content.ReadFromJsonAsync<LoginResponse>().Result ?? new();

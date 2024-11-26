@@ -14,7 +14,7 @@ public static class GetRoles
     {
     }
 
-    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<List<ApplicationUserRoleResponse>>>
+    internal sealed class Handler(Gha2zErpDbContext dbContext) : IRequestHandler<Query, Result<List<ApplicationUserRoleResponse>>>
     {
 
 

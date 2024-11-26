@@ -15,7 +15,7 @@ public class ServerSettingResponse
     public  string BackupFileName { get; set; } = string.Empty;
     public  bool AppendDateTime { get; set; } = true;
     public bool UseIntegratedSecurity { get; set; } = true;
-    public int Port { get; set; } = 50001;
+    public int Port { get; set; } = 39501;
 
 
 }

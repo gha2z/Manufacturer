@@ -21,19 +21,19 @@ public static class SetDatabaseServer
         public string UserId { get; set; } = "";
         public string Password { get; set; } = "";
         public bool UseIntegratedSecurity { get; set; } = true;
-        public int Port { get; set; } = 50001;
+        public int Port { get; set; } = 39501;
     }
 
 
     internal sealed class Handler(IDbConfigConnectionFactory dbConfigConnectionFactory,
         IDbConnectionFactory dbConnectionFactory,
-        IntrManDbContext context) : IRequestHandler<Command, Result<bool>>
+        Gha2zErpDbContext context) : IRequestHandler<Command, Result<bool>>
     {
         public async Task<Result<bool>> Handle(Command request, CancellationToken cancellationToken)
         {
             try
             {
-                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Intrepid Manufacture App");
+                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Gha2z ERP");
                 if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
 
                 appDataPath = Path.Combine(appDataPath, "Backend Service");
@@ -44,7 +44,7 @@ public static class SetDatabaseServer
                 var appSettings = JsonSerializer.Deserialize<ServerAppSettings>(File.ReadAllText(appDataPath)) ?? new();
                 appSettings.Port = request.Port;
                 appSettings.ConnectionStrings.Database=
-                    $"Server={request.Server};Database=IntrManDb;User Id={request.UserId};Password={request.Password};" +
+                    $"Server={request.Server};Database=Gha2zERPDB;User Id={request.UserId};Password={request.Password};" +
                     $"TrustServerCertificate=True;Integrated Security={request.UseIntegratedSecurity}";
                 appSettings.ConnectionStrings.DbConfig =
                   $"Server={request.Server};Database=Master;User Id={request.UserId};Password={request.Password};" +

@@ -3,11 +3,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:IntrManHybridApp.UI"
              x:Class="IntrManHybridApp.UI.MainPage"
+             xmlns:blazorweb="clr-namespace:Microsoft.AspNetCore.Components.Web;assembly=Microsoft.AspNetCore.Components.Web"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
         <BlazorWebView.RootComponents>
             <RootComponent Selector="#app" ComponentType="{x:Type local:Components.Routes}" />
+            <RootComponent ComponentType="{x:Type blazorweb:HeadOutlet}" Selector="#testlink-head::after" />
         </BlazorWebView.RootComponents>
     </BlazorWebView>
 

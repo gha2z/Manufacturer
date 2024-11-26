@@ -163,7 +163,7 @@
         {
             logger.LogInformation($"CartonIdPrinting.CreateHubConnection - create connection to SignalR hub");
             hubConnection = new HubConnectionBuilder()
-               .WithUrl("http://localhost:50000/chathub")
+               .WithUrl("http://localhost:39500/chathub")
                .WithAutomaticReconnect()
                .Build();
 
@@ -185,7 +185,7 @@
                             break;
                         case AppMessageType.PrintLabelResult:
                             NotificationService.Notify(NotificationSeverity.Success,
-                                "Print Result", msg.Data?.ToString() ?? string.Empty, 5000);
+                                "Print Result", msg.Data?.ToString() ?? string.Empty, 3950);
                             break;
                     }
                 }                 

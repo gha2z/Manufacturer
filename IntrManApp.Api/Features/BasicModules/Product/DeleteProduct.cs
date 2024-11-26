@@ -24,9 +24,9 @@ namespace IntrManApp.Api.Features.BasicModules
             }
         }
 
-        internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Command, Result<bool>>
+        internal sealed class Handler(Gha2zErpDbContext dbContext) : IRequestHandler<Command, Result<bool>>
         {
-            private readonly IntrManDbContext _context = dbContext;
+            private readonly Gha2zErpDbContext _context = dbContext;
 
             public async Task<Result<bool>> Handle(Command request, CancellationToken cancellationToken)
             {

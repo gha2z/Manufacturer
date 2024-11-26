@@ -7,6 +7,12 @@ public class ProductNameRequest
     public string? Description { get; set; } = string.Empty;
 }
 
+public class MeasurementUnitGroupDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = null!;
+}
+
 public class MeasurementUnitRequest
 {
     public Guid Id { get; set; }
@@ -25,16 +31,17 @@ public class MeasurementUnitRequest
 {
     public Guid Id { get; set; } = Guid.Empty;
     public Guid ProductId { get; set; }
-
-    public decimal Weight { get; set; }
-
+    public decimal Weight { get; set; } = 1;
     public Guid MeasurementUnitId { get; set; }
-
+    public string Sku { get; set; } = string.Empty;
+    public decimal StandardCost { get; set; } = 0;
+    public decimal ListPrice { get; set; } = 0;
+    public string Caption { get; set; } = string.Empty;
     public virtual MeasurementUnitRequest MeasurementUnit { get; set; } = null!;
 
     public override string ToString()
     {
-        return $"{Weight:N2} {MeasurementUnit.Initial}";
+        return string.IsNullOrEmpty(Caption) ? $"{Weight:N2} {MeasurementUnit.Initial}" : Caption;
     }
 
 }

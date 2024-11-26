@@ -17,7 +17,7 @@ public static class GetStockAdjustmentReasons
 
     }
 
-    internal sealed class Handler(IntrManDbContext _context) : IRequestHandler<Query, Result<List<StockAdjustmentReason>>>
+    internal sealed class Handler(Gha2zErpDbContext _context) : IRequestHandler<Query, Result<List<StockAdjustmentReason>>>
     {
       
         public async Task<Result<List<StockAdjustmentReason>>> Handle(Query request, CancellationToken cancellationToken)

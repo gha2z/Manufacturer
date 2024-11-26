@@ -15,5 +15,7 @@ public partial class StockAdjustMent
 
     public bool? FromInventoryTransfer { get; set; }
 
+    public virtual ICollection<QualityControl> QualityControls { get; set; } = new List<QualityControl>();
+
     public virtual ICollection<StockAdjustmentLine> StockAdjustmentLines { get; set; } = new List<StockAdjustmentLine>();
 }

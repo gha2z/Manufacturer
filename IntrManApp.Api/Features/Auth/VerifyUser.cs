@@ -18,7 +18,7 @@ public static class VerifyUser
         public string Password { get; set; } = string.Empty;
     }
 
-    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<bool>>
+    internal sealed class Handler(Gha2zErpDbContext dbContext) : IRequestHandler<Query, Result<bool>>
     {
 
 

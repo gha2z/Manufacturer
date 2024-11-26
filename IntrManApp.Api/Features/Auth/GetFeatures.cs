@@ -16,7 +16,7 @@ public static class GetFeatures
     {
     }
 
-    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<List<FeatureAccessResponse>>>
+    internal sealed class Handler(Gha2zErpDbContext dbContext) : IRequestHandler<Query, Result<List<FeatureAccessResponse>>>
     {
 
 

@@ -13,6 +13,8 @@ public partial class BusinessEntity
 
     public virtual Customer? Customer { get; set; }
 
+    public virtual Manufacturer? Manufacturer { get; set; }
+
     public virtual Person? Person { get; set; }
 
     public virtual Supplier? Supplier { get; set; }

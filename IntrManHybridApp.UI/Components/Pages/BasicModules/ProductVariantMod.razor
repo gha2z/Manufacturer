@@ -5,6 +5,7 @@
 @inject IProductService service
 @inject Radzen.DialogService dialogService
 @inject Radzen.NotificationService notificationService
+@inject ILogger<ProductVariantMod> logger
 
 <RadzenTemplateForm TItem="ProductVariantRequest" Data=@variant Submit=@Save>
     <RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
@@ -12,12 +13,37 @@
             <RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween">
                 <RadzenStack>
                     <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
-                        <RadzenFormField Text="Measurement Unit">
+                        <RadzenFormField Text="Measurement Unit" Style="width:65%" >
                             <RadzenDropDown Data="@measurementUnits" @bind-Value="@variant.MeasurementUnitId" ValueProperty="Id" TextProperty="Name"
-                                            Name="MeasurementUnit" />
+                            Name="MeasurementUnit" />
                         </RadzenFormField>
-                        <RadzenFormField Text="Weight">
-                            <RadzenNumeric @bind-Value="@variant.Weight" Name="Weight" Min="1" />
+                        <RadzenFormField Text="Weight" Style="width:35%">
+                            <RadzenNumeric @bind-Value="@variant.Weight" Name="Weight" Min="1"/>
+                        </RadzenFormField>
+                    </RadzenStack>
+                </RadzenStack>
+
+                <RadzenStack>
+                    <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        
+                        <RadzenFormField Text="Description" Style="width:65%">
+                            <RadzenTextBox @bind-Value="@variant.Caption" Name="Description" />
+                        </RadzenFormField>
+                        <RadzenFormField Text="SKU" Style="width:35%">
+                            <RadzenTextBox MaxLength="16" Name="Sku" @bind-Value="@variant.Sku" />
+                        </RadzenFormField>
+                    </RadzenStack>
+                    <RadzenRequiredValidator Component="Sku" Text="SKU is required!" />
+
+                </RadzenStack>
+
+                <RadzenStack>
+                    <RadzenStack JustifyContent="JustifyContent.Start" Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                        <RadzenFormField Text="Standard Cost">
+                            <RadzenNumeric Min="0" Max="999999999999" Name="Cost" @bind-Value="@variant.StandardCost" Format="N2"  />
+                        </RadzenFormField>
+                        <RadzenFormField Text="List Price">
+                            <RadzenNumeric Min="0" Max="999999999999" Name="Price" @bind-Value="@variant.ListPrice" Format="N2" />
                         </RadzenFormField>
                     </RadzenStack>
                 </RadzenStack>
@@ -36,11 +62,16 @@
     [Parameter]
     public ProductVariantRequest variant { get; set; }
 
+    [Parameter]
+    public Guid groupId { get; set; }
+
     List<MeasurementUnitRequest> measurementUnits = [];
 
     protected override async Task OnInitializedAsync()
     {
-        measurementUnits = await service.GetMeasurementUnitAsync();
+        //notificationService.Notify(NotificationSeverity.Info, "Getting Measurement Units", $"Group Id => \"{groupId}\"");
+        measurementUnits = await service.GetMeasurementUnitsByGroupIdAsync(groupId);
+        logger.LogInformation($"Getting Measurement Units by GroupId \"{groupId}\" => {measurementUnits.Count}");
     }
 
     void Save()
@@ -49,7 +80,6 @@
         {
             variant.MeasurementUnit = measurementUnits.First(m => m.Id.Equals(variant.MeasurementUnitId));
             dialogService.Close(variant);
-            notificationService.Notify(NotificationSeverity.Info, "Ok", "Great!");
         } catch(Exception ex)
         {
              notificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);

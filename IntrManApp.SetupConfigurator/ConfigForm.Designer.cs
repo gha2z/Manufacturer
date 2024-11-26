@@ -147,11 +147,11 @@
             // 
             ServerPortNum.Location = new Point(186, 20);
             ServerPortNum.Maximum = new decimal(new int[] { 65535, 0, 0, 0 });
-            ServerPortNum.Minimum = new decimal(new int[] { 50001, 0, 0, 0 });
+            ServerPortNum.Minimum = new decimal(new int[] { 39501, 0, 0, 0 });
             ServerPortNum.Name = "ServerPortNum";
             ServerPortNum.Size = new Size(141, 30);
             ServerPortNum.TabIndex = 1;
-            ServerPortNum.Value = new decimal(new int[] { 50001, 0, 0, 0 });
+            ServerPortNum.Value = new decimal(new int[] { 39501, 0, 0, 0 });
             ServerPortNum.ValueChanged += ServerPortNum_ValueChanged;
             // 
             // label6
@@ -271,11 +271,11 @@
             // 
             ClientServerPortNum.Location = new Point(186, 62);
             ClientServerPortNum.Maximum = new decimal(new int[] { 65535, 0, 0, 0 });
-            ClientServerPortNum.Minimum = new decimal(new int[] { 50001, 0, 0, 0 });
+            ClientServerPortNum.Minimum = new decimal(new int[] { 39501, 0, 0, 0 });
             ClientServerPortNum.Name = "ClientServerPortNum";
             ClientServerPortNum.Size = new Size(141, 30);
             ClientServerPortNum.TabIndex = 1;
-            ClientServerPortNum.Value = new decimal(new int[] { 50001, 0, 0, 0 });
+            ClientServerPortNum.Value = new decimal(new int[] { 39501, 0, 0, 0 });
             // 
             // label7
             // 

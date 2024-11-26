@@ -24,7 +24,7 @@
                     <RadzenTextBox @bind-Value=@AppSettings.ApiBaseUrl></RadzenTextBox>
                 </RadzenFormField>
             <RadzenFormField Text="Port" class="rz-mb-3">
-                <RadzenNumeric Min="50001" Max="65532" @bind-Value=@AppSettings.ApiBasePort></RadzenNumeric>
+                <RadzenNumeric Min="39501" Max="65532" @bind-Value=@AppSettings.ApiBasePort></RadzenNumeric>
             </RadzenFormField>
             <RadzenButton Text="Apply" Click="@SetServerEndPoint" Style="height:40px; margin-top:9px"
                           BusyText="Wait ..." IsBusy="@isBusy" class="rz-background-color-primary-light" />
@@ -38,7 +38,7 @@
         <RadzenStack Gap="0.75rem">
             <RadzenStack Gap="1rem" Orientation="Orientation.Horizontal">
                <RadzenFormField Text="Server Port" >
-                    <RadzenNumeric Min="50001" Max="65532" @bind-Value=@DatabaseSettings.Port></RadzenNumeric>
+                    <RadzenNumeric Min="39501" Max="65532" @bind-Value=@DatabaseSettings.Port></RadzenNumeric>
                 </RadzenFormField>
                 <RadzenFormField Text="SQL Server Instance" >
                     <RadzenTextBox @bind-Value=@DatabaseSettings.DatabaseServer></RadzenTextBox>
@@ -350,7 +350,7 @@
         {
             logger.LogInformation($"ProductionLabelPrinting.CreateHubConnection - create connection to SignalR hub");
             hubConnection = new HubConnectionBuilder()
-               .WithUrl("http://localhost:50000/chathub")
+               .WithUrl("http://localhost:39500/chathub")
                .WithAutomaticReconnect()
                .Build();
 

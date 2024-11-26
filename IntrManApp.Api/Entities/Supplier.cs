@@ -16,4 +16,6 @@ public partial class Supplier
     public virtual BusinessEntity BusinessEntity { get; set; } = null!;
 
     public virtual ICollection<ProductCheckIn> ProductCheckIns { get; set; } = new List<ProductCheckIn>();
+
+    public virtual ICollection<PurchaseInvoice> PurchaseInvoices { get; set; } = new List<PurchaseInvoice>();
 }

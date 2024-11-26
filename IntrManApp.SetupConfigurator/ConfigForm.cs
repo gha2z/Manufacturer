@@ -42,7 +42,7 @@ namespace IntrManApp.SetupConfigurator
         {
             InitializeComponent();
             isUninstalling = unReg;
-            appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Intrepid Manufacture App");
+            appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Gha2z ERP");
             if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
             var logPath = Path.Combine(appDataPath, "Installation");
             if (!Directory.Exists(logPath)) Directory.CreateDirectory(logPath);
@@ -167,7 +167,7 @@ namespace IntrManApp.SetupConfigurator
 
         private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
-            string svcName = "IntrMan Backend Service";
+            string svcName = "Gha2z ERP Backend Service";
             string path = new DirectoryInfo(Application.StartupPath).Parent?.FullName ?? Application.StartupPath;
             string binPath = Path.Combine(appDataPath, "Backend Service");  //Path.Combine(path, "Backend Service", "IntrManApp.Api.exe");
             ProcessStartInfo pi;
@@ -193,7 +193,7 @@ namespace IntrManApp.SetupConfigurator
                         var appSettings = new ServerAppSettings();
                         appSettings.Port = (int)ServerPortNum.Value;
                         appSettings.ConnectionStrings.Database =
-                            $"Server={Path.Combine(".",SqlServerTxt.Text)};Database=IntrManDb;User Id={UserIdTxt.Text};Password={PasswordTxt.Text};" +
+                            $"Server={Path.Combine(".",SqlServerTxt.Text)};Database=Gha2zERPDB;User Id={UserIdTxt.Text};Password={PasswordTxt.Text};" +
                             $"TrustServerCertificate=True;Integrated Security={UseIntSecCk.Checked}";
                         appSettings.ConnectionStrings.DbConfig =
                             $"Server={Path.Combine(".", SqlServerTxt.Text)};Database=Master;User Id={UserIdTxt.Text} ;Password= {PasswordTxt.Text};" +
@@ -211,12 +211,12 @@ namespace IntrManApp.SetupConfigurator
                         proc?.WaitForExit();
 
                         Notify("Registering Intrman Backend Windows Service");
-                        pi = new ProcessStartInfo("sc.exe", $"description \"{svcName}\" \"Intrepid Manufacture App Backend Service\"");
+                        pi = new ProcessStartInfo("sc.exe", $"description \"{svcName}\" \"Gha2z ERP Backend Service\"");
                         proc = Process.Start(pi);
                         proc?.WaitForExit();
 
                         Notify("Configuring Intrman Backend Windows Service recovery options");
-                        pi = new ProcessStartInfo("sc.exe", $"failure  \"{svcName}\" reset=0 actions=restart/5000/restart/5000/restart/5000");
+                        pi = new ProcessStartInfo("sc.exe", $"failure  \"{svcName}\" reset=0 actions=restart/3950/restart/3950/restart/3950");
                         proc = Process.Start(pi);
                         proc?.WaitForExit();
 
@@ -281,16 +281,16 @@ namespace IntrManApp.SetupConfigurator
                     Process.Start(pi);
 
                     var shortcutPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Manufacture");
-                    Notify($"Creating Intrepid Manufacture App shortcut: {shortcutPath} <==> " +
-                        $"{Path.Combine(appDataPath, "Client App", "Intrepid Manufacture App.exe")}");
-                    var shortcut = File.CreateSymbolicLink(shortcutPath, Path.Combine(appDataPath, "Client App", "Intrepid Manufacture App.exe"));
+                    Notify($"Creating Gha2z ERP shortcut: {shortcutPath} <==> " +
+                        $"{Path.Combine(appDataPath, "Client App", "Gha2z ERP.exe")}");
+                    var shortcut = File.CreateSymbolicLink(shortcutPath, Path.Combine(appDataPath, "Client App", "Gha2z ERP.exe"));
                     Notify(shortcut.FullName + " created successfully");
                     
                 }
                 else
                 {
-                    //Kill Intrepid Manufacture App
-                    var procs = Process.GetProcessesByName("Intrepid Manufacture App");
+                    //Kill Gha2z ERP
+                    var procs = Process.GetProcessesByName("Gha2z ERP");
                     if (procs.Length > 0)
                     {
                         Notify("Killing IntraManApp.WinBridge ...");
@@ -334,7 +334,7 @@ namespace IntrManApp.SetupConfigurator
                     binPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Manufacture");
                     if (File.Exists(binPath))
                     {
-                        Notify("Deleting Intrepid Manufacture App shortcut ...");
+                        Notify("Deleting Gha2z ERP shortcut ...");
                         File.Delete(binPath);
                     }
                 }

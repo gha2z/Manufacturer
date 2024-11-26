@@ -63,10 +63,18 @@ public static class MauiProgram
 
         var settings = new ClientAppSettingLoader();
 
+#if ANDROID
+    if(File.Exists(appSettingJsonFile)) File.Delete(appSettingJsonFile);
+#endif
         if (!File.Exists(appSettingJsonFile))
         {
-            settings.ApiBaseUrl = "localhost";
-            settings.ApiBasePort = 50001;
+#if ANDROID
+    settings.ApiBaseUrl = "10.0.2.2";
+#else
+    settings.ApiBaseUrl = "localhost";
+#endif
+
+            settings.ApiBasePort = 39501;
             settings.AppDataPath = appDataPath;
             settings.ApiUrlVerb = "http";
             File.WriteAllText(appSettingJsonFile, JsonSerializer.Serialize(settings));
@@ -77,7 +85,7 @@ public static class MauiProgram
             settings = new ClientAppSettingLoader();
             settings = JsonSerializer.Deserialize<ClientAppSettingLoader>(File.ReadAllText(appSettingJsonFile));
             AppSettings.ApiBaseUrl = settings?.ApiBaseUrl ?? "localhost";
-            AppSettings.ApiBasePort = settings?.ApiBasePort ?? 50001;
+            AppSettings.ApiBasePort = settings?.ApiBasePort ?? 39501;
             AppSettings.AppDataPath = settings?.AppDataPath ?? string.Empty;
             AppSettings.ApiUrlVerb = settings?.ApiUrlVerb ?? "http";
         }
@@ -141,29 +149,31 @@ public static class MauiProgram
              });
 
 
-#if WINDOWS
+//#if WINDOWS
    
-    builder.ConfigureLifecycleEvents(events =>
-    {
-        events.AddWindows(wndLifeCycleBuilder =>
-        {
-            wndLifeCycleBuilder.OnWindowCreated(window =>
-            {
-                IntPtr nativeWindowHandle = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                Microsoft.UI.WindowId win32WindowsId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(nativeWindowHandle);
-                Microsoft.UI.Windowing.AppWindow winuiAppWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(win32WindowsId);
-                if (winuiAppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
-                {
+//    builder.ConfigureLifecycleEvents(events =>
+//    {
+//        events.AddWindows(wndLifeCycleBuilder =>
+//        {
+//            wndLifeCycleBuilder.OnWindowCreated(window =>
+//            {
+//                IntPtr nativeWindowHandle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+//                Microsoft.UI.WindowId win32WindowsId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(nativeWindowHandle);
+//                Microsoft.UI.Windowing.AppWindow winuiAppWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(win32WindowsId);
+//                if (winuiAppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
+//                {
                
-                    p.Maximize();
-                    //p.IsResizable = false;
-                    //p.IsMaximizable = false;
-                    //p.IsMinimizable = false;
-                }
-            });
-        });
-    });
-#endif
+//                    p.Maximize();
+//                    //p.IsResizable = false;
+//                    //p.IsMaximizable = false;
+//                    //p.IsMinimizable = false;
+//                }
+//            });
+//        });
+//    });
+//#endif
+
+    
 
         return builder.Build();
     }

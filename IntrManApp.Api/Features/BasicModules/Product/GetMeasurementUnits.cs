@@ -18,7 +18,7 @@ public static class GetMeasurementUnits
 
     }
 
-    internal sealed class Handler(IntrManDbContext context) : IRequestHandler<Query, Result<List<MeasurementUnitRequest>>>
+    internal sealed class Handler(Gha2zErpDbContext context) : IRequestHandler<Query, Result<List<MeasurementUnitRequest>>>
     {
         
         public async Task<Result<List<MeasurementUnitRequest>>> Handle(Query request, CancellationToken cancellationToken)

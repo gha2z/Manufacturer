@@ -23,7 +23,7 @@ public static class CreateRole
             RuleFor(c => c.Name).NotEmpty();
         }
     }
-    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Command, Result<Guid>>
+    internal sealed class Handler(Gha2zErpDbContext dbContext) : IRequestHandler<Command, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
         {

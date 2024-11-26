@@ -8,6 +8,7 @@ using Mapster;
 using IntrManApp.Api.Entities;
 using System.Globalization;
 using Azure.Core;
+using Microsoft.EntityFrameworkCore;
 
 namespace IntrManApp.Api.Features.BasicModules
 {
@@ -26,7 +27,7 @@ namespace IntrManApp.Api.Features.BasicModules
 
             public bool? IsSalable { get; set; }
 
-            public bool? IsUniqueBatchPerOrder { get; set; }
+            public bool? IsUniqueBatchPerOrder { get; set; } 
 
             public decimal? SafetyStockLevel { get; set; }
 
@@ -67,9 +68,9 @@ namespace IntrManApp.Api.Features.BasicModules
             }
         }
 
-        internal sealed class Handler(IntrManDbContext dbContext, IValidator<CreateProduct.Command> validator) : IRequestHandler<Command, Result<Guid>>
+        internal sealed class Handler(Gha2zErpDbContext dbContext, IValidator<CreateProduct.Command> validator) : IRequestHandler<Command, Result<Guid>>
         {
-            private readonly IntrManDbContext _context = dbContext;
+            private readonly Gha2zErpDbContext _context = dbContext;
             private readonly IValidator<Command> _validator = validator;
 
             public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -294,14 +295,18 @@ namespace IntrManApp.Api.Features.BasicModules
                         product.ProductNameAndDescriptionCultures.Add(newCulture);
                     }
 
-                    product.ProductVariants.Clear();
+                    //product.ProductVariants.Clear();
                     foreach (var variant in request.productVariants)
                     {
                         product.ProductVariants.Add(new ProductVariant()
                         {
                             ProductId = product.Id,
                             MeasurementUnitId = variant.MeasurementUnitId,
-                            Weight = variant.Weight
+                            Weight = variant.Weight,
+                            Sku = variant.Sku,
+                            Caption = variant.Caption,
+                            StandardCost = variant.StandardCost,
+                            ListPrice = variant.ListPrice
                         });
                     }
 

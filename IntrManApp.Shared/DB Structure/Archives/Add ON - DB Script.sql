@@ -1,4 +1,4 @@
-USE [IntrManDB]
+USE [Gha2zERPDB]
 GO
 if not exists(select * from sys.columns where Name='OutLocationId') ALTER Table Production.Product ADD OutLocationId Uniqueidentifier NULL
 go

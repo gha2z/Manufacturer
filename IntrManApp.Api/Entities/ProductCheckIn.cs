@@ -17,5 +17,7 @@ public partial class ProductCheckIn
 
     public virtual ICollection<ProductCheckInLine> ProductCheckInLines { get; set; } = new List<ProductCheckInLine>();
 
+    public virtual ICollection<QualityControl> QualityControls { get; set; } = new List<QualityControl>();
+
     public virtual Supplier? Supplier { get; set; }
 }

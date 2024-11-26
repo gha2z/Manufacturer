@@ -12,5 +12,5 @@ public class SetDatabaseServerRequest
     public string UserId { get; set; } = "";
     public string Password { get; set; } = "";
     public bool UseIntegratedSecurity { get; set; } = true;
-    public int Port { get; set; } = 50001;
+    public int Port { get; set; } = 39501;
 }

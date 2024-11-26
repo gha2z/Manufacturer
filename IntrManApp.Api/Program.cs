@@ -29,11 +29,11 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddWindowsService( options =>
 {
-    options.ServiceName = "IntrMan Backend Service";
+    options.ServiceName = "Gha2z ERP Backend Service";
 });
 builder.Services.AddHostedService<BackendService>();
 
-string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Intrepid Manufacture App");
+string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Gha2z ERP");
 if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
 
 
@@ -78,7 +78,7 @@ builder.Configuration.AddJsonFile(appSettingFile,false,true);
 
 builder.Services.Configure<ConnectionStrings>(builder.Configuration.GetSection("ConnectionStrings"));
 
-builder.Services.AddDbContext<IntrManDbContext>(o =>
+builder.Services.AddDbContext<Gha2zErpDbContext>(o =>
 {
     var cs = builder.Configuration.GetConnectionString("Database");
     Log.Logger.Information($"Configuring database connection => \"{cs}\"");
@@ -108,10 +108,11 @@ var app = builder.Build();
     string queryString = string.Empty;
     string sps = string.Empty;
     using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<IntrManDbContext>();
+    var context = scope.ServiceProvider.GetRequiredService<Gha2zErpDbContext>();
 
-    Log.Logger.Information("Checking if database \"IntrManDB\" exists");
+    Log.Logger.Information("Checking if database \"Gha2zERPDB\" exists");
     bool dbCreated = context.Database.CanConnect();
+    bool dbJustCreated = false;
 
     if (!dbCreated)
     {
@@ -120,6 +121,7 @@ var app = builder.Build();
         try
         {
             dbCreated = context.Database.EnsureCreated();
+            dbJustCreated = dbCreated;
         } catch (SqlException ex)
         {
             Log.Logger.Error(ex, $"Error creating database\nException Message:{ex.Message}\n\nException ToString:{ex}");

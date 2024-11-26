@@ -25,9 +25,9 @@ namespace IntrManApp.Api.Features.BasicModules
             }
         }
 
-        internal sealed class Handler(IntrManDbContext dbContext, IValidator<CreateLocation.Command> validator) : IRequestHandler<Command, Result<Guid>>
+        internal sealed class Handler(Gha2zErpDbContext dbContext, IValidator<CreateLocation.Command> validator) : IRequestHandler<Command, Result<Guid>>
         {
-            private readonly IntrManDbContext _context = dbContext;
+            private readonly Gha2zErpDbContext _context = dbContext;
             private readonly IValidator<Command> _validator = validator;
 
             public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)

@@ -28,10 +28,10 @@ namespace IntrManApp.Api.Features.BasicModules
 
         internal sealed class Handler : IRequestHandler<Command, Result<Guid>>
         {
-            private readonly IntrManDbContext _context;
+            private readonly Gha2zErpDbContext _context;
             private readonly IValidator<Command> _validator;
 
-            public Handler(IntrManDbContext dbContext, IValidator<Command> validator)
+            public Handler(Gha2zErpDbContext dbContext, IValidator<Command> validator)
             {
                 _context = dbContext;
                 _validator = validator;

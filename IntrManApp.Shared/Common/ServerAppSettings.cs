@@ -7,7 +7,7 @@ public class ServerAppSettings
     public ConnectionStrings ConnectionStrings { get; set; } = new ConnectionStrings();
     public SerilogConfig Serilog { get; set; } = new SerilogConfig();
     public string AllowedHosts { get; set; } = "*";
-    public Int32 Port { get; set; } = 50001;
+    public Int32 Port { get; set; } = 39501;
 
     public class SerilogConfig
     {

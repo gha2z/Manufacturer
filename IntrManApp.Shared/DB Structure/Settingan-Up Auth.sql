@@ -1,4 +1,4 @@
-USE [IntrManDB]
+USE [Gha2zERPDB]
 GO
 ALTER TABLE [dbo].[UserTypeFeature] DROP CONSTRAINT [FK_UserTypeFeature_UserType]
 GO

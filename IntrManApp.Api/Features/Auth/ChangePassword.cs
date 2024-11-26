@@ -29,7 +29,7 @@ public static class ChangePassword
             RuleFor(c => c.NewPassword).NotEmpty();
         }
     }
-    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Command, Result<bool>>
+    internal sealed class Handler(Gha2zErpDbContext dbContext) : IRequestHandler<Command, Result<bool>>
     {
         public async Task<Result<bool>> Handle(Command request, CancellationToken cancellationToken)
         {

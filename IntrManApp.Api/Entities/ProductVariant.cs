@@ -13,6 +13,14 @@ public partial class ProductVariant
 
     public Guid MeasurementUnitId { get; set; }
 
+    public string? Sku { get; set; }
+
+    public decimal? StandardCost { get; set; }
+
+    public decimal? ListPrice { get; set; }
+
+    public string? Caption { get; set; }
+
     public virtual MeasurementUnit MeasurementUnit { get; set; } = null!;
 
     public virtual Product Product { get; set; } = null!;

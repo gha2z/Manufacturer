@@ -13,7 +13,7 @@ public static class RestoreDatabase
 {
     public class Command : IRequest<Result<BackupRestoreDbResult>>
     {
-        public string DB { get; set; } = "IntrManDb";
+        public string DB { get; set; } = "Gha2zERPDB";
         public string Path { get; set; } = string.Empty;
     }
 
@@ -58,7 +58,7 @@ public class RestoreDatabaseEndPoint : ICarterModule
             return Results.Ok(result.Value);
         }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
         {
-            Description = "Restore IntrManDb database from a specified backup file",
+            Description = "Restore Gha2zERPDB database from a specified backup file",
             Summary = "Restore Database",
             Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
             {

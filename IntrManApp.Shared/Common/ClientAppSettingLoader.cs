@@ -4,7 +4,7 @@
     {
         public string ApiUrlVerb { get; set; } = "http";
         public string ApiBaseUrl { get; set; } = string.Empty;
-        public int ApiBasePort { get; set; } = 50001;
+        public int ApiBasePort { get; set; } = 39501;
         public string AppDataPath { get; set; } = string.Empty;
     }
 }

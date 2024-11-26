@@ -12,7 +12,7 @@ public static class BackupDatabase
 {
     public class Command : IRequest<Result<BackupRestoreDbResult>>
     {
-        public string DB { get; set; } = "IntrManDb";
+        public string DB { get; set; } = "Gha2zERPDB";
     }
 
     internal sealed class Handler(IDbConfigConnectionFactory dbConnectionFactory) : IRequestHandler<Command, Result<BackupRestoreDbResult>>
@@ -56,7 +56,7 @@ public class BackupDatabaseEndPoint : ICarterModule
             return Results.Ok(result.Value);
         }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
         {
-            Description = "Backup IntrManDb database into the specified path on disk",
+            Description = "Backup Gha2zERPDB database into the specified path on disk",
             Summary = "Backup Database",
             Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
             {

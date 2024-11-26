@@ -260,6 +260,9 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
         }
     }
 
+    #endregion
+
+    #region MeasurementUnit
     public async Task<List<MeasurementUnitRequest>> GetMeasurementUnitAsync()
     {
         try
@@ -273,5 +276,34 @@ public class ProductService(HttpClient httpClient, ILogger<ProductService> logge
             return [];
         }
     }
+
+    public async Task<List<MeasurementUnitRequest>> GetMeasurementUnitsByGroupIdAsync(Guid id)
+    {
+        try
+        {
+            logger.LogInformation("Getting Measurement Units => ");
+            return await httpClient.GetFromJsonAsync<List<MeasurementUnitRequest>>($"measurementUnitsByGroupId/{id}") ?? [];
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting Measurement Units");
+            return [];
+        }
+    }
+
+    public async Task<IEnumerable<MeasurementUnitGroupDto>> GetMeasurementUnitGroupAsync()
+    {
+        try
+        {
+            logger.LogInformation("Getting Measurement Unit Groups");
+            return await httpClient.GetFromJsonAsync<List<MeasurementUnitGroupDto>>("measurementUnitGroups") ?? [];
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting Measurement Unit Groups");
+            return [];
+        }
+    }
+
     #endregion
 }

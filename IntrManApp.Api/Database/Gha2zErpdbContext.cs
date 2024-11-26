@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IntrManApp.Api.Database;
 
-public partial class IntrManDbContext : DbContext
+public partial class Gha2zErpDbContext : DbContext
 {
-    public IntrManDbContext()
+    public Gha2zErpDbContext()
     {
     }
 
-    public IntrManDbContext(DbContextOptions<IntrManDbContext> options)
+    public Gha2zErpDbContext(DbContextOptions<Gha2zErpDbContext> options)
         : base(options)
     {
     }
@@ -35,6 +35,8 @@ public partial class IntrManDbContext : DbContext
     public virtual DbSet<InventoryFlag> InventoryFlags { get; set; }
 
     public virtual DbSet<Location> Locations { get; set; }
+
+    public virtual DbSet<Manufacturer> Manufacturers { get; set; }
 
     public virtual DbSet<MeasurementUnit> MeasurementUnits { get; set; }
 
@@ -88,6 +90,24 @@ public partial class IntrManDbContext : DbContext
 
     public virtual DbSet<ProductionOrderLineDetailResourceAllocation> ProductionOrderLineDetailResourceAllocations { get; set; }
 
+    public virtual DbSet<PurchaseInvoice> PurchaseInvoices { get; set; }
+
+    public virtual DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines { get; set; }
+
+    public virtual DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+
+    public virtual DbSet<PurchaseOrderLine> PurchaseOrderLines { get; set; }
+
+    public virtual DbSet<PurchaseRequest> PurchaseRequests { get; set; }
+
+    public virtual DbSet<PurchaseRequestLine> PurchaseRequestLines { get; set; }
+
+    public virtual DbSet<QualityControl> QualityControls { get; set; }
+
+    public virtual DbSet<QualityControlLine> QualityControlLines { get; set; }
+
+    public virtual DbSet<QualityControlParam> QualityControlParams { get; set; }
+
     public virtual DbSet<RackingPallet> RackingPallets { get; set; }
 
     public virtual DbSet<SalesOrder> SalesOrders { get; set; }
@@ -99,6 +119,8 @@ public partial class IntrManDbContext : DbContext
     public virtual DbSet<StockAdjustmentLine> StockAdjustmentLines { get; set; }
 
     public virtual DbSet<Supplier> Suppliers { get; set; }
+
+    public virtual DbSet<Test> Tests { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -262,6 +284,22 @@ public partial class IntrManDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Name).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<Manufacturer>(entity =>
+        {
+            entity.HasKey(e => e.BusinessEntityId);
+
+            entity.ToTable("Manufacturer", "Purchasing");
+
+            entity.Property(e => e.BusinessEntityId).ValueGeneratedNever();
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.Name).HasMaxLength(50);
+
+            entity.HasOne(d => d.BusinessEntity).WithOne(p => p.Manufacturer)
+                .HasForeignKey<Manufacturer>(d => d.BusinessEntityId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Manufacturer_BusinessEntity");
         });
 
         modelBuilder.Entity<MeasurementUnit>(entity =>
@@ -481,6 +519,10 @@ public partial class IntrManDbContext : DbContext
                 .HasForeignKey(d => d.LocationId)
                 .HasConstraintName("FK_ProductCheckInLine_Location");
 
+            entity.HasOne(d => d.Manufacturer).WithMany(p => p.ProductCheckInLines)
+                .HasForeignKey(d => d.ManufacturerId)
+                .HasConstraintName("FK_ProductCheckInLine_Manufacturer");
+
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductCheckInLines)
                 .HasForeignKey(d => d.MeasurementUnitId)
                 .HasConstraintName("FK_ProductCheckInLine_MeasurementUnit");
@@ -609,6 +651,8 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.CheckInId, e.InventoryId });
 
             entity.ToTable("ProductInternalCheckInLine", "Production");
+
+            entity.HasIndex(e => e.LineId, "AK_ProductInternalCheckInLine_LineId").IsUnique();
 
             entity.HasIndex(e => e.LineId, "IX_ProductInternalCheckInLine").IsUnique();
 
@@ -791,7 +835,7 @@ public partial class IntrManDbContext : DbContext
             entity.Property(e => e.ProductionDate).HasColumnType("datetime");
             entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Reserved)
-                .HasDefaultValue(0m)
+                .HasDefaultValue(0.0m)
                 .HasColumnType("decimal(18, 0)");
             entity.Property(e => e.TotalBatches)
                 .HasDefaultValue(1.0m)
@@ -880,9 +924,17 @@ public partial class IntrManDbContext : DbContext
 
             entity.HasIndex(e => new { e.ProductId, e.MeasurementUnitId, e.Weight }, "IX_ProductVariant").IsUnique();
 
+            entity.HasIndex(e => e.Sku, "IX_ProductVariant_1").IsUnique();
+
             entity.HasIndex(e => e.MeasurementUnitId, "IX_ProductVariant_MeasurementUnitId");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.Caption).HasMaxLength(50);
+            entity.Property(e => e.ListPrice).HasColumnType("money");
+            entity.Property(e => e.Sku)
+                .HasMaxLength(50)
+                .HasColumnName("SKU");
+            entity.Property(e => e.StandardCost).HasColumnType("money");
             entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.MeasurementUnit).WithMany(p => p.ProductVariants)
@@ -1030,6 +1082,194 @@ public partial class IntrManDbContext : DbContext
                 .HasConstraintName("FK_ProductionOrderLineDetailResourceAllocation_ProductionOrderLineDetailResource");
         });
 
+        modelBuilder.Entity<PurchaseInvoice>(entity =>
+        {
+            entity.ToTable("PurchaseInvoice", "Purchasing");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.PurchaseDate).HasColumnType("datetime");
+            entity.Property(e => e.RequiredDate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.PurchaseOrder).WithMany(p => p.PurchaseInvoices)
+                .HasForeignKey(d => d.PurchaseOrderId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_PurchaseInvoice_PurchaseOrder");
+
+            entity.HasOne(d => d.Supplier).WithMany(p => p.PurchaseInvoices)
+                .HasForeignKey(d => d.SupplierId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_PurchaseInvoice_Supplier");
+        });
+
+        modelBuilder.Entity<PurchaseInvoiceLine>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("PurchaseInvoiceLine", "Purchasing");
+
+            entity.Property(e => e.DiscNom).HasColumnType("money");
+            entity.Property(e => e.DiscPrc).HasColumnType("money");
+            entity.Property(e => e.Price).HasColumnType("money");
+            entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.SubTotal).HasColumnType("money");
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.MeasurementUnit).WithMany()
+                .HasForeignKey(d => d.MeasurementUnitId)
+                .HasConstraintName("FK_PurchaseInvoiceLine_MeasurementUnit");
+
+            entity.HasOne(d => d.Product).WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK_PurchaseInvoiceLine_Product");
+
+            entity.HasOne(d => d.ProductVariant).WithMany()
+                .HasForeignKey(d => d.ProductVariantId)
+                .HasConstraintName("FK_PurchaseInvoiceLine_ProductVariant");
+
+            entity.HasOne(d => d.PurchaseInvoice).WithMany()
+                .HasForeignKey(d => d.PurchaseInvoiceId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_PurchaseInvoiceLine_PurchaseInvoice");
+        });
+
+        modelBuilder.Entity<PurchaseOrder>(entity =>
+        {
+            entity.ToTable("PurchaseOrder", "Purchasing");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.OrderDate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.PurchaseRequest).WithMany(p => p.PurchaseOrders)
+                .HasForeignKey(d => d.PurchaseRequestId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_PurchaseOrder_PurchaseRequest");
+        });
+
+        modelBuilder.Entity<PurchaseOrderLine>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("PurchaseOrderLine", "Purchasing");
+
+            entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.MeasurementUnit).WithMany()
+                .HasForeignKey(d => d.MeasurementUnitId)
+                .HasConstraintName("FK_PurchaseOrderLine_MeasurementUnit");
+
+            entity.HasOne(d => d.Order).WithMany()
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_PurchaseOrderLine_PurchaseOrder");
+
+            entity.HasOne(d => d.Product).WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK_PurchaseOrderLine_Product");
+
+            entity.HasOne(d => d.ProductVariant).WithMany()
+                .HasForeignKey(d => d.ProductVariantId)
+                .HasConstraintName("FK_PurchaseOrderLine_ProductVariant");
+        });
+
+        modelBuilder.Entity<PurchaseRequest>(entity =>
+        {
+            entity.ToTable("PurchaseRequest", "Purchasing");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.RequestDate).HasColumnType("datetime");
+            entity.Property(e => e.RequiredDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<PurchaseRequestLine>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("PurchaseRequestLine", "Purchasing");
+
+            entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.MeasurementUnit).WithMany()
+                .HasForeignKey(d => d.MeasurementUnitId)
+                .HasConstraintName("FK_PurchaseRequestLine_MeasurementUnit");
+
+            entity.HasOne(d => d.Product).WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK_PurchaseRequestLine_Product");
+
+            entity.HasOne(d => d.ProductVariant).WithMany()
+                .HasForeignKey(d => d.ProductVariantId)
+                .HasConstraintName("FK_PurchaseRequestLine_ProductVariant");
+
+            entity.HasOne(d => d.Request).WithMany()
+                .HasForeignKey(d => d.RequestId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_PurchaseRequestLine_PurchaseRequest");
+        });
+
+        modelBuilder.Entity<QualityControl>(entity =>
+        {
+            entity.ToTable("QualityControl", "Production");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.CheckDate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.ProductCheckInRef).WithMany(p => p.QualityControls)
+                .HasForeignKey(d => d.ProductCheckInRefId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_QualityControl_ProductCheckIn");
+
+            entity.HasOne(d => d.StockAdjustmentRef).WithMany(p => p.QualityControls)
+                .HasForeignKey(d => d.StockAdjustmentRefId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_QualityControl_StockAdjustMent");
+        });
+
+        modelBuilder.Entity<QualityControlLine>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("QualityControlLine", "Production");
+
+            entity.Property(e => e.Quantity).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Value).HasMaxLength(100);
+            entity.Property(e => e.Weight).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.Line).WithMany()
+                .HasForeignKey(d => d.LineId)
+                .HasConstraintName("FK_QualityControlLine_ProductInventory");
+
+            entity.HasOne(d => d.MeasurementUnit).WithMany()
+                .HasForeignKey(d => d.MeasurementUnitId)
+                .HasConstraintName("FK_QualityControlLine_MeasurementUnit");
+
+            entity.HasOne(d => d.Qc).WithMany()
+                .HasForeignKey(d => d.QcId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_QualityControlLine_QualityControl");
+
+            entity.HasOne(d => d.QcParam).WithMany()
+                .HasForeignKey(d => d.QcParamId)
+                .HasConstraintName("FK_QualityControlLine_QualityControlParam");
+        });
+
+        modelBuilder.Entity<QualityControlParam>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_QualityIndicator");
+
+            entity.ToTable("QualityControlParam", "Production");
+
+            entity.HasIndex(e => e.Name, "IX_QualityIndicator").IsUnique();
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newsequentialid())");
+            entity.Property(e => e.DefaultValue).HasMaxLength(100);
+            entity.Property(e => e.Name).HasMaxLength(50);
+        });
+
         modelBuilder.Entity<RackingPallet>(entity =>
         {
             entity.ToTable("RackingPallet", "Production");
@@ -1168,6 +1408,21 @@ public partial class IntrManDbContext : DbContext
                 .HasConstraintName("FK_Supplier_BusinessEntity");
         });
 
+        modelBuilder.Entity<Test>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("test");
+
+            entity.Property(e => e.Text1)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("text1");
+            entity.Property(e => e.Text2)
+                .HasMaxLength(50)
+                .HasColumnName("text2");
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(e => e.Name, "IX_Users").IsUnique();
@@ -1202,6 +1457,8 @@ public partial class IntrManDbContext : DbContext
             entity.HasKey(e => new { e.FeatureId, e.UserTypeId });
 
             entity.ToTable("UserTypeFeature");
+
+            entity.HasIndex(e => e.UserTypeId, "IX_UserTypeFeature_UserTypeId");
 
             entity.Property(e => e.Accessible).HasDefaultValue(false);
 

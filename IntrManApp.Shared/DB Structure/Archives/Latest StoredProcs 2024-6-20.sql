@@ -1,4 +1,4 @@
-USE [IntrManDB]
+USE [Gha2zERPDB]
 GO
 /****** Object:  StoredProcedure [Sales].[GetDispatchOrderDetailByDate]    Script Date: 6/20/2024 8:58:23 PM ******/
 DROP PROCEDURE IF EXISTS [Sales].[GetDispatchOrderDetailByDate]

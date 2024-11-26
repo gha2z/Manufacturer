@@ -14,9 +14,9 @@ public static class SetBackupDiskPath
 {
     public class Command : IRequest<Result<bool>>
     {
-        public string Db { get; set; } = "IntrManDb";
+        public string Db { get; set; } = "Gha2zERPDB";
         public string Path { get; set; } = string.Empty;
-        public string FileName { get; set; } = "IntrManDbBackup";
+        public string FileName { get; set; } = "Gha2zERPDBBackup";
         public bool AppendDateTime { get; set; } = true;
     }
 
@@ -55,7 +55,7 @@ public class SetBackupDiskPathEndPoint : ICarterModule
             return Results.Ok(result.Value);
         }).WithOpenApi(x => new Microsoft.OpenApi.Models.OpenApiOperation(x)
         {
-            Description = "Backup IntrManDb database into the specified path on disk",
+            Description = "Backup Gha2zERPDB database into the specified path on disk",
             Summary = "Backup Database",
             Tags = new List<Microsoft.OpenApi.Models.OpenApiTag>
             {

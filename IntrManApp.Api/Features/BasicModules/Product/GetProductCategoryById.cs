@@ -16,7 +16,7 @@ public static class GetProductCategoryById
         public Guid Id { get; set; }
     }
 
-    internal sealed class Handler(IntrManDbContext context) : IRequestHandler<Query, Result<ProductCategoryResponse>>
+    internal sealed class Handler(Gha2zErpDbContext context) : IRequestHandler<Query, Result<ProductCategoryResponse>>
     {
 
         public async Task<Result<ProductCategoryResponse>> Handle(Query request, CancellationToken cancellationToken)

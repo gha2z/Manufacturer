@@ -13,7 +13,7 @@ public static class GetDatabaseSetting
 {
     public class Command : IRequest<Result<ServerSettingResponse>>
     {
-        public string Db { get; set; } = "IntrManDb";
+        public string Db { get; set; } = "Gha2zERPDB";
     }
 
    
@@ -25,7 +25,7 @@ public static class GetDatabaseSetting
         {
             try
             {
-                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Intrepid Manufacture App");
+                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Gha2z ERP");
                 if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
 
                 appDataPath = Path.Combine(appDataPath, "Backend Service");

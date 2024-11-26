@@ -18,7 +18,7 @@ public static class Login
         public string Password { get; set; } = string.Empty;
     }
 
-    internal sealed class Handler(IntrManDbContext dbContext) : IRequestHandler<Query, Result<LoginResponse>>
+    internal sealed class Handler(Gha2zErpDbContext dbContext) : IRequestHandler<Query, Result<LoginResponse>>
     {
         public async Task<Result<LoginResponse>> Handle(Query request, CancellationToken cancellationToken)
         {

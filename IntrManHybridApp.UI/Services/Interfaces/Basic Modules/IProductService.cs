@@ -19,6 +19,7 @@ public interface IProductService
     List<BomSpecificationResponse> GetBomSpecification(Guid id);
     Task<bool> CreateBillOfMaterialAsync(BomRequest request);
     Task<List<MeasurementUnitRequest>> GetMeasurementUnitAsync();
-
+    Task<List<MeasurementUnitRequest>> GetMeasurementUnitsByGroupIdAsync(Guid id);
+    Task<IEnumerable<MeasurementUnitGroupDto>> GetMeasurementUnitGroupAsync();
 
 }

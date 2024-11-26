@@ -14,12 +14,22 @@
 @inject NotificationService NotificationService
 @inject IAuthService auth
 @inject ILogger<MainLayout> logger
+@inject TooltipService tooltipService
+@inject ThemeService ThemeService
+
+<HeadContent>
+    <link rel="stylesheet" href=@($"_content/Radzen.Blazor/css/{currentTheme}.css")>
+</HeadContent>
 
 <RadzenComponents/>
 
+
+
 <RadzenLayout style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body';">
+
+
     <RadzenHeader>
-        <RadzenRow JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Gap="0">
+        <RadzenRow JustifyContent="JustifyContent.Start" AlignItems="AlignItems.Center" Gap="0" class="rz-p-1">
             <RadzenColumn Size="5">
                 <RadzenStack AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Left" Gap="3">
                     <RadzenSidebarToggle Style="margin-right:2px" Click="@SidebarToggleClick"></RadzenSidebarToggle>
@@ -30,8 +40,9 @@
 
             <RadzenColumn Size="7">
                 <RadzenStack AlignItems="AlignItems.End" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="3">
+                   
                     <RadzenMenu>
-                        <RadzenMenuItem Icon="account_circle" Visible="@(AppUser.Token!=Guid.Empty)" Text="@AppUser.Username" Style="margin-right:48px">
+                        <RadzenMenuItem Icon="account_circle" Visible="@(AppUser.Token!=Guid.Empty)" Text="@AppUser.Username" Style="margin-right:36px">
                             <RadzenMenuItem Style="font-size:small;" Text="Change Password" Click="@ChangePassword" Icon="password"></RadzenMenuItem>
                             <RadzenMenuItem Style="font-size:small;" Text="Logout ..." Click="@Logout" Icon="logout"></RadzenMenuItem>
                         </RadzenMenuItem>
@@ -40,20 +51,24 @@
             </RadzenColumn>
         </RadzenRow>
     </RadzenHeader>
-    <RadzenBody Expanded="@sidebarExpanded">
-        <RadzenRow class="rz-mx-auto rz-px-4 rz-pt-2 rz-pt-md-4 rz-pt-lg-6 rz-pt-xl-12 rz-pb-2 rz-pb-lg-12"
-                   Style="margin:10px; padding:0px">
-            <RadzenColumn Size="12">
-                @Body
-            </RadzenColumn>
-        </RadzenRow>
-    </RadzenBody>
-    <RadzenSidebar Expanded="@sidebarExpanded" style="z-index: 2">
-        <RadzenStack AlignItems="Radzen.AlignItems.Center" class="rz-py-4 rz-py-lg-6" Style="padding: var(--rz-panel-menu-item-padding); border-bottom: var(--rz-panel-menu-item-border);">
-            <RadzenImage Path="images/logo.png" style="width: 96px; height: 96px;" AlternateText="Application logo"></RadzenImage>
-            <RadzenText Text="Intrepid Manufacture App" TextStyle="Radzen.Blazor.TextStyle.Subtitle1" class="rz-mb-0" style="color: var(--rz-sidebar-color);" />
+
+    <RadzenSidebar Responsive="false" Style="@(sidebarExpanded ? string.Empty : "width: max-content;")">
+
+        <RadzenStack AlignItems="Radzen.AlignItems.Center"
+        class="rz-p-2 rz-p-lg-3" Style="padding: var(--rz-panel-menu-item-padding); border-bottom: var(--rz-panel-menu-item-border);">
+
+            <RadzenImage Path="images/ptdbslogo.png"
+                Style="@(sidebarExpanded ? "width: 128px; height: 128px;" : "width: 24px; height: 24px;")"
+                AlternateText="Application logo"></RadzenImage>
+            <RadzenText Visible="@sidebarExpanded" Text="PT. DAPUA BASAMO SAMO" TextStyle="Radzen.Blazor.TextStyle.Subtitle1" 
+                class="rz-mb-0" style="color: var(--rz-sidebar-color);" />
+           
+            
+          
         </RadzenStack>
-        <RadzenPanelMenu>
+
+        <RadzenPanelMenu Multiple="true" DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText :
+            MenuItemDisplayStyle.Icon)" ShowArrow="@(sidebarExpanded ? true : false)">
             @foreach (var item in AppUser.FeatureAccesses)
             {
                 logger.LogInformation($"Adding Feature: {item.Name}");
@@ -62,7 +77,10 @@
                     icons.Add(item.Name, item.Icon);
                 }
                 catch { }
-                <RadzenPanelMenuItem Text="@item.Name"  Visible="@item.ChildrenFeatures.Where(c=>c.CanView).Any()" Icon="@item.Icon" Click="setActiveWindow">
+                <RadzenPanelMenuItem Text="@item.Name" Visible="@item.ChildrenFeatures.Where(c=>c.CanView).Any()"
+                Icon="@item.Icon" Click="setActiveWindow"
+                MouseEnter="@(args => ShowTooltip(args, item.Name, new TooltipOptions(){ Position = TooltipPosition.Right }))">
+
                     @foreach (var subItem in item.ChildrenFeatures)
                     {
                         logger.LogInformation($"Adding sub Feature {subItem.Name} to {item.Name}");
@@ -71,25 +89,72 @@
                             icons.Add(subItem.Name, subItem.Icon);
                         }
                         catch { }
-                        <RadzenPanelMenuItem Text="@subItem.Name" Icon="@subItem.Icon" Style="margin-left:6px"
-                                             Click="setActiveWindow" Path="@subItem.Path" Visible="@subItem.CanView" />
+                        <RadzenPanelMenuItem Text="@subItem.Name" Icon="@subItem.Icon"
+                        Click="setActiveWindow" Path="@subItem.Path" Visible="@subItem.CanView"
+                        MouseEnter="@(args => ShowTooltip(args, subItem.Name, new TooltipOptions(){  Position = TooltipPosition.Right }))" />
+                        @* Style="margin-left:6px" *@
                     }
                 </RadzenPanelMenuItem>
             }
         </RadzenPanelMenu>
-        <RadzenStack AlignItems="Radzen.AlignItems.Center" Gap="0" class="rz-py-4 rz-py-lg-6" Style="padding: var(--rz-panel-menu-item-padding);">
-            <RadzenText Text="Intrepid Manufacture App v1.0.0" TextStyle="Radzen.Blazor.TextStyle.Caption" TagName="Radzen.Blazor.TagName.P" TextAlign="Radzen.TextAlign.Center" />
+
+        <RadzenStack AlignItems="Radzen.AlignItems.Center" Visible="@sidebarExpanded" class="rz-py-6 rz-py-lg-8" 
+            JustifyContent="JustifyContent.End" Style="padding: var(--rz-panel-menu-item-padding);">
+
+            <RadzenStack Orientation="Orientation.Horizontal">
+                <RadzenLabel Text="Theme" class="rz-mt-2" Style="font-size:small;" Component="ThemDropDown" />
+                <RadzenDropDown Name="ThemeDropDown" TValue="string" Value="@currentTheme" Data="@Themes.Free"
+                                TextProperty=@nameof(Theme.Text) ValueProperty=@nameof(Theme.Value) ValueChanged="@ChangeTheme"
+                                Style="width=100%"/>
+               
+             @*    <RadzenText Text="@($"Server: {AppSettings.ApiBaseUrl}")" TextStyle="Radzen.Blazor.TextStyle.Caption" class="rz-mb-0"
+                            TagName="Radzen.Blazor.TagName.P" TextAlign="Radzen.TextAlign.Center" /> *@
+            </RadzenStack>
+
+            <RadzenStack Gap="1">
+                <RadzenText Text="DBS ERP (SIAP) V2.0" TextStyle="Radzen.Blazor.TextStyle.Subtitle1"
+                            class="rz-mb-0" style="color: var(--rz-sidebar-color);" />
+                <RadzenText Text="Copyright Ⓒ 2024" TextStyle="Radzen.Blazor.TextStyle.Caption" class="rz-mb-0" 
+                             TextAlign="Radzen.TextAlign.Center" />
+            </RadzenStack>
+            
+        </RadzenStack>
+
+    </RadzenSidebar>
+
+
+
+    <RadzenBody>
+        <div class="rz-p-1">
+            @Body
+        </div>
+    </RadzenBody>
+
+
+    @*  <RadzenFooter>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="Radzen.JustifyContent.SpaceBetween" class="rz-p-1">
+            <RadzenText Text="@($"Server: {AppSettings.ApiBaseUrl}")" TextStyle="Radzen.Blazor.TextStyle.Caption" class="rz-mb-0" TagName="Radzen.Blazor.TagName.P" TextAlign="Radzen.TextAlign.Center" />
+            <RadzenText Text="DBS ERP (SIAP) v1.0.0" TextStyle="Radzen.Blazor.TextStyle.Caption" TagName="Radzen.Blazor.TagName.P" TextAlign="Radzen.TextAlign.Center" />
             <RadzenText Text="Copyright Ⓒ 2024" TextStyle="Radzen.Blazor.TextStyle.Caption" class="rz-mb-0" TagName="Radzen.Blazor.TagName.P" TextAlign="Radzen.TextAlign.Center" />
         </RadzenStack>
-    </RadzenSidebar>
+    </RadzenFooter> *@
 </RadzenLayout>
 
 @code {
     bool sidebarExpanded = true;
     string activeWindow = "Home";
     string activeIcon = "home";
-
+    string currentTheme = "dark";
     Dictionary<string, string> icons = [];
+
+    void ChangeTheme(string value)
+    {
+        ThemeService.SetTheme(value);
+       
+        currentTheme = value;
+        //StateHasChanged();
+    }
+
 
     void SidebarToggleClick()
     {
@@ -100,6 +165,10 @@
     {
         activeWindow = args.Text;
         activeIcon = icons[args.Text];
+    }
+
+    void ShowTooltip(ElementReference elementReference, string text, TooltipOptions options = null) {
+        if(!sidebarExpanded) tooltipService.Open(elementReference, text, options);
     }
 
     protected override async Task OnInitializedAsync()

@@ -66,9 +66,9 @@ namespace IntrManApp.Api.Features.BasicModules
             }
         }
 
-        internal sealed class Handler(IntrManDbContext dbContext, IValidator<UpdateProduct.Command> validator) : IRequestHandler<Command, Result<Guid>>
+        internal sealed class Handler(Gha2zErpDbContext dbContext, IValidator<UpdateProduct.Command> validator) : IRequestHandler<Command, Result<Guid>>
         {
-            private readonly IntrManDbContext _context = dbContext;
+            private readonly Gha2zErpDbContext _context = dbContext;
             private readonly IValidator<Command> _validator = validator;
 
             public async Task<Result<Guid>> Handle(Command request, CancellationToken cancellationToken)
@@ -188,14 +188,16 @@ namespace IntrManApp.Api.Features.BasicModules
                 Debug.WriteLine("Product Variants: " + request.productVariants.Count);
                 foreach (var variant in request.productVariants)
                 {
-
-                    _context.ProductVariants.Add(new ProductVariant()
+                    product.ProductVariants.Add(new ProductVariant()
                     {
                         ProductId = product.Id,
                         MeasurementUnitId = variant.MeasurementUnitId,
-                        Weight = variant.Weight
+                        Weight = variant.Weight,
+                        Sku = variant.Sku,
+                        Caption = variant.Caption,
+                        StandardCost = variant.StandardCost,
+                        ListPrice = variant.ListPrice
                     });
-                    Debug.WriteLine($"Adding Product Variant: {variant.Weight}{variant.MeasurementUnit.Name} ({variant.MeasurementUnitId})");
                 }
                 await _context.SaveChangesAsync(cancellationToken);
                 _context.Database.CommitTransaction();

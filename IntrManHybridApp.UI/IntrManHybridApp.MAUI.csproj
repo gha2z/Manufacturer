@@ -22,10 +22,10 @@
         <Nullable>enable</Nullable>
 
         <!-- Display name -->
-        <ApplicationTitle>Intrepid Manufacture App</ApplicationTitle>
+        <ApplicationTitle>Gha2z ERP</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.intrmanhybridapp.ui</ApplicationId>
+        <ApplicationId>com.gha2z.erp.ui</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -37,7 +37,7 @@
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.22621.0</SupportedOSPlatformVersion>
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.22621.0</TargetPlatformMinVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
-        <AssemblyName>Intrepid Manufacture App</AssemblyName>
+        <AssemblyName>Gha2z ERP</AssemblyName>
         
     </PropertyGroup>
 
@@ -46,48 +46,48 @@
   </PropertyGroup>
   
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
-      <ApplicationTitle>Intrepid Manufacture App</ApplicationTitle>
-      <ApplicationId>com.companyname.intrepid.erp</ApplicationId>
+      <ApplicationTitle>com.gha2z.erp.ui</ApplicationTitle>
+      <ApplicationId>com.gha2z.erp.ui</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-ios|AnyCPU'">
-      <ApplicationTitle>Intrepid Manufacture App</ApplicationTitle>
-      <ApplicationId>com.companyname.intrepid.erp</ApplicationId>
+      <ApplicationTitle>com.gha2z.erp.ui</ApplicationTitle>
+      <ApplicationId>com.gha2z.erp.ui</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-maccatalyst|AnyCPU'">
-      <ApplicationTitle>Intrepid Manufacture App</ApplicationTitle>
-      <ApplicationId>com.companyname.intrepid.erp</ApplicationId>
+      <ApplicationTitle>Gha2z ERP</ApplicationTitle>
+      <ApplicationId>com.gha2z.erp.ui</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-windows10.0.22621.0|AnyCPU'">
-      <ApplicationTitle>Intrepid Manufacture App</ApplicationTitle>
-      <ApplicationId>com.companyname.intrepid.erp</ApplicationId>
+      <ApplicationTitle>Gha2z ERP</ApplicationTitle>
+      <ApplicationId>com.gha2z.erp.ui</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-android|AnyCPU'">
-      <ApplicationTitle>Intrepid Manufacture App</ApplicationTitle>
-      <ApplicationId>com.companyname.intrepid.erp</ApplicationId>
+      <ApplicationTitle>Gha2z ERP</ApplicationTitle>
+      <ApplicationId>com.gha2z.erp.ui</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-ios|AnyCPU'">
-      <ApplicationTitle>Intrepid Manufacture App</ApplicationTitle>
-      <ApplicationId>com.companyname.intrepid.erp</ApplicationId>
+      <ApplicationTitle>Gha2z ERP</ApplicationTitle>
+      <ApplicationId>com.gha2z.erp.ui</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-maccatalyst|AnyCPU'">
-      <ApplicationTitle>Intrepid Manufacture App</ApplicationTitle>
-      <ApplicationId>com.companyname.intrepid.erp</ApplicationId>
+      <ApplicationTitle>Gha2z ERP</ApplicationTitle>
+      <ApplicationId>com.gha2z.erp.ui</ApplicationId>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-windows10.0.22621.0|AnyCPU'">
-      <ApplicationTitle>Intrepid Manufacture App</ApplicationTitle>
-      <ApplicationId>com.companyname.intrepid.erp</ApplicationId>
+      <ApplicationTitle>Gha2z ERP</ApplicationTitle>
+      <ApplicationId>com.gha2z.erp.ui</ApplicationId>
     </PropertyGroup>
 
     <ItemGroup>
-        <!-- App Icon -->
-
+     
+      
         <!-- Splash Screen -->
         <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
 
@@ -102,10 +102,10 @@
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
     </ItemGroup>
 
-    <ItemGroup>
+    <!--<ItemGroup>
       <None Remove="Resources\AppIcon\appicon.svg" />
       <None Remove="Resources\Raw\rCartonLabel.btw" />
-    </ItemGroup>
+    </ItemGroup>-->
 
     <ItemGroup>
         <PackageReference Include="BlazorILogger" Version="1.4.0" />
@@ -120,17 +120,14 @@
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Polly" Version="8.3.1" />
         <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
-        <PackageReference Include="Radzen.Blazor" Version="4.30.2" />
+        <PackageReference Include="Radzen.Blazor" Version="5.6.7" />
         <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+        <PackageReference Include="System.Text.Json" Version="8.0.5" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\IntrManApp.Shared\IntrManApp.Shared.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="wwwroot\images\" />
     </ItemGroup>
 
     <ItemGroup>

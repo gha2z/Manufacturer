@@ -36,10 +36,10 @@ builder.Services.AddHostedService<SignalrService>();
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    serverOptions.ListenAnyIP(50000); // http
+    serverOptions.ListenAnyIP(39500); // http
 });
 
-string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Intrepid Manufacture App");
+string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Gha2z ERP");
 if (!Directory.Exists(appDataPath)) Directory.CreateDirectory(appDataPath);
 
 var logPath = Path.Combine(appDataPath, "SignalR Service");

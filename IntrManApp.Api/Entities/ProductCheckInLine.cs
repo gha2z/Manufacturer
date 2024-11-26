@@ -27,9 +27,13 @@ public partial class ProductCheckInLine
 
     public Guid? RackingPalletId { get; set; }
 
+    public Guid? ManufacturerId { get; set; }
+
     public virtual ProductCheckIn? CheckIn { get; set; }
 
     public virtual Location? Location { get; set; }
+
+    public virtual Manufacturer? Manufacturer { get; set; }
 
     public virtual MeasurementUnit? MeasurementUnit { get; set; }
 
